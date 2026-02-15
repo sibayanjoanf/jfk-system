@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { TypewriterText } from '@/components/typewriter-text';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Categories, Product, ShowcaseProducts } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
 
 interface CategorySectionProps {
   image: string;
@@ -90,19 +91,29 @@ function CategorySection({ image, categoryLabel }: CategorySectionProps) {
   )
 }
 
-// SERVER COMPONENT - Fetches data server-side
+// Fetch directly from Supabase
 async function getProducts(category?: string): Promise<Product[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const url = category
-      ? `${baseUrl}/api/products?category=${category}`
-      : `${baseUrl}/api/products`;
+    let query = supabase
+      .from('products')
+      .select(`
+        *,
+        sub_categories!inner (
+          name,
+          categories!inner (
+            name
+          )
+        )
+      `);
 
-    const response = await fetch(url, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Failed to fetch products');
-    
-    const data = await response.json();
-    return data.products || [];
+    if (category) {
+      query = query.eq('sub_categories.categories.name', category);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -111,12 +122,12 @@ async function getProducts(category?: string): Promise<Product[]> {
 
 async function getCategories(): Promise<Categories[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/categories`, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Failed to fetch categories');
-    
-    const data = await response.json();
-    return data.success ? data.data : [];
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*');
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error fetching categories:', error);
     return [];
@@ -125,19 +136,30 @@ async function getCategories(): Promise<Categories[]> {
 
 async function getShowcase(): Promise<ShowcaseProducts[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/showcase`, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Failed to fetch showcase');
-    
-    const data = await response.json();
-    return data.success ? data.data : [];
+    const { data, error } = await supabase
+      .from('showcase')
+      .select(`
+        *,
+        products!inner (
+          name,
+          sub_categories!inner (
+            name,
+            categories!inner (
+              name
+            )
+          )
+        )
+      `);
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error fetching showcase:', error);
     return [];
   }
 }
 
-export default async function HomePage() {
+export default async function Page() {
   // Fetch all data server-side in parallel
   const [tilesProducts, stonesProducts, fixturesProducts, categories, showcase] = await Promise.all([
     getProducts('Tiles'),
