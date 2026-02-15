@@ -2,13 +2,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, install dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-Second, run the development server:
+Create `.env.local` file in root folder. Paste database details there.
+
+Run the dev server:
 
 ```bash
 npm run dev
