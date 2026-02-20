@@ -23,22 +23,36 @@ export default function SearchPage() {
   const fetchData = async () => {
   setLoading(true);
   try {
-    const fuzzyPattern = `%${searchTerm.split('').join('%')}%`;
-
-    const { data, error } = await supabase
-      .from('products')
-      .select(`*, 
-        sub_categories!inner(
-          name, categories!inner(
-            name
-          )
+    const selectQuery = `*, 
+      sub_categories!inner(
+        name, categories!inner(
+          name
         )
-      `)
-      .or(`name.ilike.%${searchTerm}%, name.ilike.${fuzzyPattern}`)
-      .limit(10); 
+      )
+    `;
 
-    if (error) throw error;
-    setProducts(data || []);
+    const { data: exactData, error: exactError } = await supabase
+      .from('products')
+      .select(selectQuery)
+      .ilike('name', `%${searchTerm}%`)
+      .limit(10);
+
+    if (exactError) throw exactError;
+
+    if (exactData && exactData.length > 0) {
+      setProducts(exactData);
+      return;
+    }
+
+    const fuzzyPattern = `%${searchTerm.split('').join('%')}%`;
+    const { data: fuzzyData, error: fuzzyError } = await supabase
+      .from('products')
+      .select(selectQuery)
+      .ilike('name', fuzzyPattern)
+      .limit(10);
+
+    if (fuzzyError) throw fuzzyError;
+    setProducts(fuzzyData || []);
   } catch (err) {
     console.error(err);
   } finally {
@@ -50,7 +64,7 @@ export default function SearchPage() {
 }, [searchTerm]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8f8f8]">
+    <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
 
       {/* Search Header Section */}
@@ -68,7 +82,7 @@ export default function SearchPage() {
               className="border-0 shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-md md:text-xl placeholder:text-gray-400 h-12 w-full px-0" 
             />
             {loading ? (
-              <Loader2 className="ml-4 h-6 w-6 animate-spin text-red-600" />
+              <Loader2 className="ml-4 h-6 w-6 animate-spin text-black" />
             ) : (
               <Search className="ml-4 h-6 w-6 text-black" />
             )}
@@ -86,7 +100,7 @@ export default function SearchPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
           {products.map((product) => (
             <ProductCard
               key={product.id}

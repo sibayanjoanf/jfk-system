@@ -4,13 +4,14 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { SubCategories } from '@/lib/types';
+import { CategoryWithSub } from '@/lib/types';
+import Link from 'next/link';
 
 export default function CollectionPage() {
-  const [subCategories, setSubCategories] = useState<SubCategories[]>([]);
+  const [subCategories, setSubCategories] = useState<CategoryWithSub[]>([]);
 
   useEffect(() => {
-    fetch('/api/sub_categories')
+    fetch('/api/categories')
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -36,25 +37,40 @@ export default function CollectionPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {subCategories.length > 0 ? (
                 subCategories
-                  .slice() 
+                  .slice()
                   .sort((a, b) => String(a.id).localeCompare(String(b.id)))
-                  .map((subCat) => (
-                    <div key={subCat.id} className="group relative flex flex-col items-center cursor-pointer">
-                      <div className="relative overflow-hidden bg-gray-200 border rounded-xl w-40 sm:w-60 aspect-square flex items-center justify-center">
-                        <span className="absolute text-white text-shadow-lg font-semibold text-md md:hidden text-center leading-tight">{subCat.name}</span>
-                        {subCat.image_url ? (
-                          <img 
-                            src={subCat.image_url} 
-                            alt={subCat.name} 
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        ) : (
-                          <span className="text-gray-500 text-xs"></span>  
-                        )}
-                        <div className="absolute inset-0 bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-center justify-center">
-                          <span className="p-10 text-white font-semibold text-md text-shadow-lg md:text-lg text-center leading-tight">{subCat.name}</span>
-                        </div>
+                  .map((category) => (
+                    category.sub_categories.map((sub) => (
+                      <div key={sub.id} className="group relative flex flex-col items-center cursor-pointer">
+                        <Link href={{
+                          pathname: `/collection/${category.name.toLowerCase().replace(/\s+/g, '-')}`,
+                          query: { sub: sub.name }
+                        }}>
+                          <div className="relative overflow-hidden bg-gray-200 border rounded-xl w-full aspect-square flex items-center justify-center">
+                            {sub.image_url ? (
+                              <img 
+                                src={sub.image_url} 
+                                alt={sub.name} 
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                              />
+                            ) : (
+                              <span className="text-gray-500 text-xs"></span>  
+                            )}
+
+                            <div className="absolute inset-0 bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-center justify-center">
+                              <span className="hidden lg:flex p-10 text-white font-semibold text-md text-shadow-lg md:text-lg text-center leading-tight">
+                                {sub.name}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="lg:hidden w-full py-5">
+                            <p className="text-center text-sm font-medium text-gray-700 leading-snug">
+                              {sub.name}
+                            </p>
+                          </div>
+                        </Link>
                       </div>
-                    </div>
+                    ))
                   ))
               ) : (
                 <p className="col-span-full text-center text-gray-500">No subcategories available.</p>

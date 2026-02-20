@@ -19,6 +19,7 @@ export interface CategoryWithSub {
   sub_categories: {
     id: string;
     name: string;
+    image_url?: string;
   }[];
 }
 

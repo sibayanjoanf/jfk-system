@@ -90,7 +90,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </Link>
               <span className="px-3">•</span> 
               <Link 
-                href={`/collection/${product.sub_categories?.name.toLowerCase().replace(/\s+/g, '-')}`}
+                href={{
+                  pathname: `/collection/${product.sub_categories?.categories?.name.toLowerCase().replace(/\s+/g, '-')}`,
+                  query: { sub: product.sub_categories?.name }
+                }}
               >
                 {product.sub_categories?.name}
               </Link>
@@ -106,7 +109,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <p className="text-xs text-gray-400 uppercase tracking-widest">SKU: {product.sku}</p>
             </div>
 
-            {/* Placeholder, color for now */}
+            {/* Placeholder, ito muna */}
             <div>
               <p className="font-semibold mb-2">Color: <span className="text-gray-500 font-normal">Steel</span></p>
               <div className="flex flex-wrap gap-2">

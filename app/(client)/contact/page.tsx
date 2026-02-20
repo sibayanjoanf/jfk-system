@@ -60,7 +60,7 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Form */}
-            <div className="flex flex-col gap-6 order-1 lg:order-2">
+            <div className="flex flex-col gap-6 order-1 lg:order-2 mb-5">
               {isSent && (
                 <div className="bg-[#9797971A] text-center text-gray-500 font-semibold p-4 rounded-md animate-in fade-in slide-in-from-top-100 slide duration-300">
                   <span>Your message has been sent!</span>
@@ -99,7 +99,7 @@ export default function ContactPage() {
 
                 <Button
                   onClick={sendMessage} 
-                  className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-md transition-colors mt-2"
+                  className="cursor-pointer w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-md transition-colors mt-2"
                 >
                   Send Message
                 </Button>

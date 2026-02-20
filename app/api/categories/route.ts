@@ -9,7 +9,8 @@ export async function GET() {
         *,
         sub_categories (
           id, 
-          name
+          name,
+          image_url
         )
       `)
       .order('name', { ascending: true });

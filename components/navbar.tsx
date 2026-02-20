@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ChevronDown, Menu, Package, Search, ShoppingCart } from 'lucide-react';
+import { ChevronDown, Menu, Minus, Package, Plus, Search, SearchIcon, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CategoryWithSub } from '@/lib/types';
 import {
@@ -11,17 +11,39 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetDescription
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Spinner } from './ui/spinner';
 import Image from 'next/image';
 import { useCart } from '@/hooks/cart';
+import { LucideIcon } from 'lucide-react';
+
+type NavItem = {
+  label: string;
+  href?: string; 
+  icon?: LucideIcon;
+  onClick?: () => void;
+};
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<CategoryWithSub | null>(null);
   const [isCollectionOpen, setIsCollectionOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryWithSub[]>([]);
+
+  const { updateQuantity } = useCart();
+  const handleQuantityChange = (itemId: string, newQuantity: number, stockQty: number) => {
+    if (newQuantity < 1) return;
+
+    if (newQuantity > stockQty) {
+      alert(`Only ${stockQty} units available in stock.`);
+      return;
+    }
+    updateQuantity(itemId, newQuantity);
+  };
 
   useEffect(() => {
     fetch('/api/categories')
@@ -53,11 +75,30 @@ export function Navbar() {
     { href: '/contact', label: 'Contact' },
   ];
 
+  const navLinksMobile: NavItem[] = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About Us' },
+  { href: '/collection', label: 'All Collection' },
+  ...['Tiles', 'Stones', 'Fixtures'].map(name => ({
+    label: name,
+    icon: ChevronDown,
+    onClick: () => {
+      const cat = categories.find(c => c.name === name);
+      if (cat) {
+        setActiveCategory(cat);
+        setIsCategoryOpen(true);
+      }
+    }
+  })),
+  { href: '/faq', label: 'FAQ' },
+  { href: '/contact', label: 'Contact' },
+];
+
   const navBtns = [
-    { href: '/search', icon: Search },
-    { href: '/track-order', icon: Package },
-    { href: '/cart', icon: ShoppingCart, onClick: () => setIsCartOpen(true) },
-  ];
+  { href: '/search', icon: Search, isCart: false, onClick: undefined },
+  { href: '/track-order', icon: Package, isCart: false, onClick: undefined },
+  { href: '/cart', icon: ShoppingCart, isCart: true, onClick: () => setIsCartOpen(true) },
+];
 
   return (
     <header className="fixed top-0 z-50 w-full">
@@ -178,58 +219,150 @@ export function Navbar() {
             </div>
 
             {/* Mobile Burger Menu */}
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle Menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-full sm:w-[400px]">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center space-x-2">
-                    <img 
-                      src={logo} 
-                      alt="JFK Logo" 
-                      className='h-9 w-auto object-contain'
-                    />
-                    <div className='flex flex-col gap-[-10] leading-tight'>
-                      <span className="text-xs font-semibold text-gray-900">Tile and </span>
-                      <span className="text-xs font-semibold text-gray-900">Stone Builders</span>
-                    </div>
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="mt-6 flex flex-col space-y-4 px-4">
-                  {navLinks.map((link) => {
-                    const isCollection = link.label === 'Collection';
-                    const commonClasses = "flex items-center space-x-3 text-md font-normal text-gray-900 transition-colors hover:text-red-600";
+            <div className="flex lg:hidden items-center space-x-1">
+              <button onClick={() => setIsCartOpen(true)} className="relative">
+                <ShoppingCart className="h-4 w-4 hover:text-red-600"></ShoppingCart>
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                    {totalQty}
+                  </span>
+              </button>
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild className="lg:hidden">
+                  <Button variant="ghost" size="icon" className="hover:text-red-600 hover:bg-transparent">
+                    <Menu className="h-6 w-6 hover:text-red-600" />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-full sm:w-100 flex flex-col h-full p-0">
+                  {/* Header Section */}
+                  <div className="p-auto pb-2">
+                    <SheetHeader>
+                      <SheetTitle className="flex items-center space-x-2">
+                        <img 
+                          src={logo} 
+                          alt="JFK Logo" 
+                          className='h-9 w-auto object-contain'
+                        />
+                        <div className='flex flex-col leading-tight'>
+                          <span className="text-xs font-semibold text-gray-900">Tile and </span>
+                          <span className="text-xs font-semibold text-gray-900">Stone Builders</span>
+                        </div>
+                      </SheetTitle>
+                      <SheetDescription className="sr-only">Categories</SheetDescription>
+                    </SheetHeader>
+                  </div>
 
-                    if (link.href) {
+                  {/* Navigations */}
+                  <div className="flex-1 overflow-y-auto mt-4 flex flex-col space-y-6 px-6">
+                    {navLinksMobile.map((link) => {
+                      const commonClasses = "flex items-center space-x-3 text-md font-normal text-gray-900 transition-colors hover:text-red-600";
+                      
+                      if (link.href) {
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setIsOpen(false)}
+                            className={commonClasses}
+                          >
+                            <span>{link.label}</span>
+                          </Link>
+                        );
+                      }
                       return (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          onClick={() => setIsOpen(false)}
-                          className={commonClasses}
+                        <div 
+                          key={link.label} 
+                          className={cn(commonClasses, "cursor-pointer")}
+                          onClick={() => {
+                            link.onClick?.(); 
+                            setIsOpen(false); 
+                          }}
                         >
                           <span>{link.label}</span>
-                        </Link>
+                          {link.icon && <link.icon className="h-4 w-4" />}
+                        </div>
                       );
-                    }
-                    return (
-                      <div 
-                        key={link.label} 
-                        className={cn(commonClasses, "cursor-pointer")}
+                    })}
+                  </div>
+
+                  {/* Button Section (Search & Track) */}
+                  <div className="mt-auto p-6">
+                    <div className="flex justify-between gap-4">
+                      <Link href="/search" className="flex-1" onClick={() => setIsOpen(false)}>
+                        <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
+                          <SearchIcon className="mb-1" />
+                          <span className="text-sm">Search</span>
+                        </div>
+                      </Link>
+                      <Link href="/track-order" className="flex-1" onClick={() => setIsOpen(false)}>
+                        <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
+                          <Package className="mb-1" />
+                          <span className="text-sm">Track Order</span>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {/* Mobile Category Menu */}
+            <Sheet open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+              <SheetContent side="left" className="w-full sm:w-100 flex flex-col h-full p-0">
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Category Menu</SheetTitle>
+                  <SheetDescription className="sr-only">Sub-Categories</SheetDescription>
+                  <div className="py-5">
+                    <button 
+                      onClick={() => {
+                        setIsCategoryOpen(false);
+                        setIsOpen(true);
+                      }}
+                      className="flex items-center text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
+                    >
+                      <ChevronDown className="rotate-90 h-4 w-4 mr-1" />
+                      Main Menu
+                    </button>
+                  </div>
+
+                  {/* Sub-Categorues */}
+                  <div className="flex-1 overflow-y-auto flex flex-col">
+                    {activeCategory && (
+                      <Link
+                        href={`/collection/${activeCategory.name.toLowerCase().replace(/\s+/g, '-')}`}
                         onClick={() => {
-                          console.log("Collection clicked on mobile");
+                          setIsCategoryOpen(false);
+                          setIsOpen(false);
                         }}
+                        className="group px-6 py-4 text-lg font-semibold text-red-600 flex justify-between items-center"
                       >
-                        <span>{link.label}</span>
-                        {link.icon && <link.icon className="h-4 w-4" />}
-                      </div>
-                    );
-                  })}
-                </div>
+                        All {activeCategory.name}
+                        <span className="text-xs uppercase tracking-widest group-hover:underline">Explore</span>
+                      </Link>
+                    )}
+                    <div className="flex flex-col">
+                      {activeCategory?.sub_categories?.map((sub) => (
+                        <Link
+                          key={sub.id}
+                          href={{
+                            pathname: `/collection/${activeCategory?.name?.toLowerCase().replace(/\s+/g, '-')}`,
+                            query: { sub: sub.name }
+                          }}
+                          onClick={() => {
+                            setIsCategoryOpen(false);
+                            setIsOpen(false);
+                          }}
+                          className="group px-6 py-4 text-gray-900 hover:text-red-600 transition-colors flex justify-between items-center"
+                        >
+                          {sub.name}
+                          <ChevronDown 
+                            className="-rotate-90 h-4 w-4 text-gray-300 group-hover:text-red-600 transition-colors" 
+                          />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </SheetHeader>
               </SheetContent>
             </Sheet>
 
@@ -274,11 +407,29 @@ export function Navbar() {
                         </Link>
                         <div className="relative -ml-8">
                           <p className="font-medium text-sm w-[15vh]">{item.name}</p>
-                          <p className="text-sm text-gray-400">Qty: {item.quantity}</p>
+                          <div className="w-fit flex items-center border rounded-md bg-transparent mt-2">
+                            <button 
+                              onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.stock_qty)}
+                              disabled={item.quantity <= 1}
+                              className="p-2 border-r hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                            >
+                              <Minus size={10} />
+                            </button>
+                            <span className="w-6 md:w-12 text-center font-semibold text-xs md:text-sm">
+                              {item.quantity}
+                            </span>
+                            <button 
+                              onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock_qty)}
+                              disabled={item.quantity >= item.stock_qty}
+                              className="p-2 border-l hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                            >
+                              <Plus size={10} />
+                            </button>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-sm">
-                            <span className="font-medium">₱</span>
+                            <span className="font-medium">₱ </span>
                             {(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                           <button 
                             onClick={() => removeItem(item.id)}
@@ -339,7 +490,10 @@ export function Navbar() {
                       {category.sub_categories?.map((sub) => (
                         <Link 
                           key={sub.id} 
-                          href={`/collection/${category.name.toLowerCase().replace(/\s+/g, '-')}/${sub.name.toLowerCase().replace(/\s+/g, '-')}`} 
+                          href={{
+                            pathname: `/collection/${category.name.toLowerCase().replace(/\s+/g, '-')}`,
+                            query: { sub: sub.name }
+                          }} 
                           className="hover:text-red-600 transition-colors"
                           onClick={() => setIsCollectionOpen(false)}
                         >
