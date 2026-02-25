@@ -85,6 +85,7 @@ export interface Product {
   stock_qty: number;
   image_url?: string | null;
   created_at: string;
+  keywords?: string;
   sub_categories?: {
     name: string;
     categories?: {

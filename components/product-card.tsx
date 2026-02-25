@@ -185,7 +185,7 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                         <input
                           type="text"
                           inputMode="numeric"
-                          autoFocus={false}
+                          tabIndex={-1}
                           value={selectedQty === 0 ? "" : selectedQty}
                           onChange={(e) => {
                             const val = e.target.value;

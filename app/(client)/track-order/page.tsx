@@ -58,13 +58,13 @@ export default function ContactPage() {
                   onClick={handleScanClick}
                   className="group p-12 rounded-lg border border-dashed border-red-600 
                              cursor-pointer transition-all duration-300
-                             hover:bg-red-500 hover:text-white hover:scale-105"
+                             hover:bg-red-600 hover:text-white hover:scale-105"
                 >
                   <QrCode className="mx-auto mb-4 text-red-600 transition-colors duration-300 group-hover:text-white" size={48} />
                   <p className="text-sm font-semibold text-center">
                     <span className="text-red-600 transition-colors duration-300 group-hover:text-white">Scan </span>your QR code here
                     <br />
-                    <span className="text-xs text-gray-400 font-normal">
+                    <span className="group-hover:text-white text-xs text-gray-400 font-normal">
                       Supports JPG, JPEG, PNG
                     </span>
                   </p>
@@ -75,13 +75,13 @@ export default function ContactPage() {
                   onClick={handleUploadClick}
                   className="group p-12 rounded-lg border border-dashed border-red-600 
                              cursor-pointer transition-all duration-300
-                             hover:bg-red-500 hover:text-white hover:scale-105"
+                             hover:bg-red-600 hover:text-white hover:scale-105"
                 >
                   <Upload className="mx-auto mb-4 text-red-600 transition-colors duration-300 group-hover:text-white" size={48} />
                   <p className="text-sm font-semibold text-center">
                     <span className="text-red-600 transition-colors duration-300 group-hover:text-white">Upload </span>your QR code here
                     <br />
-                    <span className="text-xs text-gray-400 font-normal">
+                    <span className="group-hover:text-white text-xs text-gray-400 font-normal">
                       Supports JPG, JPEG, PNG
                     </span>
                   </p>

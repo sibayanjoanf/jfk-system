@@ -418,6 +418,7 @@ export function Navbar() {
                             <input
                               type="number"
                               value={item.quantity}
+                              tabIndex={-1}
                               onChange={(e) => {
                                 const val = parseInt(e.target.value);
                                 if (!isNaN(val)) {
@@ -431,7 +432,7 @@ export function Navbar() {
                                   handleQuantityChange(item.id, 1, item.stock_qty);
                                 }
                               }}
-                              className="w-8 md:w-14 text-center font-semibold text-xs md:text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-10 text-center font-semibold text-xs bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             <button 
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock_qty)}

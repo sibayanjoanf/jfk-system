@@ -9,6 +9,20 @@ import { ProductCard } from '@/components/product-card';
 import { Product } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
+function levenshtein(a: string, b: string): number {
+  const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      matrix[i][j] = b[i - 1] === a[j - 1]
+        ? matrix[i - 1][j - 1]
+        : 1 + Math.min(matrix[i - 1][j - 1], matrix[i - 1][j], matrix[i][j - 1]);
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,8 +48,8 @@ export default function SearchPage() {
     const { data: exactData, error: exactError } = await supabase
       .from('products')
       .select(selectQuery)
-      .ilike('name', `%${searchTerm}%`)
-      .limit(10);
+      .or(`name.ilike.%${searchTerm}%,keywords.ilike.%${searchTerm}%`)
+      .limit(200);
 
     if (exactError) throw exactError;
 
@@ -44,15 +58,28 @@ export default function SearchPage() {
       return;
     }
 
-    const fuzzyPattern = `%${searchTerm.split('').join('%')}%`;
-    const { data: fuzzyData, error: fuzzyError } = await supabase
+    const { data: allData, error: allError } = await supabase
       .from('products')
       .select(selectQuery)
-      .ilike('name', fuzzyPattern)
-      .limit(10);
+      .limit(200); 
 
-    if (fuzzyError) throw fuzzyError;
-    setProducts(fuzzyData || []);
+    if (allError) throw allError;
+
+    const term = searchTerm.toLowerCase();
+
+    const fuzzyResults = (allData || []).filter(product => {
+      const fields = [
+        product.name?.toLowerCase() || '',
+        product.keywords?.toLowerCase() || '',
+      ];
+
+      return fields.some(field => {
+        const words = field.split(/[\s,]+/);
+        return words.some((word: string) => levenshtein(word, term) <= 2);
+      });
+    });
+
+    setProducts(fuzzyResults.slice(0, 10));
   } catch (err) {
     console.error(err);
   } finally {
