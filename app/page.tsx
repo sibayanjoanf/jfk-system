@@ -57,6 +57,7 @@ function ProductFeatureSection({ title, products, categoryLink }: ProductFeature
                 category={product.sub_categories?.categories?.name || 'General'}
                 sub_category={product.sub_categories?.name || 'General'}
                 stock_qty={product.stock_qty}
+                description={product.description}
               />
             </CarouselItem>
           ))}
@@ -161,7 +162,6 @@ async function getShowcase(): Promise<ShowcaseProducts[]> {
 }
 
 export default async function Page() {
-  // Fetch all data server-side in parallel
   const [tilesProducts, stonesProducts, fixturesProducts, categories, showcase] = await Promise.all([
     getProducts('Tiles'),
     getProducts('Stones'),

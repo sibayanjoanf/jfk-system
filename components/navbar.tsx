@@ -415,9 +415,24 @@ export function Navbar() {
                             >
                               <Minus size={10} />
                             </button>
-                            <span className="w-6 md:w-12 text-center font-semibold text-xs md:text-sm">
-                              {item.quantity}
-                            </span>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val)) {
+                                  handleQuantityChange(item.id, Math.min(Math.max(1, val), item.stock_qty), item.stock_qty);
+                                } else if (e.target.value === "") {
+                                  handleQuantityChange(item.id, 0, item.stock_qty);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === "" || parseInt(e.target.value) < 1) {
+                                  handleQuantityChange(item.id, 1, item.stock_qty);
+                                }
+                              }}
+                              className="w-8 md:w-14 text-center font-semibold text-xs md:text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
                             <button 
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock_qty)}
                               disabled={item.quantity >= item.stock_qty}

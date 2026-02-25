@@ -24,9 +24,10 @@ interface ProductCardProps {
   category: string;
   sub_category: string;
   stock_qty: number;
+  description?: string;
 }
 
-export function ProductCard({ sku, name, price, image, category, sub_category, stock_qty }: ProductCardProps) {
+export function ProductCard({ sku, name, price, image, category, sub_category, stock_qty, description }: ProductCardProps) {
   const [isAddedtoCart, setIsAddedtoCart] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedQty, setSelectedQty] = useState(1);
@@ -155,16 +156,13 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                 <p className="text-center md:text-left text-sm text-gray-400 font-semibold mt-1 mb-6">Category
                   <span className="font-normal"> {sub_category}</span>
                 </p>
-                <div className="grid grid-cols-[1fr_2fr] gap-4 text-sm font-semibold py-4 border-t border-gray-100">
-                  <div className="gap-2 flex flex-col">
-                    <p className="mt-1">SKU: <span className="font-normal">{sku}</span></p>
-                    <p>Stock: <span className="font-normal">{stock_qty}</span></p>
-                  </div>
+                <div className="grid gap-4 text-sm font-semibold py-4 border-t border-gray-100">
                   <div>
-                    <p className="mt-1 font-normal text-gray-600 leading-relaxed line-clamp-4">
-                      High-quality {sub_category} perfect for modern architectural designs. Durable, aesthetic, and built to last.
+                    <p className="mt-1 font-normal text-gray-600">
+                      {description}
                     </p>
                   </div>
+                  <p>Stock: <span className="font-normal">{stock_qty}</span></p>
                 </div>
               </div>
 
@@ -184,9 +182,31 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                         >
                           <Minus size={16} />
                         </button>
-                        <span className="w-10 text-center font-semibold text-sm">
-                          {selectedQty}
-                        </span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoFocus={false}
+                          value={selectedQty === 0 ? "" : selectedQty}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "") {
+                              setSelectedQty(0);
+                              return;
+                            }
+
+                            if (/^\d+$/.test(val)) {
+                              const num = parseInt(val, 10);
+                              const maxAllowed = stockQtyNum - currentQtyInCart;
+                              setSelectedQty(Math.min(num, maxAllowed));
+                            }
+                          }}
+                          onBlur={() => {
+                            if (selectedQty < 1) {
+                              setSelectedQty(1);
+                            }
+                          }}
+                          className="w-10 text-center font-semibold text-sm bg-transparent focus:outline-none"
+                        />
                         <button 
                           onClick={handleIncrement}
                           className="p-2 hover:bg-gray-100 disabled:opacity-30 transition-colors"
