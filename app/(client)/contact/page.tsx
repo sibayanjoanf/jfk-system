@@ -27,10 +27,64 @@ export default function ContactPage() {
   }, []);
 
   const inputStyles = "border-gray-200 focus-visible:border-red-600 bg-gray-50/50 h-12 text-sm";
+  
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [messageBox, setMessage] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const formatName = (value: string) => {
+    return value
+      .replace(/[^a-zA-Z\s-]/g, '') 
+      .toLowerCase()
+      .replace(/(^|[\s-]-)([a-z])/g, (_, sep, char) => sep + char.toUpperCase()); 
+  };
+
+  const formatEmail = (value: string) =>
+    value.replace(/\s/g, ''); 
+    
+  const isValidEmail = (value: string) => {
+    if (value.includes(' ')) return false;  
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value
+      .replace(/^\+63/, '')
+      .replace(/\D/g, '')
+      .slice(0, 10);
+    setPhone('+63' + digits);
+  };
+
+  const handlePhoneFocus = () => {
+    if (!phone) setPhone('+63'); 
+  };
+
+  const handlePhoneBlur = () => {
+    if (phone === '+63') setPhone('');
+  };
+  
   const sendMessage = () => {
-    setIsSent(true);
+    const newErrors: Record<string, string> = {};
+
+    if (!firstName.trim()) newErrors.firstName = 'First name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last name is required.';
+    if (!email.trim()) newErrors.email = 'Email is required.';
+    else if (!isValidEmail(email)) newErrors.email = 'Enter a valid email address.';
+    if (phone.length < 13) newErrors.phone = 'Enter a valid phone number.';
+    if (!messageBox.trim()) newErrors.messageBox = 'Message required.';
+    
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      setIsSent(true);
+    }
     setTimeout(() => setIsSent(false), 5000);
   };
+
+
 
   return (
     <div className="flex min-h-screen min-w-20 flex-col">
@@ -71,30 +125,51 @@ export default function ContactPage() {
               <div className="flex flex-col gap-4">
                 <FieldGroup className="grid grid-cols-2 gap-4">
                   <Field>
-                    <Input id="first-name" placeholder="First Name" className={inputStyles} required />
+                    <Input id="first-name" placeholder="First Name" className={cn(inputStyles, errors.firstName && 'border-red-500')} 
+                    value={firstName}
+                    onChange={(e) => setFirstName(formatName(e.target.value))} 
+                    required />
+                    {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                   </Field>
                   <Field>
-                    <Input id="last-name" placeholder="Last Name" className={inputStyles} required />
+                    <Input id="last-name" placeholder="Last Name" className={cn(inputStyles, errors.lastName && 'border-red-500')}
+                    value={lastName}
+                    onChange={(e) => setLastName(formatName(e.target.value))} 
+                    required />
+                    {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                   </Field>
                 </FieldGroup>
 
                 <Field>
-                  <Input id="email" type="email" placeholder="Email Address" className={inputStyles} />
+                  <Input id="email" type="email" placeholder="Email Address" className={cn(inputStyles, errors.email && 'border-red-500')} 
+                  value={email}
+                  onChange={(e) => setEmail(formatEmail(e.target.value))} 
+                  onKeyDown={(e) => e.key === ' ' && e.preventDefault()}
+                  required />
+                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                 </Field>
                 
                 <Field>
-                  <Input id="phone" type="tel" placeholder="Phone" className={inputStyles} />
+                  <Input id="phone" type="tel" placeholder="Phone" className={cn(inputStyles, errors.phone && 'border-red-500')}
+                  value={phone} 
+                  onChange={handlePhoneChange}
+                  onFocus={handlePhoneFocus}
+                  onBlur={handlePhoneBlur}
+                  required />
+                  {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
                 </Field>
 
                 <Field>
-                  <Textarea
-                    id="message"
-                    placeholder="Message"
+                  <Textarea id="message" placeholder="Message"
+                    value={messageBox}
+                    onChange={(e) => setMessage(e.target.value)}
                     className={cn(
                       "min-h-[180px] border shadow-xs selection:bg-gray-200 focus-visible:ring-ring/30 focus-visible:border-none bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
-                      "resize-none overflow-y-auto transition-colors"
+                      "resize-none overflow-y-auto transition-colors",
+                      errors.messageBox && "border-red-500"
                     )}
                   />
+                  {errors.messageBox && <p className="text-xs text-red-500 mt-1">{errors.messageBox}</p>}
                 </Field>
 
                 <Button
