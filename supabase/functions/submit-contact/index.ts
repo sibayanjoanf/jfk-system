@@ -62,7 +62,7 @@ We'll contact you via ${email} or ${phone} or pede namang hinde sino ka ba hehe
     body: JSON.stringify({
       from: 'JFK Tiles <onboarding@resend.dev>',
       to: email,
-      subject: 'We received your inquiry! 🧱',
+      subject: 'We received your message! 📧',
       text: emailBody,
     }),
   });
