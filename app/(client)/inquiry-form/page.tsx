@@ -29,6 +29,69 @@ export default function InquiryFormPage() {
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const totalAmount = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
+  // Validation kinemez
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const formatName = (value: string) => {
+    return value
+      .replace(/[^a-zA-Z\s-]/g, '') 
+      .toLowerCase()
+      .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase()); 
+  };
+
+  const formatEmail = (value: string) =>
+    value.replace(/\s/g, ''); 
+    
+  const isValidEmail = (value: string) => {
+    if (value.includes(' ')) return false;  
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value
+      .replace(/^\+63/, '')
+      .replace(/\D/g, '')
+      .slice(0, 10);
+    setPhone('+63' + digits);
+  };
+
+  const handlePhoneFocus = () => {
+    if (!phone) setPhone('+63'); 
+  };
+
+  const handlePhoneBlur = () => {
+    if (phone === '+63') setPhone('');
+  };
+
+  // dont submit if stupid
+
+  const [deliveryPref, setDeliveryPref] = useState('');
+  const [paymentPref, setPaymentPref] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!firstName.trim()) newErrors.firstName = 'First name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last name is required.';
+    if (!email.trim()) newErrors.email = 'Email is required.';
+    else if (!isValidEmail(email)) newErrors.email = 'Enter a valid email address.';
+    if (phone.length < 13) newErrors.phone = 'Enter a valid phone number.';
+    if (!deliveryPref) newErrors.deliveryPref = 'Please select a delivery preference.';
+    if (!paymentPref) newErrors.paymentPref = 'Please select a payment preference.';
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      window.location.href = '/confirmation';
+    }
+  };
+
   return (
     <div className="bg-transparent">
       <header className="fixed top-0 z-50 w-full">
@@ -86,49 +149,76 @@ export default function InquiryFormPage() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field>
-                <Input id="/first-name" placeholder="First Name" className={inputStyles} required />
+                <Input id="/first-name" placeholder="First Name" className={cn(inputStyles, errors.firstName && 'border-red-500')}
+                value={firstName}
+                onChange={(e) => setFirstName(formatName(e.target.value))} 
+                required />
+                {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
               </Field>
               <Field>
-                <Input id="/last-name" placeholder="Last Name" className={inputStyles} required />
+                <Input id="/last-name" placeholder="Last Name" className={cn(inputStyles, errors.lastName && 'border-red-500')}
+                value={lastName}
+                onChange={(e) => setLastName(formatName(e.target.value))} 
+                required />
+                {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
               </Field>
             </div>
             
             <Field>
-              <Input id="/email" type="email" placeholder="Email Address" className={inputStyles} required />
+              <Input id="/email" type="email" placeholder="Email Address" className={cn(inputStyles, errors.email && 'border-red-500')} 
+              value={email}
+              onChange={(e) => setEmail(formatEmail(e.target.value))} 
+              onKeyDown={(e) => e.key === ' ' && e.preventDefault()}
+              required />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
             </Field>
             
             <Field>
-              <Input id="/phone" type="tel" placeholder="Phone" className={inputStyles} required />
+              <Input id="/phone" type="tel" placeholder="Phone" className={cn(inputStyles, errors.phone && 'border-red-500')}
+              value={phone} 
+              onChange={handlePhoneChange}
+              onFocus={handlePhoneFocus}
+              onBlur={handlePhoneBlur}
+              required />
+              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Select onValueChange={setSortBy}>
-                <SelectTrigger className="w-full py-6 border-gray-300 bg-transparent text-sm">
-                  <SelectValue placeholder="Delivery Preferences"/>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="a-to-z">Delivery</SelectItem>
-                    <SelectItem value="z-to-a">Walk In</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              <Select onValueChange={setSortBy}>
-                <SelectTrigger className="w-full py-6 border-gray-300 bg-transparent text-sm">
-                  <SelectValue placeholder="Payment Preferences"/>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="a-to-z">Cash</SelectItem>
-                    <SelectItem value="z-to-a">Online Payment</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <div>
+                <Select onValueChange={(val) => { setDeliveryPref(val); setErrors(p => ({ ...p, deliveryPref: '' })); }}>
+                  <SelectTrigger className="w-full py-6 border-gray-300 bg-transparent text-sm">
+                    <SelectValue placeholder="Delivery Preferences"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="a-to-z">Delivery</SelectItem>
+                      <SelectItem value="z-to-a">Walk In</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {errors.deliveryPref && <p className="text-xs text-red-500 mt-1">{errors.deliveryPref}</p>}
+              </div>
+              
+              <div>
+                <Select onValueChange={(val) => { setPaymentPref(val); setErrors(p => ({ ...p, paymentPref: '' })); }}>
+                  <SelectTrigger className="w-full py-6 border-gray-300 bg-transparent text-sm">
+                    <SelectValue placeholder="Payment Preferences"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="a-to-z">Cash</SelectItem>
+                      <SelectItem value="z-to-a">Online Payment</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {errors.paymentPref && <p className="text-xs text-red-500 mt-1">{errors.paymentPref}</p>}
+              </div>
             </div>
 
             <Textarea
               id="message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               placeholder="Message / Notes"
               className={cn(
                 "min-h-[120px] md:min-h-[180px] border-gray-300 bg-transparent p-4 text-sm placeholder:text-gray-400",
@@ -136,11 +226,9 @@ export default function InquiryFormPage() {
               )}
             />
 
-            <Link href="/confirmation">
-              <Button className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm md:text-md transition-colors cursor-pointer">
+              <Button onClick={handleSubmit} className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm md:text-md transition-colors cursor-pointer">
                 Submit Inquiry
               </Button>
-            </Link>
 
             <div className="flex flex-wrap gap-4 md:gap-6 pt-6 border-t border-gray-300 text-xs md:text-sm text-gray-500 justify-center lg:justify-start">
               <Link href="/terms-and-conditions" className="hover:text-red-600">Terms & Conditions</Link>
