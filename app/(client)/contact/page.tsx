@@ -39,7 +39,7 @@ export default function ContactPage() {
     return value
       .replace(/[^a-zA-Z\s-]/g, '') 
       .toLowerCase()
-      .replace(/(^|[\s-]-)([a-z])/g, (_, sep, char) => sep + char.toUpperCase()); 
+      .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase()); 
   };
 
   const formatEmail = (value: string) =>
