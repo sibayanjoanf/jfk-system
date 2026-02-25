@@ -141,7 +141,7 @@ export default function InquiryFormPage() {
 
         {/* Main Navbar */}
         <nav>
-          <div className="container mx-auto px-4 bg-[#f8f8f8]">
+          <div className="container mx-auto px-4 bg-transparent">
             <div className="flex h-16 items-center justify-between">
               {/* Logo */}
               <Link href="/" className="flex items-center space-x-2">

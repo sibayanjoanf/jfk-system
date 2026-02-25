@@ -10,6 +10,7 @@ export interface CartItem {
   stock_qty: number;
   category: string;
   sub_category: string;
+  description?: string;
 }
 
 export function useCart() {

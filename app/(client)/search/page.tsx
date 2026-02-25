@@ -111,6 +111,7 @@ export default function SearchPage() {
               category={product.sub_categories?.categories?.name || 'General'}
               sub_category={product.sub_categories?.name || 'General'}
               stock_qty={product.stock_qty}
+              description={product.description || ''}
             />
           ))}
         </div>

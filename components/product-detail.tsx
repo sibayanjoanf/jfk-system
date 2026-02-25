@@ -15,6 +15,7 @@ interface ProductActionsProps {
     stock_qty: number;
     category: string;
     sub_category: string;
+    description?: string;
   };
 }
 
@@ -52,12 +53,13 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
       image: product.image_url,
       stock_qty: product.stock_qty,
       category: product.category,
-      sub_category: product.sub_category
+      sub_category: product.sub_category,
+      description: product.description
     }, stockQtyNum, selectedQty);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Quantity Selector */}
       {!isOutOfStock && !isFullyStockedInCart && (
         <div className="space-y-2">
@@ -70,9 +72,30 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
             >
               <Minus size={18} />
             </button>
-            <span className="w-14 text-center font-semibold text-lg">
-              {selectedQty}
-            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={selectedQty === 0 ? "" : selectedQty}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") {
+                  setSelectedQty(0);
+                  return;
+                }
+
+                if (/^\d+$/.test(val)) {
+                  const num = parseInt(val, 10);
+                  const maxAllowed = stockQtyNum - currentQtyInCart;
+                  setSelectedQty(Math.min(num, maxAllowed));
+                }
+              }}
+              onBlur={() => {
+                if (selectedQty < 1) {
+                  setSelectedQty(1);
+                }
+              }}
+              className="w-14 text-center font-semibold text-sm bg-transparent focus:outline-none"
+            />
             <button 
               onClick={handleIncrement}
               disabled={currentQtyInCart + selectedQty >= stockQtyNum}
@@ -90,10 +113,10 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
           onClick={handleAddToCart}
           disabled={isOutOfStock || isLimitReached || isFullyStockedInCart}
           className={cn(
-            "flex-1 h-14 rounded-lg font-bold uppercase tracking-wider text-lg transition-all",
+            "cursor-pointer flex-1 h-14 rounded-lg font-bold uppercase tracking-wider text-md md:text-lg transition-all",
             (isOutOfStock || isLimitReached || isFullyStockedInCart) 
               ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
-              : "bg-red-600 hover:bg-red-700 text-white shadow-md active:scale-[0.98]"
+              : "bg-red-600 hover:bg-red-700 text-white active:scale-[0.98]"
           )}
         >
           {isOutOfStock 
