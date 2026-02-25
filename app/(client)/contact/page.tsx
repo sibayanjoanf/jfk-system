@@ -66,7 +66,7 @@ export default function ContactPage() {
     if (phone === '+63') setPhone('');
   };
   
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!firstName.trim()) newErrors.firstName = 'First name is required.';
@@ -77,11 +77,34 @@ export default function ContactPage() {
     if (!messageBox.trim()) newErrors.messageBox = 'Message required.';
     
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
-    if (Object.keys(newErrors).length === 0) {
-      setIsSent(true);
+    const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-contact`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        phone,
+        message: messageBox
+      }),
     }
+    
+  );
+  setIsSent(true);
+
+  if (!response.ok) {
+    console.error('Failed to submit message');
     setTimeout(() => setIsSent(false), 5000);
+    return;
+  }
+    
   };
 
 
