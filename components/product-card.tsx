@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { useCart } from '@/hooks/cart';
 import { cn } from '@/lib/utils';
+import { ProductVariant } from '@/lib/types';
 
 interface ProductCardProps {
   sku: string;
@@ -25,22 +26,40 @@ interface ProductCardProps {
   sub_category: string;
   stock_qty: number;
   description?: string;
+  variants?: ProductVariant[];
 }
 
-export function ProductCard({ sku, name, price, image, category, sub_category, stock_qty, description }: ProductCardProps) {
+export function ProductCard({ sku, name, price, image, category, sub_category, stock_qty, description, variants }: ProductCardProps) {
   const [isAddedtoCart, setIsAddedtoCart] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedQty, setSelectedQty] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    variants && variants.length > 0 ? (variants.find(v => v.stock_qty > 0) ?? variants[0]) : null
+  );
   const { items, addItem } = useCart();
-  const stockQtyNum = Number(stock_qty);
+
+  // Use selected variant data if available, otherwise fall back to props
+  const activePrice = selectedVariant?.price ?? price;
+  const activeImage = selectedVariant?.image_url || image;
+  const activeSku = selectedVariant?.sku ?? sku;
+  const activeStockQty = selectedVariant?.stock_qty ?? stock_qty;
+
+  const stockQtyNum = Number(activeStockQty);
   const isOutOfStock = stockQtyNum <= 0;
-
-  const itemInCart = items.find(item => item.id === sku);
+  const itemInCart = items.find(item => item.id === activeSku);
   const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
-
   const isLimitReached = (currentQtyInCart + selectedQty) > stockQtyNum;
   const isFullyStockedInCart = currentQtyInCart >= stockQtyNum;
 
+  const hasVariants = variants && variants.length > 1;
+
+  // Group variants by attribute_name
+  const grouped = hasVariants ? variants!.reduce((acc, v) => {
+    const key = v.attribute_name || 'Variant';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(v);
+    return acc;
+  }, {} as Record<string, ProductVariant[]>) : {};
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -64,20 +83,17 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (isOutOfStock || isFullyStockedInCart) return;
-
-    addItem({ 
-      id: sku, 
-      name, 
-      price, 
-      image,
-      stock_qty,
+    addItem({
+      id: activeSku,
+      name,
+      price: activePrice,
+      image: activeImage,
+      stock_qty: activeStockQty,
       category,
       sub_category,
     }, stockQtyNum, selectedQty);
     setIsOpen(false);
-
     setIsAddedtoCart(true);
   };
 
@@ -105,27 +121,21 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                   Low Stock
                 </div>
               ) : null}
-              <div 
-                onClick={handleQuickView} 
+              <div
+                onClick={handleQuickView}
                 className="hidden lg:flex absolute bottom-3 right-4 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 shadow-md z-10 cursor-pointer"
               >
-                <span className="text-[#f8f8f8] text-sm font-medium whitespace-nowrap">
-                  Quick View
-                </span>
+                <span className="text-[#f8f8f8] text-sm font-medium whitespace-nowrap">Quick View</span>
               </div>
             </div>
             <div className="grow p-4 pr-12">
-              <h3 className="mb-2 text-sm md:text-md font-semibold text-gray-900">
-                {name}
-              </h3>
-              <p className="text-sm font-medium text-red-600">₱ {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                {/* <span className='text-xs text-gray-400'> / PC </span> */}
-              </p>
+              <h3 className="mb-2 text-sm md:text-md font-semibold text-gray-900">{name}</h3>
+              <p className="text-sm font-medium text-red-600">₱ {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
             </div>
-            <div 
-              onClick={handleQuickView} 
+            <div
+              onClick={handleQuickView}
               className="lg:hidden absolute bottom-4 right-4 bg-white hover:bg-gray-100 p-2 rounded-full border border-gray-200 text-gray-900 pointer-events-auto">
-                <Eye size={20}/>
+              <Eye size={20} />
             </div>
           </CardContent>
         </Card>
@@ -141,41 +151,74 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
 
           <div className="grid grid-rows-[1fr_auto] md:grid-cols-2 gap-0">
             <div className="relative flex-1 bg-white">
-              <Image 
-                src={image} 
-                alt={name} 
-                fill 
-                className="object-contain" 
+              <Image
+                src={activeImage}
+                alt={name}
+                fill
+                className="object-contain"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
 
-            <div className="flex flex-col justify-between p-6 md:p-12"> 
+            <div className="flex flex-col justify-between p-6 md:p-12">
               <div>
                 <h2 className="text-md md:text-xl font-semibold text-center md:text-left">{name}</h2>
-                <p className="text-center md:text-left text-sm text-gray-400 font-semibold mt-1 mb-6">Category
-                  <span className="font-normal"> {sub_category}</span>
+                <p className="text-center md:text-left text-sm text-gray-400 font-semibold mt-1 mb-6">
+                  Category <span className="font-normal">{sub_category}</span>
                 </p>
-                <div className="grid gap-4 text-sm font-semibold py-4 border-t border-gray-100">
-                  <div>
-                    <p className="mt-1 font-normal text-gray-600">
-                      {description}
-                    </p>
-                  </div>
-                  <p>Stock: <span className="font-normal">{stock_qty}</span></p>
+
+                {/* Variants */}
+                <div className="grid gap-4 text-sm font-semibold py-6 border-t border-gray-100">
+                  {hasVariants ? (
+                    Object.entries(grouped).map(([attrName, attrVariants]) => (
+                      <div key={attrName}>
+                        <p className="font-semibold mb-2">
+                          {attrName}:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {attrVariants.map((v) => (
+                            <button
+                              key={v.id}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedVariant(v); setSelectedQty(1); }}
+                              disabled={v.stock_qty <= 0}
+                              className={cn(
+                                "relative px-4 py-1.5 border rounded-md text-xs font-medium transition-all overflow-hidden",
+                                selectedVariant?.id === v.id
+                                  ? "bg-red-600 text-white border-red-600"
+                                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
+                                v.stock_qty <= 0 && "opacity-40 cursor-not-allowed"
+                              )}
+                            >
+                              {v.attribute_value}
+                              {v.stock_qty <= 0 && (
+                                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <span className="absolute w-[140%] h-[1px] bg-current rotate-[-18deg]" />
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div>
+                      <p className="mt-1 mb-3 font-normal text-gray-600">{description}</p>
+                      <p>Stock: <span className="font-normal">{activeStockQty}</span></p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="mt-6 space-y-4">
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-1 justify-between items-center">
-                    <span className="text-2xl font-medium text-red-600">₱
-                      {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <span className="text-2xl font-medium text-red-600">
+                      ₱ {activePrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
 
                     {!isOutOfStock && !isFullyStockedInCart && (
                       <div className="flex items-center border rounded-md h-10">
-                        <button 
+                        <button
                           onClick={handleDecrement}
                           className="p-2 hover:bg-gray-100 disabled:opacity-30 transition-colors"
                           disabled={selectedQty <= 1}
@@ -189,25 +232,17 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                           value={selectedQty === 0 ? "" : selectedQty}
                           onChange={(e) => {
                             const val = e.target.value;
-                            if (val === "") {
-                              setSelectedQty(0);
-                              return;
-                            }
-
+                            if (val === "") { setSelectedQty(0); return; }
                             if (/^\d+$/.test(val)) {
                               const num = parseInt(val, 10);
                               const maxAllowed = stockQtyNum - currentQtyInCart;
                               setSelectedQty(Math.min(num, maxAllowed));
                             }
                           }}
-                          onBlur={() => {
-                            if (selectedQty < 1) {
-                              setSelectedQty(1);
-                            }
-                          }}
+                          onBlur={() => { if (selectedQty < 1) setSelectedQty(1); }}
                           className="w-10 text-center font-semibold text-sm bg-transparent focus:outline-none"
                         />
-                        <button 
+                        <button
                           onClick={handleIncrement}
                           className="p-2 hover:bg-gray-100 disabled:opacity-30 transition-colors"
                           disabled={currentQtyInCart + selectedQty >= stockQtyNum}
@@ -219,7 +254,7 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button 
+                    <Button
                       onClick={handleAddToCart}
                       disabled={isOutOfStock || isLimitReached}
                       className={cn(
@@ -237,15 +272,12 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
         </DialogContent>
       </Dialog>
 
-      {/* Added to Card Modal */}
+      {/* Added to Cart Modal */}
       <Dialog open={isAddedtoCart} onOpenChange={setIsAddedtoCart}>
         <DialogContent className="
-          left-auto top-auto translate-x-0 translate-y-0 
-          
+          left-auto top-auto translate-x-0 translate-y-0
           fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto
-          
           w-auto sm:w-[400px] md:w-[500px] h-auto min-h-0
-          
           p-4 shadow-2xl rounded-xl border border-gray-100
           [&>button]:hidden duration-500 animate-in fade-in slide-in-from-bottom-10
         ">
@@ -254,25 +286,19 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="items-center justify-center flex pb-3">
-              <Image 
-                src={image} 
-                alt={name} 
-                width={200} 
-                height={200} 
-                className="object-fill" 
-              />
+              <Image src={activeImage} alt={name} width={200} height={200} className="object-fill" />
             </div>
             <div className="md:col-span-2 flex flex-col leading-tight">
               <DialogHeader>
                 <DialogTitle className="text-md text-center md:text-start">{name}</DialogTitle>
-                <p className="text-sm text-center md:text-start text-gray-500">{sku}</p>
+                <p className="text-sm text-center md:text-start text-gray-500">{activeSku}</p>
                 <div className="flex flex-row justify-between items-center">
-                  <p className="text-lg text-center md:text-start font-medium text-red-600">₱ {(price * selectedQty).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                  <p className="text-lg text-center md:text-start font-medium text-red-600">₱ {(activePrice * selectedQty).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                   <p className="text-sm text-center font-normal text-gray-500">Qty: {selectedQty}</p>
                 </div>
                 <Link href={"/cart"}>
                   <Button className="bg-red-600 hover:bg-red-700 text-white w-full mt-5 cursor-pointer" onClick={() => setIsAddedtoCart(false)}>
-                    View Cart 
+                    View Cart
                   </Button>
                 </Link>
               </DialogHeader>

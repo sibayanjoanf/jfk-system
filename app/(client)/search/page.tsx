@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProductCard } from '@/components/product-card';
-import { Product } from '@/lib/types';
+import { Product, ProductVariant } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
 function levenshtein(a: string, b: string): number {
@@ -42,13 +42,14 @@ export default function SearchPage() {
         name, categories!inner(
           name
         )
-      )
+      ),
+      product_variants(*)
     `;
 
     const { data: exactData, error: exactError } = await supabase
       .from('products')
       .select(selectQuery)
-      .or(`name.ilike.%${searchTerm}%,keywords.ilike.%${searchTerm}%`)
+      .ilike('name', `%${searchTerm}%`)
       .limit(200);
 
     if (exactError) throw exactError;
@@ -68,9 +69,11 @@ export default function SearchPage() {
     const term = searchTerm.toLowerCase();
 
     const fuzzyResults = (allData || []).filter(product => {
+      const variantKeywords = product.product_variants?.map((v: ProductVariant) => v.keywords?.toLowerCase() || '').join(' ') || '';
+      
       const fields = [
         product.name?.toLowerCase() || '',
-        product.keywords?.toLowerCase() || '',
+        variantKeywords,
       ];
 
       return fields.some(field => {
@@ -79,7 +82,7 @@ export default function SearchPage() {
       });
     });
 
-    setProducts(fuzzyResults.slice(0, 10));
+    setProducts(fuzzyResults);
   } catch (err) {
     console.error(err);
   } finally {
@@ -128,19 +131,25 @@ export default function SearchPage() {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              sku={product.sku}
-              name={product.name}
-              price={product.price}
-              image={product.image_url || '/placeholder.png'}
-              category={product.sub_categories?.categories?.name || 'General'}
-              sub_category={product.sub_categories?.name || 'General'}
-              stock_qty={product.stock_qty}
-              description={product.description || ''}
-            />
-          ))}
+          {products.map((product) => {
+            const variant = product.product_variants?.[0];
+            if (!variant) return null;
+
+            return (
+              <ProductCard
+                key={product.id}
+                sku={variant.sku}
+                name={product.name}
+                price={variant.price}
+                image={variant.image_url || '/placeholder.png'}
+                category={product.sub_categories?.categories?.name || 'General'}
+                sub_category={product.sub_categories?.name || 'General'}
+                stock_qty={variant.stock_qty}
+                description={product.description || ''}
+                variants={product.product_variants || []}
+              />
+            );
+          })}
         </div>
 
         {/* Empty States */}

@@ -15,7 +15,8 @@ export async function GET(request: Request) {
           categories!inner (
             name
           )
-        )
+        ),
+        product_variants (*)
       `);
 
     if (categoryName) {

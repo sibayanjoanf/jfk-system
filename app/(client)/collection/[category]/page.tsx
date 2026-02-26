@@ -72,7 +72,8 @@ export default function CategoryPage({ params }: PageProps) {
             categories!inner (
               name
             )
-          )
+          ),
+          product_variants (*)
         `)
         .eq('sub_categories.name', name);
 
@@ -85,7 +86,8 @@ export default function CategoryPage({ params }: PageProps) {
             categories!inner (
               name
             )
-          )
+          ),
+          product_variants (*)
         `)
         .eq('sub_categories.categories.name', name);
 
@@ -115,7 +117,7 @@ export default function CategoryPage({ params }: PageProps) {
     }
 
     if (inStockOnly) {
-      result = result.filter(p => p.stock_qty > 0);
+      result = result.filter(p => (p.product_variants?.[0]?.stock_qty ?? 0) > 0);
     }
 
     switch (sortBy) {
@@ -126,10 +128,10 @@ export default function CategoryPage({ params }: PageProps) {
         result.sort((a, b) => b.name.localeCompare(a.name));
         break;
       case "price-low-to-high":
-        result.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => (a.product_variants?.[0]?.price ?? 0) - (b.product_variants?.[0]?.price ?? 0));
         break;
       case "price-high-to-low":
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => (b.product_variants?.[0]?.price ?? 0) - (a.product_variants?.[0]?.price ?? 0));
         break;
       default:
         break;
@@ -385,19 +387,24 @@ export default function CategoryPage({ params }: PageProps) {
           {/* Main Product Grid */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-10">
-              {displayProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  sku={product.sku}
-                  name={product.name}
-                  price={product.price}
-                  image={product.image_url || '/placeholder.png'}
-                  category={product.sub_categories?.categories?.name || 'General'}
-                  sub_category={product.sub_categories?.name || 'General'}
-                  stock_qty={product.stock_qty}
-                  description={product.description || ''}
-                />
-              ))}
+              {displayProducts.map((product) => {
+                  const variant = product.product_variants?.[0];
+                  if (!variant) return null;
+
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      sku={variant.sku}
+                      name={product.name}
+                      price={variant.price}
+                      image={variant.image_url || '/placeholder.png'}
+                      category={product.sub_categories?.categories?.name || 'General'}
+                      sub_category={product.sub_categories?.name || 'General'}
+                      stock_qty={variant.stock_qty}
+                      description={product.description || ''}
+                    />
+                  );
+                })}
             </div>
             
             {displayProducts.length === 0 && (

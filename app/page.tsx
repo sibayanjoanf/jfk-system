@@ -47,20 +47,26 @@ function ProductFeatureSection({ title, products, categoryLink }: ProductFeature
         className="w-full"
       >
         <CarouselContent>
-          {products.map((product) => (
-            <CarouselItem key={product.id} className="basis-3/4 sm:basis-1/3 md:basis-1/3 lg:basis-1/5">
-              <ProductCard
-                sku={product.sku}
-                name={product.name}
-                price={product.price}
-                image={product.image_url || '/placeholder.png'}
-                category={product.sub_categories?.categories?.name || 'General'}
-                sub_category={product.sub_categories?.name || 'General'}
-                stock_qty={product.stock_qty}
-                description={product.description}
-              />
-            </CarouselItem>
-          ))}
+          {products.map((product) => {
+            const variant = product.product_variants?.[0];
+            if (!variant) return null;
+
+            return (
+              <CarouselItem key={product.id} className="basis-3/4 sm:basis-1/3 md:basis-1/3 lg:basis-1/5">
+                <ProductCard
+                  sku={variant.sku}
+                  name={product.name}
+                  price={variant.price}
+                  image={variant.image_url || '/placeholder.png'}
+                  category={product.sub_categories?.categories?.name || 'General'}
+                  sub_category={product.sub_categories?.name || 'General'}
+                  stock_qty={variant.stock_qty}
+                  description={product.description}
+                  variants={product.product_variants}
+                />
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
         <div className="hidden md:block">
           <CarouselPrevious className="-left-15 bg-white hover:bg-gray-100 border-gray-200" />
@@ -93,7 +99,7 @@ function CategorySection({ image, categoryLabel }: CategorySectionProps) {
   )
 }
 
-// Fetch directly from Supabase
+// Fetch directly from Supa
 async function getProducts(category?: string): Promise<Product[]> {
   try {
     let query = supabase
@@ -105,7 +111,8 @@ async function getProducts(category?: string): Promise<Product[]> {
           categories!inner (
             name
           )
-        )
+        ),
+        product_variants (*)
       `);
 
     if (category) {

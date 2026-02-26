@@ -78,20 +78,29 @@ export interface OrderItem {
 
 export interface Product {
   id: string;
-  sku: string;
   name: string;
   description?: string;
-  price: number;
-  stock_qty: number;
-  image_url?: string | null;
   created_at: string;
-  keywords?: string;
   sub_categories?: {
     name: string;
     categories?: {
       name: string;
     };
   };
+  product_variants?: ProductVariant[];
+}
+
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  sku: string;
+  attribute_name?: string;
+  attribute_value?: string;
+  price: number;
+  stock_qty: number;
+  image_url?: string | null;
+  keywords?: string;
+  created_at: string;
 }
 
 export type OrderStatus = 
