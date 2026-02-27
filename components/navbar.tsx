@@ -368,9 +368,9 @@ export function Navbar() {
 
             {/* Cart Menu */}
             <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-              <SheetContent side="right" className="bg-white w-full"> 
+              <SheetContent side="right" className="bg-white w-full [&>button]:hidden"> 
                 <SheetTitle className="sr-only"></SheetTitle>
-                <div className="mt-10 flex flex-col">
+                <div className="mt-5 flex flex-col">
                   <div className="py-3 mx-6 flex justify-between font-medium text-sm text-gray-600 border-b">
                     <p className="uppercase">Items in Cart ({items.length})</p>
                     <p onClick={() => clearCart()} className="text-red-600 cursor-pointer">Clear Cart</p>
@@ -396,7 +396,7 @@ export function Navbar() {
                         <Link 
                           href={`/collection/${item.category.toLowerCase().replace(/\s+/g, '-')}/${item.sub_category.toLowerCase().replace(/\s+/g, '-')}/${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                         >
-                          <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md  border-gray-200 mr-4">
+                          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md  border-gray-200 mr-4">
                             <Image 
                               src={item.image || '/placeholder.png'} 
                               alt={item.name} 
@@ -407,6 +407,7 @@ export function Navbar() {
                         </Link>
                         <div className="relative -ml-8">
                           <p className="font-medium text-sm w-[15vh]">{item.name}</p>
+                          <p className="font-normal text-xs w-[15vh] text-gray-500 mt-1">{item.sku}</p>
                           <div className="w-fit flex items-center border rounded-md bg-transparent mt-2">
                             <button 
                               onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.stock_qty)}
@@ -460,7 +461,7 @@ export function Navbar() {
                 </div>
 
                 {items.length > 0 && (
-                  <div className="mt-auto p-6">
+                  <div className="px-6 pb-6 pt-3">
                     <div className="flex justify-between font-semibold text-md">
                       <span>Total</span>
                       <span>
@@ -468,9 +469,20 @@ export function Navbar() {
                           {totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                     </div>
-                    <Link href="/cart" onClick={() => setIsCartOpen(false)}>
-                      <Button className="w-full mt-5 bg-red-600 h-10 hover:bg-red-700 cursor-pointer">View Cart</Button>
-                    </Link>
+                    <div className="flex w-full mt-5 gap-3">
+                      <Button
+                        onClick={() => setIsCartOpen(false)}
+                        variant="ghost"
+                        className="flex-1 h-11 border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 rounded-lg font-medium text-sm cursor-pointer"
+                      >
+                        Keep Browsing
+                      </Button>
+                      <Link href="/cart" onClick={() => setIsCartOpen(false)} className="flex-1">
+                        <Button className="w-full h-11 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm cursor-pointer">
+                          View Cart
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 )}
               </SheetContent>
@@ -479,13 +491,13 @@ export function Navbar() {
             {/* Collection Overlay */}
             <div 
               className={cn(
-                "fixed inset-0 top-[90px] bg-black/30 transition-opacity duration-500 z-[-2] pointer-events-none",
+                "fixed inset-0 top-22.5 bg-black/30 transition-opacity duration-500 z-[-2] pointer-events-none",
                 isCollectionOpen ? "opacity-100" : "opacity-0"
               )}
             />
             <div 
               className={cn(
-                "absolute left-0 top-[90px] w-full bg-[#f8f8f8] border-b border-gray-200 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[-1] overflow-hidden",
+                "absolute left-0 top-22.5 w-full bg-[#f8f8f8] border-b border-gray-200 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[-1] overflow-hidden",
                 isCollectionOpen ? "max-h-fit opacity-100" : "max-h-0 opacity-0"
               )}
             >

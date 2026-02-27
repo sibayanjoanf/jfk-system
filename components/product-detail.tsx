@@ -49,6 +49,7 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
     addItem({ 
       id: product.sku, 
       name: product.name, 
+      sku: product.sku,
       price: product.price, 
       image: product.image_url,
       stock_qty: product.stock_qty,
@@ -129,7 +130,6 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
         </Button>
       </div>
       
-      {/* Small stock indicator helper */}
       {currentQtyInCart > 0 && (
         <p className="text-xs text-gray-500 italic">
           You currently have {currentQtyInCart} in your cart.

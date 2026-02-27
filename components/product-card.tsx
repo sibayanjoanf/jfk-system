@@ -38,22 +38,24 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
   );
   const { items, addItem } = useCart();
 
-  // Use selected variant data if available, otherwise fall back to props
   const activePrice = selectedVariant?.price ?? price;
   const activeImage = selectedVariant?.image_url || image;
   const activeSku = selectedVariant?.sku ?? sku;
   const activeStockQty = selectedVariant?.stock_qty ?? stock_qty;
 
   const stockQtyNum = Number(activeStockQty);
-  const isOutOfStock = stockQtyNum <= 0;
   const itemInCart = items.find(item => item.id === activeSku);
   const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
   const isLimitReached = (currentQtyInCart + selectedQty) > stockQtyNum;
   const isFullyStockedInCart = currentQtyInCart >= stockQtyNum;
 
+  const isOutOfStock = variants && variants.length > 0
+  ? variants.every(v => v.stock_qty <= 0)
+  : stockQtyNum <= 0;
+
   const hasVariants = variants && variants.length > 1;
 
-  // Group variants by attribute_name
+  // variants by attribute_name
   const grouped = hasVariants ? variants!.reduce((acc, v) => {
     const key = v.attribute_name || 'Variant';
     if (!acc[key]) acc[key] = [];
@@ -87,6 +89,7 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
     addItem({
       id: activeSku,
       name,
+      sku: activeSku,
       price: activePrice,
       image: activeImage,
       stock_qty: activeStockQty,
@@ -106,7 +109,7 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
           <CardContent className='p-0'>
             <div className="relative aspect-square overflow-hidden bg-white">
               <Image
-                src={image}
+                src={activeImage}
                 alt={name}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -296,11 +299,19 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                   <p className="text-lg text-center md:text-start font-medium text-red-600">₱ {(activePrice * selectedQty).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                   <p className="text-sm text-center font-normal text-gray-500">Qty: {selectedQty}</p>
                 </div>
-                <Link href={"/cart"}>
-                  <Button className="bg-red-600 hover:bg-red-700 text-white w-full mt-5 cursor-pointer" onClick={() => setIsAddedtoCart(false)}>
-                    View Cart
-                  </Button>
-                </Link>
+                <div className="flex gap-3">
+                  <Button className="border border-gray-200 h-10 flex-1 text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 w-full mt-5 cursor-pointer" 
+                    variant="ghost"
+                    onClick={() => setIsAddedtoCart(false)}
+                  >
+                      Keep Browsing
+                    </Button>
+                  <Link href={"/cart"} className="flex-1">
+                    <Button className="h-10 bg-red-600 hover:bg-red-700 text-white w-full mt-5 cursor-pointer" onClick={() => setIsAddedtoCart(false)}>
+                      View Cart
+                    </Button>
+                  </Link>
+                </div>
               </DialogHeader>
             </div>
           </div>

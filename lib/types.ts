@@ -98,6 +98,7 @@ export interface ProductVariant {
   attribute_value?: string;
   price: number;
   stock_qty: number;
+  dimension?: string;
   image_url?: string | null;
   keywords?: string;
   created_at: string;

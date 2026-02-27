@@ -47,7 +47,7 @@ function ProductFeatureSection({ title, products, categoryLink }: ProductFeature
         className="w-full"
       >
         <CarouselContent>
-          {products.map((product) => {
+          {products.slice(0,10).map((product) => {
             const variant = product.product_variants?.[0];
             if (!variant) return null;
 

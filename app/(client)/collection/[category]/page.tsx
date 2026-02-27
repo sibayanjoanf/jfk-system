@@ -117,7 +117,7 @@ export default function CategoryPage({ params }: PageProps) {
     }
 
     if (inStockOnly) {
-      result = result.filter(p => (p.product_variants?.[0]?.stock_qty ?? 0) > 0);
+      result = result.filter(p => p.product_variants?.some(v => v.stock_qty > 0));
     }
 
     switch (sortBy) {
@@ -388,7 +388,7 @@ export default function CategoryPage({ params }: PageProps) {
           <div className="lg:col-span-3">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-10">
               {displayProducts.map((product) => {
-                  const variant = product.product_variants?.[0];
+                  const variant = product.product_variants?.find(v => v.stock_qty > 0) ?? product.product_variants?.[0];
                   if (!variant) return null;
 
                   return (
@@ -402,6 +402,7 @@ export default function CategoryPage({ params }: PageProps) {
                       sub_category={product.sub_categories?.name || 'General'}
                       stock_qty={variant.stock_qty}
                       description={product.description || ''}
+                      variants={product.product_variants || []}
                     />
                   );
                 })}

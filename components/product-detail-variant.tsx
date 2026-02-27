@@ -135,6 +135,40 @@ export function ProductDetailVariant({ product, variants }: Props) {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
+            {/* Technical Details - reactive to selectedVariant */}
+            <div className="bg-gray-50/50 border border-gray-100 p-8 rounded-xl h-fit">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900 mb-6 border-b pb-4">
+                Technical Details
+              </h3>
+              <ul className="space-y-4">
+                <li className="flex justify-between text-sm">
+                  <span className="text-gray-500">SKU</span>
+                  <span className="font-medium text-gray-900">{selectedVariant.sku}</span>
+                </li>
+                <li className="flex justify-between text-sm">
+                  <span className="text-gray-500">Category</span>
+                  <span className="font-medium text-gray-900">{category}</span>
+                </li>
+                <li className="flex justify-between text-sm">
+                  <span className="text-gray-500">Sub-Category</span>
+                  <span className="font-medium text-gray-900">{sub_category}</span>
+                </li>
+                <li className="flex justify-between text-sm">
+                  <span className="text-gray-500">Stock Status</span>
+                  <span className={cn(
+                    "font-medium",
+                    selectedVariant.stock_qty > 0 ? "text-green-600" : "text-red-600"
+                  )}>
+                    {selectedVariant.stock_qty > 0 ? `In Stock (${selectedVariant.stock_qty})` : 'Out of Stock'}
+                  </span>
+                </li>
+                <li className="flex justify-between text-sm border-t pt-4">
+                  <span className="text-gray-500">Dimension</span>
+                  <span className="font-medium text-gray-900">{selectedVariant.dimension}</span>
+                </li>
+              </ul>
+            </div>
+
             {/* Feature Cards */}
             <div className="lg:col-span-2 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-gray-100">
@@ -183,40 +217,6 @@ export function ProductDetailVariant({ product, variants }: Props) {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Technical Details - reactive to selectedVariant */}
-            <div className="bg-gray-50/50 border border-gray-100 p-8 rounded-xl h-fit">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900 mb-6 border-b pb-4">
-                Technical Details
-              </h3>
-              <ul className="space-y-4">
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">SKU</span>
-                  <span className="font-medium text-gray-900">{selectedVariant.sku}</span>
-                </li>
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">Category</span>
-                  <span className="font-medium text-gray-900">{category}</span>
-                </li>
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">Sub-Category</span>
-                  <span className="font-medium text-gray-900">{sub_category}</span>
-                </li>
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">Stock Status</span>
-                  <span className={cn(
-                    "font-medium",
-                    selectedVariant.stock_qty > 0 ? "text-green-600" : "text-red-600"
-                  )}>
-                    {selectedVariant.stock_qty > 0 ? `In Stock (${selectedVariant.stock_qty})` : 'Out of Stock'}
-                  </span>
-                </li>
-                <li className="flex justify-between text-sm border-t pt-4">
-                  <span className="text-gray-500">Unit</span>
-                  <span className="font-medium text-gray-900">Per Piece (PC)</span>
-                </li>
-              </ul>
             </div>
 
           </div>

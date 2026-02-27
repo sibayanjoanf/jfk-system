@@ -4,8 +4,6 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
-import Link from 'next/link';
-import { Hammer, Palette, ShieldCheck, Wrench } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { ProductCard } from '@/components/product-card';
 import { Product } from '@/lib/types';

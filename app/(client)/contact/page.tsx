@@ -187,7 +187,7 @@ export default function ContactPage() {
                     value={messageBox}
                     onChange={(e) => setMessage(e.target.value)}
                     className={cn(
-                      "min-h-[180px] border shadow-xs selection:bg-gray-200 focus-visible:ring-ring/30 focus-visible:border-none bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
+                      "min-h-[180px] border shadow-xs selection:bg-gray-200 focus-visible:ring-transparent focus-visible:border-red-600 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
                       "resize-none overflow-y-auto transition-colors",
                       errors.messageBox && "border-red-500"
                     )}
