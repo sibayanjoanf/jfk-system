@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Package, Mail, Phone, MapPin } from 'lucide-react';
+import { Package, Mail, Phone, MapPin, UserRound } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 export function Footer() {
@@ -17,6 +17,12 @@ export function Footer() {
             <p className="text-sm text-gray-600">
               Your trusted partner for quality tiles, stones, and construction materials in Laoag City.
             </p>
+            <div className="flex text-gray-600 hover:underline cursor-pointer">
+              <UserRound className="h-4 w-4 inline-block mr-2" />
+              <Link href="/admin">
+                <p className="text-sm">Access Admin</p>
+              </Link>
+            </div>
           </div>
 
           {/* Quick Links */}

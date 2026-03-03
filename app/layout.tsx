@@ -2,9 +2,7 @@ import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import { WindSong } from 'next/font/google';
 import './globals.css';
-import Providers from './provider'; 
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/footer';
+import Providers from './provider';
 
 const poppins = Poppins({ 
   subsets: ['latin'],
