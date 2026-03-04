@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { CircleUserRound, User, Settings, LogOut } from 'lucide-react';
+import { CircleUserRound, User, Settings, LogOut, Laptop } from 'lucide-react';
 import Link from 'next/link';
 
 const HeaderUser: React.FC = () => {
@@ -41,6 +41,12 @@ const HeaderUser: React.FC = () => {
             <Settings size={15} className="text-gray-400" />
             Settings
           </button>
+          <Link href="/">
+            <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+              <Laptop size={15} className="text-gray-400" />
+              Visit Site
+            </button>
+          </Link>
           <div className="border-t border-gray-100 mt-1">
             <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
               <LogOut size={15} />

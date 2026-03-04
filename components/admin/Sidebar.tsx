@@ -121,19 +121,6 @@ const Sidebar: React.FC = () => {
             );
           })}
         </nav>
-
-        {/* Bottom */}
-        <div className={`border-t border-gray-100 px-2 py-3 transition-all duration-300 hidden lg:block`}>
-          <div className={`flex items-center h-11 rounded-lg px-2 gap-3 overflow-hidden`}>
-            <div className="w-[28px] min-w-[28px] flex justify-center shrink-0">
-              <CircleUserRound size={18} className="text-gray-400" strokeWidth={1.75} />
-            </div>
-            <div className={`transition-all duration-300 overflow-hidden ${isExpanded ? 'opacity-100 w-40' : 'opacity-0 w-0'}`}>
-              <p className="text-xs font-semibold text-gray-900 whitespace-nowrap">Admin</p>
-              <p className="text-xs text-gray-400 whitespace-nowrap truncate">admin@jfktiles.com</p>
-            </div>
-          </div>
-        </div>
       </aside>
     </>
   );
