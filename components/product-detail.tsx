@@ -74,6 +74,7 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
               <Minus size={18} />
             </button>
             <input
+              id="quantity"
               type="text"
               inputMode="numeric"
               value={selectedQty === 0 ? "" : selectedQty}

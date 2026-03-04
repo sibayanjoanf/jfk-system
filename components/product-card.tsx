@@ -229,6 +229,7 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                           <Minus size={16} />
                         </button>
                         <input
+                          id={`qty-${activeSku}`}
                           type="text"
                           inputMode="numeric"
                           tabIndex={-1}
@@ -286,6 +287,7 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
         ">
           <DialogHeader>
             <DialogTitle className="text-center text-sm bg-gray-200 text-gray-500 py-3 rounded-lg">Item Added to Cart!</DialogTitle>
+            <DialogDescription className="sr-only">{name} is added to your cart.</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="items-center justify-center flex pb-3">

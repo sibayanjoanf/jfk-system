@@ -12,6 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Reveal } from "@/components/reveal";
 
 export default function FAQPage() {
   const [FAQCategories, setFAQCategories] = useState<FAQWithCategory[]>([]);
@@ -58,96 +59,98 @@ export default function FAQPage() {
       </section>
 
       {/* Main Content Section */}
-      <section className="bg-[#f8f8f8] py-10 lg:py-15 text-sm">
-        <div className="container mx-auto px-4">
-          
-          {/* Small Screen Layout */}
-          <div className="lg:hidden mb-8">
-            <p className="font-semibold mb-4 uppercase tracking-wider text-gray-500">Categories</p>
-            <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar">
-              {FAQCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveCategoryId(category.id)}
-                  className={cn(
-                    "whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium transition-all border",
-                    activeCategoryId === category.id 
-                      ? "bg-red-600 border-red-600 text-white shadow-md" 
-                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-100"
-                  )}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16 items-start">
+      <Reveal>
+        <section className="bg-[#f8f8f8] py-10 lg:py-15 text-sm">
+          <div className="container mx-auto px-4">
             
-            {/* Desktop Layout */}
-            <div className="hidden lg:block lg:col-span-1">
-              <p className="font-semibold uppercase tracking-widest text-sm text-gray-400 mb-5">Categories</p>
-              <ul className="space-y-4 text-gray-600">
+            {/* Small Screen Layout */}
+            <div className="lg:hidden mb-8">
+              <p className="font-semibold mb-4 uppercase tracking-wider text-gray-500">Categories</p>
+              <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar">
                 {FAQCategories.map((category) => (
-                  <li
+                  <button
                     key={category.id}
                     onClick={() => setActiveCategoryId(category.id)}
                     className={cn(
-                      "cursor-pointer transition-all duration-300 border-l-3 py-1",
+                      "whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium transition-all border",
                       activeCategoryId === category.id 
-                        ? "text-red-600 border-red-600 font-semibold pl-6" 
-                        : "border-transparent hover:border-gray-300 hover:pl-6"
+                        ? "bg-red-600 border-red-600 text-white shadow-md" 
+                        : "bg-white border-gray-200 text-gray-600 hover:bg-gray-100"
                     )}
                   >
                     {category.name}
-                  </li>
+                  </button>
                 ))}
-              </ul>
+              </div>
             </div>
 
-            {/* Accordion FAQ */}
-            <div className="lg:col-span-2">
-              {activeCategory ? (
-                <div key={activeCategoryId} className="animate-in fade-in slide-in-from-bottom-2 duration-500"> 
-                  <Accordion 
-                    type="multiple" 
-                    className="w-full"
-                    defaultValue={activeCategory.faq[0] ? [activeCategory.faq[0].id] : []}
-                  >
-                    {activeCategory.faq.map((faq) => (
-                      <AccordionItem
-                        key={faq.id}
-                        value={faq.id}
-                        className="border-none bg-white rounded-md shadow-lg overflow-hidden mb-6"
-                      >
-                        <AccordionTrigger
-                          className={cn(
-                            "p-4 px-6 text-left font-medium transition-all duration-300 hover:no-underline",
-                            "hover:bg-gray-100",
-                            "data-[state=open]:bg-red-600 data-[state=open]:text-white",
-                            "[&_svg]:data-[state=open]:text-white"
-                          )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16 items-start">
+              
+              {/* Desktop Layout */}
+              <div className="hidden lg:block lg:col-span-1">
+                <p className="font-semibold uppercase tracking-widest text-sm text-gray-400 mb-5">Categories</p>
+                <ul className="space-y-4 text-gray-600">
+                  {FAQCategories.map((category) => (
+                    <li
+                      key={category.id}
+                      onClick={() => setActiveCategoryId(category.id)}
+                      className={cn(
+                        "cursor-pointer transition-all duration-300 border-l-3 py-1",
+                        activeCategoryId === category.id 
+                          ? "text-red-600 border-red-600 font-semibold pl-6" 
+                          : "border-transparent hover:border-gray-300 hover:pl-6"
+                      )}
+                    >
+                      {category.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Accordion FAQ */}
+              <div className="lg:col-span-2">
+                {activeCategory ? (
+                  <div key={activeCategoryId} className="animate-in fade-in slide-in-from-bottom-2 duration-500"> 
+                    <Accordion 
+                      type="multiple" 
+                      className="w-full"
+                      defaultValue={activeCategory.faq[0] ? [activeCategory.faq[0].id] : []}
+                    >
+                      {activeCategory.faq.map((faq) => (
+                        <AccordionItem
+                          key={faq.id}
+                          value={faq.id}
+                          className="border-none bg-white rounded-md shadow-lg overflow-hidden mb-6"
                         >
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent className="px-6 py-6 leading-relaxed text-black bg-white">
-                          {faq.answer}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <div className="h-16 w-full bg-gray-200 animate-pulse rounded-lg" />
-                  <div className="h-16 w-full bg-gray-200 animate-pulse rounded-lg" />
-                </div>
-              )}
+                          <AccordionTrigger
+                            className={cn(
+                              "p-4 px-6 text-left font-medium transition-all duration-300 hover:no-underline",
+                              "hover:bg-gray-100",
+                              "data-[state=open]:bg-red-600 data-[state=open]:text-white",
+                              "[&_svg]:data-[state=open]:text-white"
+                            )}
+                          >
+                            {faq.question}
+                          </AccordionTrigger>
+                          <AccordionContent className="px-6 py-6 leading-relaxed text-black bg-white">
+                            {faq.answer}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="h-16 w-full bg-gray-200 animate-pulse rounded-lg" />
+                    <div className="h-16 w-full bg-gray-200 animate-pulse rounded-lg" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-        
+        </section>
+      </Reveal>
+      
       <Footer />
     </div>
   );

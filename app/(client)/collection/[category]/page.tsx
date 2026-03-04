@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -29,6 +30,7 @@ import { Product, CategoryWithSub } from '@/lib/types';
 import { useSearchParams } from 'next/navigation';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Reveal } from '@/components/reveal';
 
 interface PageProps {
   params: Promise<{
@@ -192,6 +194,7 @@ export default function CategoryPage({ params }: PageProps) {
                   <SheetHeader className="px-6 py-4">
                     <div className="flex items-center justify-between">
                       <SheetTitle className="sr-only"></SheetTitle>
+                      <SheetDescription className="sr-only"></SheetDescription>
                     </div>
                   </SheetHeader>
                   
@@ -387,23 +390,25 @@ export default function CategoryPage({ params }: PageProps) {
           {/* Main Product Grid */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-10">
-              {displayProducts.map((product) => {
+              {displayProducts.map((product,i) => {
                   const variant = product.product_variants?.find(v => v.stock_qty > 0) ?? product.product_variants?.[0];
                   if (!variant) return null;
 
                   return (
-                    <ProductCard
-                      key={product.id}
-                      sku={variant.sku}
-                      name={product.name}
-                      price={variant.price}
-                      image={variant.image_url || '/placeholder.png'}
-                      category={product.sub_categories?.categories?.name || 'General'}
-                      sub_category={product.sub_categories?.name || 'General'}
-                      stock_qty={variant.stock_qty}
-                      description={product.description || ''}
-                      variants={product.product_variants || []}
-                    />
+                    <Reveal key={product.id} delay={i*30}>
+                      <ProductCard
+                        key={product.id}
+                        sku={variant.sku}
+                        name={product.name}
+                        price={variant.price}
+                        image={variant.image_url || '/placeholder.png'}
+                        category={product.sub_categories?.categories?.name || 'General'}
+                        sub_category={product.sub_categories?.name || 'General'}
+                        stock_qty={variant.stock_qty}
+                        description={product.description || ''}
+                        variants={product.product_variants || []}
+                      />
+                    </Reveal>
                   );
                 })}
             </div>

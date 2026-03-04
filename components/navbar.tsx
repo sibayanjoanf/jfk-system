@@ -370,6 +370,7 @@ export function Navbar() {
             <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
               <SheetContent side="right" className="bg-white w-full [&>button]:hidden"> 
                 <SheetTitle className="sr-only"></SheetTitle>
+                <SheetDescription className="sr-only"></SheetDescription>
                 <div className="mt-5 flex flex-col">
                   <div className="py-3 mx-6 flex justify-between font-medium text-sm text-gray-600 border-b">
                     <p className="uppercase">Items in Cart ({items.length})</p>
@@ -401,7 +402,8 @@ export function Navbar() {
                               src={item.image || '/placeholder.png'} 
                               alt={item.name} 
                               fill 
-                              className="object-cover" 
+                              className="object-cover"
+                              sizes="80px"
                             />
                           </div>
                         </Link>
@@ -417,6 +419,7 @@ export function Navbar() {
                               <Minus size={10} />
                             </button>
                             <input
+                              id={`quantity-${item.id}`}
                               type="number"
                               value={item.quantity}
                               tabIndex={-1}

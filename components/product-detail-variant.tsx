@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ProductDetailActions } from '@/components/product-detail';
 import { ProductVariant } from '@/lib/types';
 import { Hammer, Palette, ShieldCheck, Wrench } from 'lucide-react';
+import { Reveal } from './reveal';
 
 interface Props {
   product: {
@@ -39,18 +40,20 @@ export function ProductDetailVariant({ product, variants }: Props) {
 
   return (
     <>
+    <Reveal>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Image */}
-        <div className="flex gap-4">
-          <div className="flex-1 relative aspect-square rounded-lg overflow-hidden">
-            <Image
-              src={selectedVariant.image_url || '/placeholder.png'}
-              alt={product.name}
-              fill
-              className="object-cover transition-all duration-300"
-            />
+          <div className="flex gap-4">
+            <div className="flex-1 relative aspect-square rounded-lg overflow-hidden">
+              <Image
+                src={selectedVariant.image_url || '/placeholder.png'}
+                alt={product.name}
+                fill
+                className="object-cover transition-all duration-300"
+              />
+            </div>
           </div>
-        </div>
+        
 
         {/* Info */}
         <div className="flex flex-col space-y-2 md:space-y-5">
@@ -129,13 +132,15 @@ export function ProductDetailVariant({ product, variants }: Props) {
           />
         </div>
       </div>
+    </Reveal>
 
-      {/* Product Description Section */}
+    {/* Product Description Section */}
+    <Reveal>
       <section className="bg-white mt-12 py-8">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            {/* Technical Details - reactive to selectedVariant */}
+            {/* Technical Details */}
             <div className="bg-gray-50/50 border border-gray-100 p-8 rounded-xl h-fit">
               <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900 mb-6 border-b pb-4">
                 Technical Details
@@ -222,6 +227,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
           </div>
         </div>
       </section>
+    </Reveal>
     </>
   );
 }

@@ -128,6 +128,8 @@ export default function InquiryFormPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field>
                 <Input
+                  id='firstName'
+                  autoComplete='given-name'
                   placeholder="First Name"
                   className={cn(inputStyles, errors.firstName && 'border-red-400')}
                   value={firstName}
@@ -137,6 +139,8 @@ export default function InquiryFormPage() {
               </Field>
               <Field>
                 <Input
+                  id='lastName'
+                  autoComplete='family-name'
                   placeholder="Last Name"
                   className={cn(inputStyles, errors.lastName && 'border-red-400')}
                   value={lastName}
@@ -148,7 +152,9 @@ export default function InquiryFormPage() {
 
             <Field>
               <Input
+                id='email'
                 type="email"
+                autoComplete='email'
                 placeholder="Email Address"
                 className={cn(inputStyles, errors.email && 'border-red-400')}
                 value={email}
@@ -159,8 +165,10 @@ export default function InquiryFormPage() {
             </Field>
 
             <Field>
-              <Input
+              <Input 
+                id='phone'
                 type="tel"
+                autoComplete='tel'
                 placeholder="Phone"
                 className={cn(inputStyles, errors.phone && 'border-red-400')}
                 value={phone}
@@ -203,6 +211,7 @@ export default function InquiryFormPage() {
             </div>
 
             <Textarea
+              id='message'
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Message / Notes (optional)"
@@ -259,6 +268,7 @@ export default function InquiryFormPage() {
                           alt={item.name}
                           fill
                           className="object-cover"
+                          sizes='80px'
                         />
                       </div>
                       <div>

@@ -10,6 +10,7 @@ import { TypewriterText } from '@/components/typewriter-text';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Categories, Product, ShowcaseProducts } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { Reveal } from '@/components/reveal';
 
 interface CategorySectionProps {
   image: string;
@@ -220,173 +221,181 @@ export default async function Page() {
       </section>
 
       {/* Product Category Section */}
-      <section className="pt-30 pb-20">
-        <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <div className="mb-[-40] flex justify-center">
+      <Reveal>
+        <section className="pt-30 pb-20">
+          <div className="container mx-auto px-4">
+            <div className="mb-12 text-center">
+              <div className="mb-[-40] flex justify-center">
+              </div>
+              <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
+                Product Category
+              </h2>
+              <p className="text-sm mx-auto max-w-2xl text-gray-700">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                tempor incididunt ut labore et dolore magna aliqua.
+              </p>
             </div>
-            <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
-              Product Category
-            </h2>
-            <p className="text-sm mx-auto max-w-2xl text-gray-700">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-              tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-          </div>
 
-          <div className="grid gap-4 md:gap-8 md:grid-cols-3">
-            {categories.map((category) => (
-              <CategorySection 
-                key={category.id}
-                categoryLabel={category.name}
-                image={category.image_url ?? '/images/placeholder.png'} 
-              />
-            ))}
+            <div className="grid gap-4 md:gap-8 md:grid-cols-3">
+              {categories.map((category) => (
+                <CategorySection 
+                  key={category.id}
+                  categoryLabel={category.name}
+                  image={category.image_url ?? '/images/placeholder.png'} 
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Reveal>
 
       {/* Featured Products Section */}
-      <section className='bg-white py-15'>
-        <ProductFeatureSection
-          title="Tiles"
-          products={tilesProducts}
-          categoryLink="Tiles"
-        />
+      <Reveal>
+        <section className='bg-white py-15'>
+          <ProductFeatureSection
+            title="Tiles"
+            products={tilesProducts}
+            categoryLink="Tiles"
+          />
 
-        <ProductFeatureSection
-          title="Stones"
-          products={stonesProducts}
-          categoryLink="Stones"
-        />
+          <ProductFeatureSection
+            title="Stones"
+            products={stonesProducts}
+            categoryLink="Stones"
+          />
 
-        <ProductFeatureSection
-          title="Fixtures"
-          products={fixturesProducts}
-          categoryLink="Fixtures"
-        />
-      </section>
+          <ProductFeatureSection
+            title="Fixtures"
+            products={fixturesProducts}
+            categoryLink="Fixtures"
+          />
+        </section>
+      </Reveal>
 
       {/* Experience Section */}
-      <section className="bg-[#f8f8f8] py-10 pt-20">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="relative h-[400px] overflow-hidden rounded-lg lg:h-auto">
-              <Image
-                src="/images/featured-photo-3.png"
-                alt="Image"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className='mb-4 font-semibold tracking-widest text-red-600 text-sm'>EXPERIENCE</span>
-              <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
-                We Provide You The Best Experience
-              </h2>
-              <p className="mb-6 leading-relaxed text-gray-600 text-sm">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat.
-              </p>
-              <Link
-                href="/about"
-                className="flex items-center justify-end text-sm font-medium text-red-600 hover:text-red-700"
-              >
-                Read More <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+      <Reveal>
+        <section className="bg-[#f8f8f8] py-10 pt-20">
+          <div className="container mx-auto px-4">
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="relative h-[400px] overflow-hidden rounded-lg lg:h-auto">
+                <Image
+                  src="/images/featured-photo-3.png"
+                  alt="Image"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
+              <div className="flex flex-col justify-center">
+                <span className='mb-4 font-semibold tracking-widest text-red-600 text-sm'>EXPERIENCE</span>
+                <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
+                  We Provide You The Best Experience
+                </h2>
+                <p className="mb-6 leading-relaxed text-gray-600 text-sm">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat.
+                </p>
+                <Link
+                  href="/about"
+                  className="flex items-center justify-end text-sm font-medium text-red-600 hover:text-red-700"
+                >
+                  Read More <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Concern Section */}
-      <section className="bg-[#f8f8f8] py-10 pb-20">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="flex flex-col justify-center order-2 lg:order-1">
-              <span className='mb-4 font-semibold tracking-widest text-red-600 text-sm'>CONCERNS</span>
-              <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
-                Got Questions? We&apos;re Here to Help!
-              </h2>
-              <p className="mb-6 leading-relaxed text-gray-600 text-sm">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat.
-              </p>
-              <Link
-                href="/faq"
-                className="flex items-center justify-end text-sm font-medium text-red-600 hover:text-red-700"
-              >
-                Go to FAQs <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
-            <div className="relative h-[400px] overflow-hidden rounded-lg lg:h-auto order-1 lg:order-2">
-              <Image
-                src="/images/featured-photo-2.png"
-                alt="Image"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
+        {/* Concern Section */}
+        <section className="bg-[#f8f8f8] py-10 pb-20">
+          <div className="container mx-auto px-4">
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="flex flex-col justify-center order-2 lg:order-1">
+                <span className='mb-4 font-semibold tracking-widest text-red-600 text-sm'>CONCERNS</span>
+                <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
+                  Got Questions? We&apos;re Here to Help!
+                </h2>
+                <p className="mb-6 leading-relaxed text-gray-600 text-sm">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat.
+                </p>
+                <Link
+                  href="/faq"
+                  className="flex items-center justify-end text-sm font-medium text-red-600 hover:text-red-700"
+                >
+                  Go to FAQs <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </div>
+              <div className="relative h-[400px] overflow-hidden rounded-lg lg:h-auto order-1 lg:order-2">
+                <Image
+                  src="/images/featured-photo-2.png"
+                  alt="Image"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Reveal>
 
       {/* Showcase Section */}
-      <section className="bg-white pt-15 pb-20">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-12 text-center text-2xl md:text-3xl font-bold text-gray-900">
-            Showcase From Our Clients
-          </h2>
-          {showcase.length === 0 ? (
-            <p className="text-center text-gray-500">No showcase items available</p>
-          ) : (
-            <Carousel
-              opts={{
-                align: "start",
-                loop: false,
-              }}
-              className="w-full"
-            >
-              <CarouselContent>
-                {showcase.map((item, index) => {
-                  const productURL = `/collection/${item.products?.sub_categories?.categories?.name?.toLowerCase().replace(/\s+/g, '-')}/${item.products?.sub_categories?.name?.toLowerCase().replace(/\s+/g, '-')}/${item.product_name.toLowerCase().replace(/\s+/g, '-')}`;
-                  
-                  return (
-                    <CarouselItem key={index} className="basis-2/3 sm:basis-1/3 lg:basis-1/5">
-                      <Link href={productURL}>
-                        <div className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100 cursor-pointer">
-                          <Image
-                            src={item.image_url}
-                            alt={`Showcase ${index + 1}`}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-50 lg:opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                          <div className="absolute inset-x-0 bottom-0 p-4 translate-y-0 opacity-100 lg:opacity-0 transition-all duration-300 group-hover:opacity-100">
-                            <p className="text-white text-xs lg:text-sm font-medium">{item.product_name}</p>
-                            <p className="text-gray-300 text-xs">{item.products?.sub_categories?.name}</p>
-                          </div>
-                        </div> 
-                      </Link>
-                    </CarouselItem>
-                  );
-                })}
-              </CarouselContent>
-              <div className="hidden md:block">
-                <CarouselPrevious className="-left-15 bg-white hover:bg-gray-100 border-gray-200" />
-                <CarouselNext className="-right-15 bg-white hover:bg-gray-100 border-gray-200" />
-              </div>
-            </Carousel>
-          )}
-        </div>
-      </section>
+      <Reveal>
+        <section className="bg-white pt-15 pb-20">
+          <div className="container mx-auto px-4">
+            <h2 className="mb-12 text-center text-2xl md:text-3xl font-bold text-gray-900">
+              Showcase From Our Clients
+            </h2>
+            {showcase.length === 0 ? (
+              <p className="text-center text-gray-500">No showcase items available</p>
+            ) : (
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: false,
+                }}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {showcase.map((item, index) => {
+                    const productURL = `/collection/${item.products?.sub_categories?.categories?.name?.toLowerCase().replace(/\s+/g, '-')}/${item.products?.sub_categories?.name?.toLowerCase().replace(/\s+/g, '-')}/${item.product_name.toLowerCase().replace(/\s+/g, '-')}`;
+                    
+                    return (
+                      <CarouselItem key={index} className="basis-2/3 sm:basis-1/3 lg:basis-1/5">
+                        <Link href={productURL}>
+                          <div className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100 cursor-pointer">
+                            <Image
+                              src={item.image_url}
+                              alt={`Showcase ${index + 1}`}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-50 lg:opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                            <div className="absolute inset-x-0 bottom-0 p-4 translate-y-0 opacity-100 lg:opacity-0 transition-all duration-300 group-hover:opacity-100">
+                              <p className="text-white text-xs lg:text-sm font-medium">{item.product_name}</p>
+                              <p className="text-gray-300 text-xs">{item.products?.sub_categories?.name}</p>
+                            </div>
+                          </div> 
+                        </Link>
+                      </CarouselItem>
+                    );
+                  })}
+                </CarouselContent>
+                <div className="hidden md:block">
+                  <CarouselPrevious className="-left-15 bg-white hover:bg-gray-100 border-gray-200" />
+                  <CarouselNext className="-right-15 bg-white hover:bg-gray-100 border-gray-200" />
+                </div>
+              </Carousel>
+            )}
+          </div>
+        </section>
+      </Reveal>
 
       <Footer />
     </div>

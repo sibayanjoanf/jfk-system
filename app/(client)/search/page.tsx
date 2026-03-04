@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ProductCard } from '@/components/product-card';
 import { Product, ProductVariant } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { Reveal } from '@/components/reveal';
 
 function levenshtein(a: string, b: string): number {
   const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
@@ -98,27 +99,30 @@ export default function SearchPage() {
       <Navbar />
 
       {/* Search Header Section */}
-      <div className="container mx-auto mt-20 mb-10 md:mt-32 px-4 flex flex-col items-center">
-        <div className="w-full max-w-2xl flex flex-col space-y-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 tracking-tight">
-            Search
-          </h1>
+      <Reveal>
+        <div className="container mx-auto mt-20 mb-10 md:mt-32 px-4 flex flex-col items-center">
+          <div className="w-full max-w-2xl flex flex-col space-y-8 text-center">
+            <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 tracking-tight">
+              Search
+            </h1>
 
-          <div className="relative flex items-center border-b-2 border-gray-200 focus-within:border-black transition-colors duration-200 pb-2">
-            <Input 
-              placeholder="Search our collection..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-0 shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-md md:text-xl placeholder:text-gray-400 h-12 w-full px-0" 
-            />
-            {loading ? (
-              <Loader2 className="ml-4 h-6 w-6 animate-spin text-black" />
-            ) : (
-              <Search className="ml-4 h-6 w-6 text-black" />
-            )}
+            <div className="relative flex items-center border-b-2 border-gray-200 focus-within:border-black transition-colors duration-200 pb-2">
+              <Input 
+                id="search"
+                placeholder="Search our collection..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-0 shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-md md:text-xl placeholder:text-gray-400 h-12 w-full px-0" 
+              />
+              {loading ? (
+                <Loader2 className="ml-4 h-6 w-6 animate-spin text-black" />
+              ) : (
+                <Search className="ml-4 h-6 w-6 text-black" />
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </Reveal>
 
       {/* Results Section */}
       <div className="container mx-auto px-4 py-12 flex-grow">
@@ -131,23 +135,26 @@ export default function SearchPage() {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-          {products.map((product) => {
+          {products.map((product,i) => {
             const variant = product.product_variants?.[0];
             if (!variant) return null;
 
             return (
-              <ProductCard
-                key={product.id}
-                sku={variant.sku}
-                name={product.name}
-                price={variant.price}
-                image={variant.image_url || '/placeholder.png'}
-                category={product.sub_categories?.categories?.name || 'General'}
-                sub_category={product.sub_categories?.name || 'General'}
-                stock_qty={variant.stock_qty}
-                description={product.description || ''}
-                variants={product.product_variants || []}
-              />
+              <Reveal key={product.id} delay={i*30}>
+                <ProductCard
+                  key={product.id}
+                  sku={variant.sku}
+                  name={product.name}
+                  price={variant.price}
+                  image={variant.image_url || '/placeholder.png'}
+                  category={product.sub_categories?.categories?.name || 'General'}
+                  sub_category={product.sub_categories?.name || 'General'}
+                  stock_qty={variant.stock_qty}
+                  description={product.description || ''}
+                  variants={product.product_variants || []}
+                />
+              </Reveal>
+
             );
           })}
         </div>

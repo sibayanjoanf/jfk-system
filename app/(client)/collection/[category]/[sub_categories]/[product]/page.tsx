@@ -8,6 +8,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { ProductCard } from '@/components/product-card';
 import { Product } from '@/lib/types';
 import { ProductDetailVariant } from '@/components/product-detail-variant';
+import { Reveal } from '@/components/reveal';
 
 interface PageProps {
   params: Promise<{
@@ -119,6 +120,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-white">    
     <Navbar />
+
       <section className="relative h-[20vh] md:h-[30vh] overflow-hidden">
         <div className="absolute inset-0">
           <Image
@@ -143,16 +145,17 @@ export default async function ProductDetailPage({ params }: PageProps) {
           variants={product.product_variants ?? []}
         />
 
-      
-
-      <section className="bg-white py-8">
-        <AlsoLikeSection
-          title="You Might Also Like"
-          products={relatedProducts ?? []}
-        />
-      </section>
+        <Reveal>
+          <section className="bg-white py-8">
+            <AlsoLikeSection
+              title="You Might Also Like"
+              products={relatedProducts ?? []}
+            />
+          </section>
+        </Reveal>
 
       </div>
+
       <Footer />
     </main>
   );

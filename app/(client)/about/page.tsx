@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { cn } from '@/lib/utils';
+import { Reveal } from '@/components/reveal';
 
 export default function AboutPage() {
   return (
@@ -42,104 +43,113 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-white py-15 text-sm">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg lg:h-auto">
-              <Image
-                src="/images/featured-photo-3.png"
-                alt="Image"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className='mb-4 font-semibold tracking-widest text-red-600'>ABOUT US</span>
-              <h2 className="mb-4 text-3xl font-bold text-gray-900">
-                What is JFK?
-              </h2>
-              <p className="mb-6 leading-relaxed text-gray-600">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat. 
-              </p>
-              <p className="mb-6 leading-relaxed text-gray-600">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat. 
-              </p>
+      <Reveal>
+        <section className="bg-white py-15 text-sm">
+          <div className="container mx-auto px-4">
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg lg:h-auto">
+                <Image
+                  src="/images/featured-photo-3.png"
+                  alt="Image"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
+              <div className="flex flex-col justify-center">
+                <span className='mb-4 font-semibold tracking-widest text-red-600'>ABOUT US</span>
+                <h2 className="mb-4 text-3xl font-bold text-gray-900">
+                  What is JFK?
+                </h2>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat. 
+                </p>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat. 
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Reveal>
 
-      <section className="bg-white pb-15 text-sm">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="flex flex-col justify-center order-2 lg:order-1">
-              <span className='mb-4 font-semibold tracking-widest text-red-600'>ABOUT US</span>
-              <h2 className="mb-4 text-3xl font-bold text-gray-900">
-                How Did JFK Start?
-              </h2>
-              <p className="mb-6 leading-relaxed text-gray-600">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat.
-              </p>
-              <p className="mb-6 leading-relaxed text-gray-600">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat. 
-              </p>
-            </div>
-            <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg lg:h-auto order-1 lg:order-2">
-              <Image
-                src="/images/featured-photo-2.png"
-                alt="Image"
-                fill
-                className="object-cover"
-              />
+      <Reveal>
+        <section className="bg-white pb-15 text-sm">
+          <div className="container mx-auto px-4">
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="flex flex-col justify-center order-2 lg:order-1">
+                <span className='mb-4 font-semibold tracking-widest text-red-600'>ABOUT US</span>
+                <h2 className="mb-4 text-3xl font-bold text-gray-900">
+                  How Did JFK Start?
+                </h2>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat.
+                </p>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat. 
+                </p>
+              </div>
+              <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg lg:h-auto order-1 lg:order-2">
+                <Image
+                  src="/images/featured-photo-2.png"
+                  alt="Image"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Reveal>
 
-      <section className="bg-white pb-15 text-sm">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg lg:h-auto">
-              <Image
-                src="/images/featured-photo-3.png"
-                alt="Image"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="flex flex-col justify-center">
-              <span className='mb-4 font-semibold tracking-widest text-red-600'>ABOUT US</span>
-              <h2 className="mb-4 text-3xl font-bold text-gray-900">
-                What Sets JFK Apart?
-              </h2>
-              <p className="mb-6 leading-relaxed text-gray-600">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat.
-              </p>
-              <p className="mb-6 leading-relaxed text-gray-600">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-                commodo consequat.
-              </p>
+      <Reveal>
+        <section className="bg-white pb-15 text-sm">
+          <div className="container mx-auto px-4">
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="relative h-[200px] md:h-[400px] overflow-hidden rounded-lg lg:h-auto">
+                <Image
+                  src="/images/featured-photo-3.png"
+                  alt="Image"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
+              <div className="flex flex-col justify-center">
+                <span className='mb-4 font-semibold tracking-widest text-red-600'>ABOUT US</span>
+                <h2 className="mb-4 text-3xl font-bold text-gray-900">
+                  What Sets JFK Apart?
+                </h2>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat.
+                </p>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+                  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+                  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+                  commodo consequat.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Reveal>
 
       <Footer />
     </div>
