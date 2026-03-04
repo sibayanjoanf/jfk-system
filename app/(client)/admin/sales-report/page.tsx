@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Bell, CircleUserRound, Printer, Download, ChevronDown } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Printer, Download, ChevronDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import HeaderUser from '@/components/admin/HeaderUser';
+import HeaderNotifications from '@/components/admin/HeaderNotif';
 
 const SalesReport: React.FC = () => {
-  const [activeButton, setActiveButton] = useState<string | null>(null);
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [timeFilter, setTimeFilter] = useState('Monthly');
 
@@ -35,62 +36,49 @@ const SalesReport: React.FC = () => {
   return (
     <div className="p-0 font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8 w-full">
-        <div className="flex items-center flex-1">
-          <div className="w-35 shrink-0">
-            <h1 className="text-xl font-semibold text-[#0f172a]">Sales Report</h1>
+      <div className="flex justify-between items-center mb-8 w-full gap-4">
+        <div className="flex items-center gap-6 flex-1">
+          <div className="shrink-0">
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">Reports</p>
+            <h1 className="text-lg font-semibold text-gray-900">Sales Report</h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 ml-8">
-          <button 
-            onClick={() => setActiveButton(activeButton === 'bell' ? null : 'bell')}
-            className={`p-1.5 rounded-full transition-all ${activeButton === 'bell' ? 'bg-[#DF2025] text-white' : 'text-[#050F24] hover:bg-gray-200'}`}
-          >
-            <Bell size={24} />
-          </button>
-          <button 
-            onClick={() => setActiveButton(activeButton === 'user' ? null : 'user')}
-            className={`p-1.5 rounded-full transition-all ${activeButton === 'user' ? 'bg-[#DF2025] text-white' : 'text-[#050F24] hover:bg-gray-200'}`}
-          >
-            <CircleUserRound size={27} strokeWidth={1.75} />
-          </button>
+        <div className="hidden lg:flex items-center gap-1">
+          <HeaderNotifications />
+          <HeaderUser />
         </div>
       </div>
 
       {/* Main Grid */}
       <div className="grid grid-cols-12 gap-6">
-        
+
         {/* Statistics Bar Chart Card */}
-        <div className="col-span-12 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-lg font-semibold text-[#0F172A]">Statistics</h2>
-            
-            <div className="flex items-center gap-4">
+        <div className="col-span-12 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-base font-semibold text-gray-900">Statistics</h2>
+
+            <div className="flex items-center gap-3">
               <div className="relative">
                 <button
                   onClick={() => setIsTimeOpen(!isTimeOpen)}
-                  className="flex items-center justify-between gap-2 px-2 py-1.5 text-[#DF2025] rounded-full font-medium min-w-[100px] text-sm transition-all outline-none"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-lg font-medium transition-colors ${
+                    isTimeOpen ? 'bg-red-600 text-white border-red-600' : 'border-red-200 text-red-600 hover:bg-red-50'
+                  }`}
                 >
-                  {timeFilter} 
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform duration-200 ${isTimeOpen ? "rotate-180" : ""}`} 
-                  />
+                  {timeFilter}
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isTimeOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {isTimeOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
                     {['Daily', 'Weekly', 'Monthly', 'Yearly'].map((item) => (
                       <button
                         key={item}
-                        className={`w-full text-left px-6 py-3 text-sm hover:bg-gray-50 transition-colors ${
-                          item === timeFilter ? 'text-[#DF2025] font-semibold' : 'text-[#6F757E]'
+                        className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${
+                          item === timeFilter ? 'text-red-600 font-medium' : 'text-gray-600'
                         }`}
-                        onClick={() => { 
-                          setTimeFilter(item); 
-                          setIsTimeOpen(false); 
-                        }}
+                        onClick={() => { setTimeFilter(item); setIsTimeOpen(false); }}
                       >
                         {item}
                       </button>
@@ -99,102 +87,122 @@ const SalesReport: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <Printer size={20} className="text-gray-400 cursor-pointer hover:text-[#DF2025] transition-colors" />
-                <Download size={20} className="text-gray-400 cursor-pointer hover:text-[#DF2025] transition-colors" />
+              <div className="flex items-center gap-1">
+                <button className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                  <Printer size={16} />
+                </button>
+                <button className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                  <Download size={16} />
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="h-[250px] w-full">
+          <div className="h-[240px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={statsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                <Tooltip cursor={{fill: '#F8FAFC'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                <Bar dataKey="value" fill="#DF2025" radius={[4, 4, 0, 0]} barSize={8} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 11 }} />
+                <Tooltip
+                  cursor={{ fill: '#F8FAFC' }}
+                  contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                />
+                <Bar dataKey="value" fill="#DF2025" radius={[4, 4, 0, 0]} barSize={10} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Top Selling Products Table */}
-        <div className="col-span-12 lg:col-span-8 bg-white rounded-2xl border border-gray-200 overflow-auto shadow-sm">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-[#0F172A]">Top Selling Product</h2>
+        <div className="col-span-12 lg:col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-base font-semibold text-gray-900">Top Selling Products</h2>
+            <p className="text-xs text-gray-400 mt-1">Best performing products by order volume</p>
           </div>
-          <table className="w-full text-left text-sm">
-            <thead className="text-gray-400 font-medium border-y border-gray-50">
-              <tr>
-                <th className="py-4 px-6">Product</th>
-                <th className="py-4">Orders</th>
-                <th className="py-4">Price</th>
-                <th className="py-4">Category</th>
-                <th className="py-4">Refunds</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {products.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                        <img src="/product-icon.png" alt="prod" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-[#0F172A]">{item.name}</div>
-                        <div className="text-xs text-gray-400">{item.type}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-gray-500">{item.orders}</td>
-                  <td className="text-gray-500">₱{item.price}</td>
-                  <td className="text-gray-500">{item.category}</td>
-                  <td className="text-gray-500">
-                    {item.refunds > 15 ? `> ${item.refunds}` : `< ${item.refunds}`}
-                  </td>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-xs uppercase tracking-wider text-gray-400 border-y border-gray-100">
+                  <th className="py-3 pl-6 font-semibold">Product</th>
+                  <th className="py-3 px-4 font-semibold text-center">Orders</th>
+                  <th className="py-3 px-4 font-semibold text-center">Price</th>
+                  <th className="py-3 px-4 font-semibold text-center">Category</th>
+                  <th className="py-3 pr-6 font-semibold text-center">Refunds</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {products.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-100 transition-colors cursor-pointer">
+                    <td className="py-3.5 pl-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                          <img src="/product-icon.png" alt="prod" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                          <p className="text-xs text-gray-400">{item.type}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-sm text-gray-500 text-center">{item.orders.toLocaleString()}</td>
+                    <td className="py-3.5 px-4 text-sm text-gray-700 font-medium text-center">₱{item.price}</td>
+                    <td className="py-3.5 px-4 text-sm text-gray-500 text-center">{item.category}</td>
+                    <td className="py-3.5 pr-6 text-sm text-gray-500 text-center">
+                      {item.refunds > 15 ? `> ${item.refunds}` : `< ${item.refunds}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
           {/* Pagination */}
-          <div className="flex justify-between items-center px-6 py-6 border-t border-gray-50 text-xs text-gray-400">
-            <span>Showing 5 of 5 products</span>
-            <div className="flex items-center gap-4">
-              <button className="hover:text-[#DF2025]">Prev</button>
-              <span className="w-7 h-7 flex items-center justify-center rounded-full bg-[#DF2025] text-white">1</span>
-              <span className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-400">2</span>
-              <button className="text-[#DF2025] font-medium">Next</button>
+          <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-t border-gray-100 gap-4">
+            <span className="text-xs text-gray-400">Showing 5 of 5 products</span>
+            <div className="flex items-center gap-1.5">
+              <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-red-600 transition-colors">Prev</button>
+              <button className="w-7 h-7 rounded-lg bg-red-600 text-white text-xs font-semibold shadow-sm">1</button>
+              <button className="w-7 h-7 rounded-lg bg-gray-100 text-gray-500 text-xs hover:bg-gray-200 transition-colors">2</button>
+              <button className="px-3 py-1.5 text-xs text-red-600 hover:underline transition-colors">Next</button>
             </div>
           </div>
         </div>
 
         {/* Sales by Category Donut Chart */}
-        <div className="col-span-12 lg:col-span-4 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col">
-          <h2 className="text-lg font-semibold text-[#0F172A] mb-4">Sales by Category</h2>
+        <div className="col-span-12 lg:col-span-4 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
+          <h2 className="text-base font-semibold text-gray-900 mb-2">Sales by Category</h2>
+          <p className="text-xs text-gray-400 mb-4">Revenue distribution across categories</p>
+
           <div className="flex-1 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
-                <Pie data={pieData} innerRadius={65} outerRadius={85} paddingAngle={5} dataKey="value">
-                  {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={4} dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 space-y-4">
+
+          <div className="mt-2 space-y-1">
             {pieData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-sm py-2 border-t border-gray-50">
+              <div key={item.name} className="flex items-center justify-between py-2.5 border-t border-gray-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                  <span className="text-gray-500">{item.name}</span>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-sm text-gray-500">{item.name}</span>
                 </div>
-                <span className="font-semibold text-[#0F172A]">{item.value}%</span>
+                <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );
