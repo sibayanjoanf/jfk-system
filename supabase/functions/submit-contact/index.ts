@@ -44,11 +44,11 @@ Hi ${firstName}!
 Thanks for reaching out to JFK Tile and Stone Builders. 
 We've received your message and will get back to you shortly!
 
-Here ang say mo:
+Here's your message:
 
 ${message}
 
-We'll contact you via ${email} or ${phone} or pede namang hinde sino ka ba hehe
+We'll contact you via ${email} or ${phone}.
 
 — JFK Tile and Stone Builders 🪨
   `.trim();
@@ -60,7 +60,7 @@ We'll contact you via ${email} or ${phone} or pede namang hinde sino ka ba hehe
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'JFK Tiles <onboarding@resend.dev>',
+      from: 'JFK Tile and Stone Builders <noreply@jfktiles.me>',
       to: email,
       subject: 'We received your message! 📧',
       text: emailBody,
