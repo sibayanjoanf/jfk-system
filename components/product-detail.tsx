@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Minus, Plus } from 'lucide-react';
-import { useCart } from '@/hooks/cart';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Minus, Plus } from "lucide-react";
+import { useCart } from "@/hooks/cart";
+import { cn } from "@/lib/utils";
 
 interface ProductActionsProps {
   product: {
@@ -22,41 +22,45 @@ interface ProductActionsProps {
 export function ProductDetailActions({ product }: ProductActionsProps) {
   const [selectedQty, setSelectedQty] = useState(1);
   const { items, addItem } = useCart();
-  
+
   const stockQtyNum = Number(product.stock_qty);
   const isOutOfStock = stockQtyNum <= 0;
-  const itemInCart = items.find(item => item.id === product.sku);
+  const itemInCart = items.find((item) => item.id === product.sku);
   const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
 
-  const isLimitReached = (currentQtyInCart + selectedQty) > stockQtyNum;
+  const isLimitReached = currentQtyInCart + selectedQty > stockQtyNum;
   const isFullyStockedInCart = currentQtyInCart >= stockQtyNum;
 
   const handleIncrement = () => {
     if (currentQtyInCart + selectedQty < stockQtyNum) {
-      setSelectedQty(prev => prev + 1);
+      setSelectedQty((prev) => prev + 1);
     }
   };
 
   const handleDecrement = () => {
     if (selectedQty > 1) {
-      setSelectedQty(prev => prev - 1);
+      setSelectedQty((prev) => prev - 1);
     }
   };
 
   const handleAddToCart = () => {
     if (isOutOfStock || isFullyStockedInCart) return;
 
-    addItem({ 
-      id: product.sku, 
-      name: product.name, 
-      sku: product.sku,
-      price: product.price, 
-      image: product.image_url,
-      stock_qty: product.stock_qty,
-      category: product.category,
-      sub_category: product.sub_category,
-      description: product.description
-    }, stockQtyNum, selectedQty);
+    addItem(
+      {
+        id: product.sku,
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        image: product.image_url,
+        stock_qty: product.stock_qty,
+        category: product.category,
+        sub_category: product.sub_category,
+        description: product.description,
+      },
+      stockQtyNum,
+      selectedQty,
+    );
   };
 
   return (
@@ -66,7 +70,7 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
         <div className="space-y-2">
           <p className="font-semibold">Quantity:</p>
           <div className="flex items-center border rounded-md w-fit bg-white">
-            <button 
+            <button
               onClick={handleDecrement}
               disabled={selectedQty <= 1}
               className="px-4 py-2 border-r hover:bg-gray-100 disabled:opacity-30 transition-colors"
@@ -98,7 +102,7 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
               }}
               className="w-14 text-center font-semibold text-sm bg-transparent focus:outline-none"
             />
-            <button 
+            <button
               onClick={handleIncrement}
               disabled={currentQtyInCart + selectedQty >= stockQtyNum}
               className="px-4 py-2 border-l hover:bg-gray-100 disabled:opacity-30 transition-colors"
@@ -111,26 +115,26 @@ export function ProductDetailActions({ product }: ProductActionsProps) {
 
       {/* Add to Cart Button */}
       <div className="flex flex-col sm:flex-row gap-3 mt-2">
-        <Button 
+        <Button
           onClick={handleAddToCart}
           disabled={isOutOfStock || isLimitReached || isFullyStockedInCart}
           className={cn(
             "cursor-pointer flex-1 h-14 rounded-lg font-bold uppercase tracking-wider text-md md:text-lg transition-all",
-            (isOutOfStock || isLimitReached || isFullyStockedInCart) 
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
-              : "bg-red-600 hover:bg-red-700 text-white active:scale-[0.98]"
+            isOutOfStock || isLimitReached || isFullyStockedInCart
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-red-600 hover:bg-red-700 text-white active:scale-[0.98]",
           )}
         >
-          {isOutOfStock 
-            ? "Out of Stock" 
-            : isFullyStockedInCart 
-            ? "Max in Cart" 
-            : isLimitReached 
-            ? "Limit Reached" 
-            : "Add to Cart"}
+          {isOutOfStock
+            ? "Out of Stock"
+            : isFullyStockedInCart
+              ? "Max in Cart"
+              : isLimitReached
+                ? "Limit Reached"
+                : "Add to Cart"}
         </Button>
       </div>
-      
+
       {currentQtyInCart > 0 && (
         <p className="text-xs text-gray-500 italic">
           You currently have {currentQtyInCart} in your cart.

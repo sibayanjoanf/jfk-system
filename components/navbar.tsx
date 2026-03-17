@@ -1,27 +1,36 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { ChevronDown, Menu, Minus, Package, Plus, Search, SearchIcon, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CategoryWithSub } from '@/lib/types';
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  Menu,
+  Minus,
+  Package,
+  Plus,
+  Search,
+  SearchIcon,
+  ShoppingCart,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CategoryWithSub } from "@/lib/types";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetDescription
-} from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
-import { Spinner } from './ui/spinner';
-import Image from 'next/image';
-import { useCart } from '@/hooks/cart';
-import { LucideIcon } from 'lucide-react';
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { Spinner } from "./ui/spinner";
+import Image from "next/image";
+import { useCart } from "@/hooks/cart";
+import { LucideIcon } from "lucide-react";
 
 type NavItem = {
   label: string;
-  href?: string; 
+  href?: string;
   icon?: LucideIcon;
   onClick?: () => void;
 };
@@ -30,12 +39,18 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<CategoryWithSub | null>(null);
+  const [activeCategory, setActiveCategory] = useState<CategoryWithSub | null>(
+    null,
+  );
   const [isCollectionOpen, setIsCollectionOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryWithSub[]>([]);
 
   const { updateQuantity } = useCart();
-  const handleQuantityChange = (itemId: string, newQuantity: number, stockQty: number) => {
+  const handleQuantityChange = (
+    itemId: string,
+    newQuantity: number,
+    stockQty: number,
+  ) => {
     if (newQuantity < 1) return;
 
     if (newQuantity > stockQty) {
@@ -46,59 +61,67 @@ export function Navbar() {
   };
 
   useEffect(() => {
-    fetch('/api/categories')
+    fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          const order = ['Tiles', 'Stones', 'Fixtures'];
-          const sortedCategories = data.data.sort((a: CategoryWithSub, b: CategoryWithSub) => {
-            const indexA = order.indexOf(a.name);
-            const indexB = order.indexOf(b.name);
-            const posA = indexA === -1 ? 99 : indexA;
-            const posB = indexB === -1 ? 99 : indexB;
-            return posA - posB;
-          });
+          const order = ["Tiles", "Stones", "Fixtures"];
+          const sortedCategories = data.data.sort(
+            (a: CategoryWithSub, b: CategoryWithSub) => {
+              const indexA = order.indexOf(a.name);
+              const indexB = order.indexOf(b.name);
+              const posA = indexA === -1 ? 99 : indexA;
+              const posB = indexB === -1 ? 99 : indexB;
+              return posA - posB;
+            },
+          );
           setCategories(sortedCategories);
         }
       });
   }, []);
 
-  const logo = "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png";
+  const logo =
+    "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png";
   const { items, totalPrice, removeItem, clearCart } = useCart();
   const totalQty = items.reduce((acc, item) => acc + item.quantity, 0);
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/about', label: 'About Us' },
-    { label: 'Collection', icon: ChevronDown },
-    { href: '/faq', label: 'FAQ' },
-    { href: '/contact', label: 'Contact' },
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About Us" },
+    { label: "Collection", icon: ChevronDown },
+    { href: "/faq", label: "FAQ" },
+    { href: "/contact", label: "Contact" },
   ];
 
   const navLinksMobile: NavItem[] = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About Us' },
-  { href: '/collection', label: 'All Collection' },
-  ...['Tiles', 'Stones', 'Fixtures'].map(name => ({
-    label: name,
-    icon: ChevronDown,
-    onClick: () => {
-      const cat = categories.find(c => c.name === name);
-      if (cat) {
-        setActiveCategory(cat);
-        setIsCategoryOpen(true);
-      }
-    }
-  })),
-  { href: '/faq', label: 'FAQ' },
-  { href: '/contact', label: 'Contact' },
-];
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About Us" },
+    { href: "/collection", label: "All Collection" },
+    ...["Tiles", "Stones", "Fixtures"].map((name) => ({
+      label: name,
+      icon: ChevronDown,
+      onClick: () => {
+        const cat = categories.find((c) => c.name === name);
+        if (cat) {
+          setActiveCategory(cat);
+          setIsCategoryOpen(true);
+        }
+      },
+    })),
+    { href: "/faq", label: "FAQ" },
+    { href: "/contact", label: "Contact" },
+  ];
 
   const navBtns = [
-  { href: '/search', icon: Search, isCart: false, onClick: undefined },
-  { href: '/track-order', icon: Package, isCart: false, onClick: undefined },
-  { href: '/cart', icon: ShoppingCart, isCart: true, onClick: () => setIsCartOpen(true) },
-];
+    { href: "/search", icon: Search, isCart: false, onClick: undefined },
+    { href: "/track-order", icon: Package, isCart: false, onClick: undefined },
+    {
+      href: "/cart",
+      icon: ShoppingCart,
+      isCart: true,
+      onClick: () => setIsCartOpen(true),
+    },
+  ];
 
   return (
     <header className="fixed top-0 z-50 w-full">
@@ -106,25 +129,25 @@ export function Navbar() {
       <div className="bg-red-600 text-white py-2 overflow-hidden">
         <div className="animate-marquee text-[10px] md:text-[10px] font-medium uppercase tracking-[0.2em]">
           <span className="marquee-content">
-            Special Offer: Get 10% off on all Floor Tiles this month! • 
-            Free delivery for orders over ₱50,000 • 
-            Visit our showrooms in Barit, Bulangon, and Rizal • 
-            Quality Tile and Stone Builders since 2009
+            Special Offer: Get 10% off on all Floor Tiles this month! • Free
+            delivery for orders over ₱50,000 • Visit our showrooms in Barit,
+            Bulangon, and Rizal • Quality Tile and Stone Builders since 2009
           </span>
           <span className="marquee-content">
-            Special Offer: Get 10% off on all Floor Tiles this month! • 
-            Free delivery for orders over ₱50,000 • 
-            Visit our showrooms in Barit, Bulangon, and Rizal • 
-            Quality Tile and Stone Builders since 2009 
+            Special Offer: Get 10% off on all Floor Tiles this month! • Free
+            delivery for orders over ₱50,000 • Visit our showrooms in Barit,
+            Bulangon, and Rizal • Quality Tile and Stone Builders since 2009
           </span>
         </div>
       </div>
 
       {/* Main Navbar */}
-      <nav 
+      <nav
         className={cn(
           "w-full bg-[#f8f8f8] transition-all duration-300",
-          isCollectionOpen ? "border-b border-gray-200" : "border-b border-transparent"
+          isCollectionOpen
+            ? "border-b border-gray-200"
+            : "border-b border-transparent",
         )}
         onMouseLeave={() => setIsCollectionOpen(false)}
       >
@@ -132,43 +155,55 @@ export function Navbar() {
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <img 
-                src={logo} 
-                alt="JFK Logo" 
-                className='h-9 w-auto object-contain'
+              <img
+                src={logo}
+                alt="JFK Logo"
+                className="h-9 w-auto object-contain"
               />
-              <div className='flex flex-col gap-[-10] leading-tight'>
-                <span className="text-xs font-semibold text-gray-900">Tile and </span>
-                <span className="text-xs font-semibold text-gray-900">Stone Builders</span>
+              <div className="flex flex-col gap-[-10] leading-tight">
+                <span className="text-xs font-semibold text-gray-900">
+                  Tile and{" "}
+                </span>
+                <span className="text-xs font-semibold text-gray-900">
+                  Stone Builders
+                </span>
               </div>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => {
-                const isCollection = link.label === 'Collection';
-                
+                const isCollection = link.label === "Collection";
+
                 const content = (
                   <>
                     <span>{link.label}</span>
                     {link.icon && (
-                      <link.icon className={cn(
-                        "h-4 w-4 transition-transform duration-300", 
-                        isCollectionOpen && isCollection && "rotate-180"
-                      )} />
+                      <link.icon
+                        className={cn(
+                          "h-4 w-4 transition-transform duration-300",
+                          isCollectionOpen && isCollection && "rotate-180",
+                        )}
+                      />
                     )}
                   </>
                 );
 
                 const commonClasses = cn(
                   "flex items-center space-x-1 text-sm font-medium transition-colors",
-                  isCollection && isCollectionOpen ? "text-red-600" : "text-black hover:text-red-600"
+                  isCollection && isCollectionOpen
+                    ? "text-red-600"
+                    : "text-black hover:text-red-600",
                 );
 
                 return (
-                  <div 
+                  <div
                     key={link.label}
-                    onMouseEnter={() => isCollection ? setIsCollectionOpen(true) : setIsCollectionOpen(false)}
+                    onMouseEnter={() =>
+                      isCollection
+                        ? setIsCollectionOpen(true)
+                        : setIsCollectionOpen(false)
+                    }
                     className="relative h-16 flex items-center"
                   >
                     {link.href ? (
@@ -176,7 +211,10 @@ export function Navbar() {
                         {content}
                       </Link>
                     ) : (
-                      <button type="button" className={cn(commonClasses, "cursor-default")}>
+                      <button
+                        type="button"
+                        className={cn(commonClasses, "cursor-default")}
+                      >
                         {content}
                       </button>
                     )}
@@ -189,7 +227,8 @@ export function Navbar() {
             <div className="hidden lg:flex md:space-x-4">
               {navBtns.map((link) => {
                 const Icon = link.icon;
-                const commonClasses = "flex items-center space-x-1 text-sm font-normal text-black transition-colors hover:text-red-600";
+                const commonClasses =
+                  "flex items-center space-x-1 text-sm font-normal text-black transition-colors hover:text-red-600";
                 const isCart = Icon === ShoppingCart;
 
                 if (link.onClick) {
@@ -197,10 +236,13 @@ export function Navbar() {
                     <button
                       key={link.href}
                       onClick={link.onClick}
-                      className={cn(commonClasses, "bg-transparent border-none cursor-pointer relative")}
+                      className={cn(
+                        commonClasses,
+                        "bg-transparent border-none cursor-pointer relative",
+                      )}
                     >
                       {Icon && <Icon className="h-4 w-4" />}
-                      
+
                       {isCart && totalQty > 0 && (
                         <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
                           {totalQty}
@@ -211,7 +253,11 @@ export function Navbar() {
                 }
 
                 return (
-                  <Link key={link.href} href={link.href} className={commonClasses}>
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={commonClasses}
+                  >
                     {Icon && <Icon className="h-4 w-4" />}
                   </Link>
                 );
@@ -222,41 +268,55 @@ export function Navbar() {
             <div className="flex lg:hidden items-center space-x-1">
               <button onClick={() => setIsCartOpen(true)} className="relative">
                 <ShoppingCart className="h-4 w-4 hover:text-red-600"></ShoppingCart>
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                    {totalQty}
-                  </span>
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                  {totalQty}
+                </span>
               </button>
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild className="lg:hidden">
-                  <Button variant="ghost" size="icon" className="hover:text-red-600 hover:bg-transparent">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:text-red-600 hover:bg-transparent"
+                  >
                     <Menu className="h-6 w-6 hover:text-red-600" />
                     <span className="sr-only">Toggle Menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-full sm:w-100 flex flex-col h-full p-0">
+                <SheetContent
+                  side="left"
+                  className="w-full sm:w-100 flex flex-col h-full p-0"
+                >
                   {/* Header Section */}
                   <div className="p-auto pb-2">
                     <SheetHeader>
                       <SheetTitle className="flex items-center space-x-2">
-                        <img 
-                          src={logo} 
-                          alt="JFK Logo" 
-                          className='h-9 w-auto object-contain'
+                        <img
+                          src={logo}
+                          alt="JFK Logo"
+                          className="h-9 w-auto object-contain"
                         />
-                        <div className='flex flex-col leading-tight'>
-                          <span className="text-xs font-semibold text-gray-900">Tile and </span>
-                          <span className="text-xs font-semibold text-gray-900">Stone Builders</span>
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-xs font-semibold text-gray-900">
+                            Tile and{" "}
+                          </span>
+                          <span className="text-xs font-semibold text-gray-900">
+                            Stone Builders
+                          </span>
                         </div>
                       </SheetTitle>
-                      <SheetDescription className="sr-only">Categories</SheetDescription>
+                      <SheetDescription className="sr-only">
+                        Categories
+                      </SheetDescription>
                     </SheetHeader>
                   </div>
 
                   {/* Navigations */}
                   <div className="flex-1 overflow-y-auto mt-4 flex flex-col space-y-6 px-6">
                     {navLinksMobile.map((link) => {
-                      const commonClasses = "flex items-center space-x-3 text-md font-normal text-gray-900 transition-colors hover:text-red-600";
-                      
+                      const commonClasses =
+                        "flex items-center space-x-3 text-md font-normal text-gray-900 transition-colors hover:text-red-600";
+
                       if (link.href) {
                         return (
                           <Link
@@ -270,12 +330,12 @@ export function Navbar() {
                         );
                       }
                       return (
-                        <div 
-                          key={link.label} 
+                        <div
+                          key={link.label}
                           className={cn(commonClasses, "cursor-pointer")}
                           onClick={() => {
-                            link.onClick?.(); 
-                            setIsOpen(false); 
+                            link.onClick?.();
+                            setIsOpen(false);
                           }}
                         >
                           <span>{link.label}</span>
@@ -288,13 +348,21 @@ export function Navbar() {
                   {/* Button Section (Search & Track) */}
                   <div className="mt-auto p-6">
                     <div className="flex justify-between gap-4">
-                      <Link href="/search" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/search"
+                        className="flex-1"
+                        onClick={() => setIsOpen(false)}
+                      >
                         <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
                           <SearchIcon className="mb-1" />
                           <span className="text-sm">Search</span>
                         </div>
                       </Link>
-                      <Link href="/track-order" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/track-order"
+                        className="flex-1"
+                        onClick={() => setIsOpen(false)}
+                      >
                         <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
                           <Package className="mb-1" />
                           <span className="text-sm">Track Order</span>
@@ -308,12 +376,17 @@ export function Navbar() {
 
             {/* Mobile Category Menu */}
             <Sheet open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
-              <SheetContent side="left" className="w-full sm:w-100 flex flex-col h-full p-0">
+              <SheetContent
+                side="left"
+                className="w-full sm:w-100 flex flex-col h-full p-0"
+              >
                 <SheetHeader>
                   <SheetTitle className="sr-only">Category Menu</SheetTitle>
-                  <SheetDescription className="sr-only">Sub-Categories</SheetDescription>
+                  <SheetDescription className="sr-only">
+                    Sub-Categories
+                  </SheetDescription>
                   <div className="py-5">
-                    <button 
+                    <button
                       onClick={() => {
                         setIsCategoryOpen(false);
                         setIsOpen(true);
@@ -329,7 +402,7 @@ export function Navbar() {
                   <div className="flex-1 overflow-y-auto flex flex-col">
                     {activeCategory && (
                       <Link
-                        href={`/collection/${activeCategory.name.toLowerCase().replace(/\s+/g, '-')}`}
+                        href={`/collection/${activeCategory.name.toLowerCase().replace(/\s+/g, "-")}`}
                         onClick={() => {
                           setIsCategoryOpen(false);
                           setIsOpen(false);
@@ -337,7 +410,9 @@ export function Navbar() {
                         className="group px-6 py-4 text-lg font-semibold text-red-600 flex justify-between items-center"
                       >
                         All {activeCategory.name}
-                        <span className="text-xs uppercase tracking-widest group-hover:underline">Explore</span>
+                        <span className="text-xs uppercase tracking-widest group-hover:underline">
+                          Explore
+                        </span>
                       </Link>
                     )}
                     <div className="flex flex-col">
@@ -345,8 +420,8 @@ export function Navbar() {
                         <Link
                           key={sub.id}
                           href={{
-                            pathname: `/collection/${activeCategory?.name?.toLowerCase().replace(/\s+/g, '-')}`,
-                            query: { sub: sub.name }
+                            pathname: `/collection/${activeCategory?.name?.toLowerCase().replace(/\s+/g, "-")}`,
+                            query: { sub: sub.name },
                           }}
                           onClick={() => {
                             setIsCategoryOpen(false);
@@ -355,9 +430,7 @@ export function Navbar() {
                           className="group px-6 py-4 text-gray-900 hover:text-red-600 transition-colors flex justify-between items-center"
                         >
                           {sub.name}
-                          <ChevronDown 
-                            className="-rotate-90 h-4 w-4 text-gray-300 group-hover:text-red-600 transition-colors" 
-                          />
+                          <ChevronDown className="-rotate-90 h-4 w-4 text-gray-300 group-hover:text-red-600 transition-colors" />
                         </Link>
                       ))}
                     </div>
@@ -368,13 +441,21 @@ export function Navbar() {
 
             {/* Cart Menu */}
             <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-              <SheetContent side="right" className="bg-white w-full [&>button]:hidden"> 
+              <SheetContent
+                side="right"
+                className="bg-white w-full [&>button]:hidden"
+              >
                 <SheetTitle className="sr-only"></SheetTitle>
                 <SheetDescription className="sr-only"></SheetDescription>
                 <div className="mt-5 flex flex-col">
                   <div className="py-3 mx-6 flex justify-between font-medium text-sm text-gray-600 border-b">
                     <p className="uppercase">Items in Cart ({items.length})</p>
-                    <p onClick={() => clearCart()} className="text-red-600 cursor-pointer">Clear Cart</p>
+                    <p
+                      onClick={() => clearCart()}
+                      className="text-red-600 cursor-pointer"
+                    >
+                      Clear Cart
+                    </p>
                   </div>
                 </div>
 
@@ -382,9 +463,11 @@ export function Navbar() {
                   {items.length === 0 ? (
                     <div className="flex h-full flex-col justify-center items-center space-y-4">
                       <ShoppingCart className="h-10 w-10 text-red-600" />
-                      <p className="text-md font-medium text-red-600">Your cart is empty</p>
-                      <Button 
-                        variant="outline" 
+                      <p className="text-md font-medium text-red-600">
+                        Your cart is empty
+                      </p>
+                      <Button
+                        variant="outline"
                         onClick={() => setIsCartOpen(false)}
                         className="hover:bg-gray-100 text-gray-500 text-xs bg-transparent"
                       >
@@ -393,26 +476,39 @@ export function Navbar() {
                     </div>
                   ) : (
                     items.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center py-6 border-b mx-6">
-                        <Link 
-                          href={`/collection/${item.category.toLowerCase().replace(/\s+/g, '-')}/${item.sub_category.toLowerCase().replace(/\s+/g, '-')}/${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center py-6 border-b mx-6"
+                      >
+                        <Link
+                          href={`/collection/${item.category.toLowerCase().replace(/\s+/g, "-")}/${item.sub_category.toLowerCase().replace(/\s+/g, "-")}/${item.name.toLowerCase().replace(/\s+/g, "-")}`}
                         >
                           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md  border-gray-200 mr-4">
-                            <Image 
-                              src={item.image || '/placeholder.png'} 
-                              alt={item.name} 
-                              fill 
+                            <Image
+                              src={item.image || "/placeholder.png"}
+                              alt={item.name}
+                              fill
                               className="object-cover"
                               sizes="80px"
                             />
                           </div>
                         </Link>
                         <div className="relative -ml-8">
-                          <p className="font-medium text-sm w-[15vh]">{item.name}</p>
-                          <p className="font-normal text-xs w-[15vh] text-gray-500 mt-1">{item.sku}</p>
+                          <p className="font-medium text-sm w-[15vh]">
+                            {item.name}
+                          </p>
+                          <p className="font-normal text-xs w-[15vh] text-gray-500 mt-1">
+                            {item.sku}
+                          </p>
                           <div className="w-fit flex items-center border rounded-md bg-transparent mt-2">
-                            <button 
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.stock_qty)}
+                            <button
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.id,
+                                  item.quantity - 1,
+                                  item.stock_qty,
+                                )
+                              }
                               disabled={item.quantity <= 1}
                               className="p-2 border-r hover:bg-gray-100 disabled:opacity-30 transition-colors"
                             >
@@ -426,20 +522,41 @@ export function Navbar() {
                               onChange={(e) => {
                                 const val = parseInt(e.target.value);
                                 if (!isNaN(val)) {
-                                  handleQuantityChange(item.id, Math.min(Math.max(1, val), item.stock_qty), item.stock_qty);
+                                  handleQuantityChange(
+                                    item.id,
+                                    Math.min(Math.max(1, val), item.stock_qty),
+                                    item.stock_qty,
+                                  );
                                 } else if (e.target.value === "") {
-                                  handleQuantityChange(item.id, 0, item.stock_qty);
+                                  handleQuantityChange(
+                                    item.id,
+                                    0,
+                                    item.stock_qty,
+                                  );
                                 }
                               }}
                               onBlur={(e) => {
-                                if (e.target.value === "" || parseInt(e.target.value) < 1) {
-                                  handleQuantityChange(item.id, 1, item.stock_qty);
+                                if (
+                                  e.target.value === "" ||
+                                  parseInt(e.target.value) < 1
+                                ) {
+                                  handleQuantityChange(
+                                    item.id,
+                                    1,
+                                    item.stock_qty,
+                                  );
                                 }
                               }}
                               className="w-10 text-center font-semibold text-xs bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
-                            <button 
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock_qty)}
+                            <button
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.id,
+                                  item.quantity + 1,
+                                  item.stock_qty,
+                                )
+                              }
                               disabled={item.quantity >= item.stock_qty}
                               className="p-2 border-l hover:bg-gray-100 disabled:opacity-30 transition-colors"
                             >
@@ -450,8 +567,12 @@ export function Navbar() {
                         <div className="text-right">
                           <p className="font-semibold text-sm">
                             <span className="font-medium">₱ </span>
-                            {(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                          <button 
+                            {(item.price * item.quantity).toLocaleString(
+                              undefined,
+                              { minimumFractionDigits: 2 },
+                            )}
+                          </p>
+                          <button
                             onClick={() => removeItem(item.id)}
                             className="text-xs text-red-500 underline cursor-pointer"
                           >
@@ -468,9 +589,11 @@ export function Navbar() {
                     <div className="flex justify-between font-semibold text-md">
                       <span>Total</span>
                       <span>
-                        <span className="font-medium">₱ </span> 
-                          {totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
+                        <span className="font-medium">₱ </span>
+                        {totalPrice.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
                     </div>
                     <div className="flex w-full mt-5 gap-3">
                       <Button
@@ -480,7 +603,11 @@ export function Navbar() {
                       >
                         Keep Browsing
                       </Button>
-                      <Link href="/cart" onClick={() => setIsCartOpen(false)} className="flex-1">
+                      <Link
+                        href="/cart"
+                        onClick={() => setIsCartOpen(false)}
+                        className="flex-1"
+                      >
                         <Button className="w-full h-11 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm cursor-pointer">
                           View Cart
                         </Button>
@@ -492,23 +619,25 @@ export function Navbar() {
             </Sheet>
 
             {/* Collection Overlay */}
-            <div 
+            <div
               className={cn(
                 "fixed inset-0 top-22.5 bg-black/30 transition-opacity duration-500 z-[-2] pointer-events-none",
-                isCollectionOpen ? "opacity-100" : "opacity-0"
+                isCollectionOpen ? "opacity-100" : "opacity-0",
               )}
             />
-            <div 
+            <div
               className={cn(
                 "absolute left-0 top-22.5 w-full bg-[#f8f8f8] border-b border-gray-200 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[-1] overflow-hidden",
-                isCollectionOpen ? "max-h-fit opacity-100" : "max-h-0 opacity-0"
+                isCollectionOpen
+                  ? "max-h-fit opacity-100"
+                  : "max-h-0 opacity-0",
               )}
             >
               <div className="container mx-auto py-12 px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                 {categories.map((category) => (
                   <div key={category.id} className="flex flex-col space-y-4">
-                    <Link 
-                      href={`/collection/${category.name.toLowerCase().replace(/\s+/g, '-')}`} 
+                    <Link
+                      href={`/collection/${category.name.toLowerCase().replace(/\s+/g, "-")}`}
                       className="hover:text-red-600 transition-colors"
                       onClick={() => setIsCollectionOpen(false)}
                     >
@@ -516,15 +645,15 @@ export function Navbar() {
                         {category.name}
                       </h3>
                     </Link>
-                    
+
                     <div className="flex flex-col space-y-4 text-sm text-gray-600 border-l border-gray-100">
                       {category.sub_categories?.map((sub) => (
-                        <Link 
-                          key={sub.id} 
+                        <Link
+                          key={sub.id}
                           href={{
-                            pathname: `/collection/${category.name.toLowerCase().replace(/\s+/g, '-')}`,
-                            query: { sub: sub.name }
-                          }} 
+                            pathname: `/collection/${category.name.toLowerCase().replace(/\s+/g, "-")}`,
+                            query: { sub: sub.name },
+                          }}
                           className="hover:text-red-600 transition-colors"
                           onClick={() => setIsCollectionOpen(false)}
                         >
@@ -538,15 +667,17 @@ export function Navbar() {
                 <Link href="/collection">
                   <div className="relative bg-gray-300 flex justify-center items-center rounded-md h-32 shadow-2xl">
                     <div className="absolute inset-0 z-0">
-                      <Image 
+                      <Image
                         src="/images/featured-photo-3.png"
-                        alt='all_collection_img'
+                        alt="all_collection_img"
                         fill
                         className="object-cover rounded-md"
                       />
                     </div>
                     <div className="absolute inset-0 rounded-md bg-black/30 hover:bg-black/0 transition-colors duration-300 z-10"></div>
-                    <p className="relative text-lg font-semibold text-white z-20">All Collection</p>
+                    <p className="relative text-lg font-semibold text-white z-20">
+                      All Collection
+                    </p>
                   </div>
                 </Link>
 

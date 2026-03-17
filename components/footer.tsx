@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { Package, Mail, Phone, MapPin, UserRound } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import Link from "next/link";
+import { Package, Mail, Phone, MapPin, UserRound } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -12,10 +12,13 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <span className="text-lg text-gray-800 font-semibold">JFK Tile and Stone Builders</span>
+              <span className="text-lg text-gray-800 font-semibold">
+                JFK Tile and Stone Builders
+              </span>
             </div>
             <p className="text-sm text-gray-600">
-              Your trusted partner for quality tiles, stones, and construction materials in Laoag City.
+              Your trusted partner for quality tiles, stones, and construction
+              materials in Laoag City.
             </p>
             <div className="flex text-gray-600 hover:underline cursor-pointer">
               <UserRound className="h-4 w-4 inline-block mr-2" />
@@ -32,7 +35,10 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/about" className="text-gray-600 hover:text-red-600">
+                <Link
+                  href="/about"
+                  className="text-gray-600 hover:text-red-600"
+                >
                   About Us
                 </Link>
               </li>
@@ -42,12 +48,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-gray-600 hover:text-red-600">
+                <Link
+                  href="/contact"
+                  className="text-gray-600 hover:text-red-600"
+                >
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/track-order" className="text-gray-600 hover:text-red-600">
+                <Link
+                  href="/track-order"
+                  className="text-gray-600 hover:text-red-600"
+                >
                   Track Order
                 </Link>
               </li>
@@ -61,17 +73,26 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/collection/tiles" className="text-gray-600 hover:text-red-600">
+                <Link
+                  href="/collection/tiles"
+                  className="text-gray-600 hover:text-red-600"
+                >
                   Tiles
                 </Link>
               </li>
               <li>
-                <Link href="/collection/stones" className="text-gray-600 hover:text-red-600">
+                <Link
+                  href="/collection/stones"
+                  className="text-gray-600 hover:text-red-600"
+                >
                   Stones
                 </Link>
               </li>
               <li>
-                <Link href="/collection/fixtures" className="text-gray-600 hover:text-red-600">
+                <Link
+                  href="/collection/fixtures"
+                  className="text-gray-600 hover:text-red-600"
+                >
                   Fixtures
                 </Link>
               </li>
@@ -103,7 +124,9 @@ export function Footer() {
         <Separator className="my-8" />
 
         <div className="flex flex-col items-center justify-between space-y-4 text-sm text-gray-600 md:flex-row md:space-y-0">
-          <p>© {currentYear} JFK Tile and Stone Builders. All rights reserved.</p>
+          <p>
+            © {currentYear} JFK Tile and Stone Builders. All rights reserved.
+          </p>
           <div className="flex space-x-4">
             <Link href="/terms-and-conditions" className="hover:text-red-600">
               Terms & Conditions

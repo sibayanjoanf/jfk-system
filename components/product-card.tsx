@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Eye, Minus, Plus } from 'lucide-react';
+import Image from "next/image";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Eye, Minus, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { useState } from 'react';
-import { useCart } from '@/hooks/cart';
-import { cn } from '@/lib/utils';
-import { ProductVariant } from '@/lib/types';
+import { useState } from "react";
+import { useCart } from "@/hooks/cart";
+import { cn } from "@/lib/utils";
+import { ProductVariant } from "@/lib/types";
 
 interface ProductCardProps {
   sku: string;
@@ -29,12 +29,24 @@ interface ProductCardProps {
   variants?: ProductVariant[];
 }
 
-export function ProductCard({ sku, name, price, image, category, sub_category, stock_qty, description, variants }: ProductCardProps) {
+export function ProductCard({
+  sku,
+  name,
+  price,
+  image,
+  category,
+  sub_category,
+  stock_qty,
+  description,
+  variants,
+}: ProductCardProps) {
   const [isAddedtoCart, setIsAddedtoCart] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedQty, setSelectedQty] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    variants && variants.length > 0 ? (variants.find(v => v.stock_qty > 0) ?? variants[0]) : null
+    variants && variants.length > 0
+      ? (variants.find((v) => v.stock_qty > 0) ?? variants[0])
+      : null,
   );
   const { items, addItem } = useCart();
 
@@ -44,24 +56,30 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
   const activeStockQty = selectedVariant?.stock_qty ?? stock_qty;
 
   const stockQtyNum = Number(activeStockQty);
-  const itemInCart = items.find(item => item.id === activeSku);
+  const itemInCart = items.find((item) => item.id === activeSku);
   const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
-  const isLimitReached = (currentQtyInCart + selectedQty) > stockQtyNum;
+  const isLimitReached = currentQtyInCart + selectedQty > stockQtyNum;
   const isFullyStockedInCart = currentQtyInCart >= stockQtyNum;
 
-  const isOutOfStock = variants && variants.length > 0
-  ? variants.every(v => v.stock_qty <= 0)
-  : stockQtyNum <= 0;
+  const isOutOfStock =
+    variants && variants.length > 0
+      ? variants.every((v) => v.stock_qty <= 0)
+      : stockQtyNum <= 0;
 
   const hasVariants = variants && variants.length > 1;
 
   // variants by attribute_name
-  const grouped = hasVariants ? variants!.reduce((acc, v) => {
-    const key = v.attribute_name || 'Variant';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(v);
-    return acc;
-  }, {} as Record<string, ProductVariant[]>) : {};
+  const grouped = hasVariants
+    ? variants!.reduce(
+        (acc, v) => {
+          const key = v.attribute_name || "Variant";
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(v);
+          return acc;
+        },
+        {} as Record<string, ProductVariant[]>,
+      )
+    : {};
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -72,13 +90,13 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
 
   const handleIncrement = () => {
     if (currentQtyInCart + selectedQty < stockQtyNum) {
-      setSelectedQty(prev => prev + 1);
+      setSelectedQty((prev) => prev + 1);
     }
   };
 
   const handleDecrement = () => {
     if (selectedQty > 1) {
-      setSelectedQty(prev => prev - 1);
+      setSelectedQty((prev) => prev - 1);
     }
   };
 
@@ -86,58 +104,70 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock || isFullyStockedInCart) return;
-    addItem({
-      id: activeSku,
-      name,
-      sku: activeSku,
-      price: activePrice,
-      image: activeImage,
-      stock_qty: activeStockQty,
-      category,
-      sub_category,
-    }, stockQtyNum, selectedQty);
+    addItem(
+      {
+        id: activeSku,
+        name,
+        sku: activeSku,
+        price: activePrice,
+        image: activeImage,
+        stock_qty: activeStockQty,
+        category,
+        sub_category,
+      },
+      stockQtyNum,
+      selectedQty,
+    );
     setIsOpen(false);
     setIsAddedtoCart(true);
   };
 
-  const productUrl = `/collection/${category.toLowerCase().replace(/\s+/g, '-')}/${sub_category.toLowerCase().replace(/\s+/g, '-')}/${name.toLowerCase().replace(/\s+/g, '-')}`;
+  const productUrl = `/collection/${category.toLowerCase().replace(/\s+/g, "-")}/${sub_category.toLowerCase().replace(/\s+/g, "-")}/${name.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
     <>
       <Link href={productUrl}>
         <Card className="group relative flex h-full flex-col overflow-hidden pt-0 pb-4 border-none shadow-none rounded-none">
-          <CardContent className='p-0'>
+          <CardContent className="p-0">
             <div className="relative aspect-square overflow-hidden bg-white">
               <Image
                 src={activeImage}
                 alt={name}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover transition-transform group-hover:scale-105"
+                className="object-cover transition-transform group-hover:scale-105 rounded-lg"
               />
-              {isOutOfStock ? (
-                <div className="absolute left-4 top-0 z-20 bg-red-600 text-white px-3 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider">
-                  Out of Stock
-                </div>
-              ) : stockQtyNum <= 5 ? (
-                <div className="absolute left-4 top-0 z-20 bg-amber-500 text-white px-3 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider">
-                  Low Stock
-                </div>
-              ) : null}
               <div
                 onClick={handleQuickView}
                 className="hidden lg:flex absolute bottom-3 right-4 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg transition-all duration-300 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 shadow-md z-10 cursor-pointer"
               >
-                <span className="text-[#f8f8f8] text-sm font-medium whitespace-nowrap">Quick View</span>
+                <span className="text-[#f8f8f8] text-sm font-medium whitespace-nowrap">
+                  Quick View
+                </span>
               </div>
             </div>
-            <div className="grow p-4 pr-12">
-              <h3 className="mb-2 text-sm md:text-md font-semibold text-gray-900">{name}</h3>
-              <p className="text-sm font-medium text-red-600">₱ {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <div className="grow py-2 pr-12">
+              {isOutOfStock ? (
+                <span className="inline-block mb-2 bg-red-600 text-white px-3 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider">
+                  Out of Stock
+                </span>
+              ) : stockQtyNum <= 5 ? (
+                <span className="inline-block mb-2 bg-amber-500 text-white px-3 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider">
+                  Low Stock
+                </span>
+              ) : null}
+              <h3 className="mb-2 text-sm md:text-md font-semibold text-gray-900">
+                {name}
+              </h3>
+              <p className="text-sm font-medium text-red-600">
+                ₱{" "}
+                {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
             </div>
             <div
               onClick={handleQuickView}
-              className="lg:hidden absolute bottom-4 right-4 bg-white hover:bg-gray-100 p-2 rounded-full border border-gray-200 text-gray-900 pointer-events-auto">
+              className="lg:hidden absolute bottom-4 right-4 bg-white hover:bg-gray-100 p-2 rounded-full border border-gray-200 text-gray-900 pointer-events-auto"
+            >
               <Eye size={20} />
             </div>
           </CardContent>
@@ -149,7 +179,9 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
         <DialogContent className="w-[95vw] sm:max-w-sm md:max-w-2xl lg:max-w-4xl h-[90vh] md:h-fit p-0 overflow-hidden border-none shadow-none">
           <DialogHeader className="sr-only">
             <DialogTitle>{name}</DialogTitle>
-            <DialogDescription>Product details and purchase options for {name}</DialogDescription>
+            <DialogDescription>
+              Product details and purchase options for {name}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-rows-[1fr_auto] md:grid-cols-2 gap-0">
@@ -158,14 +190,16 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                 src={activeImage}
                 alt={name}
                 fill
-                className="object-contain"
+                className="object-fill"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
 
             <div className="flex flex-col justify-between p-6 md:p-12">
               <div>
-                <h2 className="text-md md:text-xl font-semibold text-center md:text-left">{name}</h2>
+                <h2 className="text-md md:text-xl font-semibold text-center md:text-left">
+                  {name}
+                </h2>
                 <p className="text-center md:text-left text-sm text-gray-400 font-semibold mt-1 mb-6">
                   Category <span className="font-normal">{sub_category}</span>
                 </p>
@@ -175,21 +209,25 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                   {hasVariants ? (
                     Object.entries(grouped).map(([attrName, attrVariants]) => (
                       <div key={attrName}>
-                        <p className="font-semibold mb-2">
-                          {attrName}:
-                        </p>
+                        <p className="font-semibold mb-2">{attrName}:</p>
                         <div className="flex flex-wrap gap-2">
                           {attrVariants.map((v) => (
                             <button
                               key={v.id}
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedVariant(v); setSelectedQty(1); }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedVariant(v);
+                                setSelectedQty(1);
+                              }}
                               disabled={v.stock_qty <= 0}
                               className={cn(
                                 "relative px-4 py-1.5 border rounded-md text-xs font-medium transition-all overflow-hidden",
                                 selectedVariant?.id === v.id
                                   ? "bg-red-600 text-white border-red-600"
                                   : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
-                                v.stock_qty <= 0 && "opacity-40 cursor-not-allowed"
+                                v.stock_qty <= 0 &&
+                                  "opacity-40 cursor-not-allowed",
                               )}
                             >
                               {v.attribute_value}
@@ -205,8 +243,13 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                     ))
                   ) : (
                     <div>
-                      <p className="mt-1 mb-3 font-normal text-gray-600">{description}</p>
-                      <p>Stock: <span className="font-normal">{activeStockQty}</span></p>
+                      <p className="mt-1 mb-3 font-normal text-gray-600">
+                        {description}
+                      </p>
+                      <p>
+                        Stock:{" "}
+                        <span className="font-normal">{activeStockQty}</span>
+                      </p>
                     </div>
                   )}
                 </div>
@@ -216,7 +259,10 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-1 justify-between items-center">
                     <span className="text-2xl font-medium text-red-600">
-                      ₱ {activePrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      ₱{" "}
+                      {activePrice.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </span>
 
                     {!isOutOfStock && !isFullyStockedInCart && (
@@ -236,20 +282,27 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                           value={selectedQty === 0 ? "" : selectedQty}
                           onChange={(e) => {
                             const val = e.target.value;
-                            if (val === "") { setSelectedQty(0); return; }
+                            if (val === "") {
+                              setSelectedQty(0);
+                              return;
+                            }
                             if (/^\d+$/.test(val)) {
                               const num = parseInt(val, 10);
                               const maxAllowed = stockQtyNum - currentQtyInCart;
                               setSelectedQty(Math.min(num, maxAllowed));
                             }
                           }}
-                          onBlur={() => { if (selectedQty < 1) setSelectedQty(1); }}
+                          onBlur={() => {
+                            if (selectedQty < 1) setSelectedQty(1);
+                          }}
                           className="w-10 text-center font-semibold text-sm bg-transparent focus:outline-none"
                         />
                         <button
                           onClick={handleIncrement}
                           className="p-2 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-                          disabled={currentQtyInCart + selectedQty >= stockQtyNum}
+                          disabled={
+                            currentQtyInCart + selectedQty >= stockQtyNum
+                          }
                         >
                           <Plus size={16} />
                         </button>
@@ -263,10 +316,16 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
                       disabled={isOutOfStock || isLimitReached}
                       className={cn(
                         "flex-1 h-12 py-3 rounded-lg font-bold uppercase tracking-wider cursor-pointer",
-                        (isOutOfStock || isLimitReached) ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
+                        isOutOfStock || isLimitReached
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-red-600 hover:bg-red-700 text-white",
                       )}
                     >
-                      {isOutOfStock ? "Out of Stock" : isLimitReached ? "Limit Reached" : "Add to Cart"}
+                      {isOutOfStock
+                        ? "Out of Stock"
+                        : isLimitReached
+                          ? "Limit Reached"
+                          : "Add to Cart"}
                     </Button>
                   </div>
                 </div>
@@ -278,38 +337,65 @@ export function ProductCard({ sku, name, price, image, category, sub_category, s
 
       {/* Added to Cart Modal */}
       <Dialog open={isAddedtoCart} onOpenChange={setIsAddedtoCart}>
-        <DialogContent className="
+        <DialogContent
+          className="
           left-auto top-auto translate-x-0 translate-y-0
           fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto
           w-auto sm:w-[400px] md:w-[500px] h-auto min-h-0
           p-4 shadow-2xl rounded-xl border border-gray-100
           [&>button]:hidden duration-500 animate-in fade-in slide-in-from-bottom-10
-        ">
+        "
+        >
           <DialogHeader>
-            <DialogTitle className="text-center text-sm bg-gray-200 text-gray-500 py-3 rounded-lg">Item Added to Cart!</DialogTitle>
-            <DialogDescription className="sr-only">{name} is added to your cart.</DialogDescription>
+            <DialogTitle className="text-center text-sm bg-gray-200 text-gray-500 py-3 rounded-lg">
+              Item Added to Cart!
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {name} is added to your cart.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="items-center justify-center flex pb-3">
-              <Image src={activeImage} alt={name} width={200} height={200} className="object-fill" />
+              <Image
+                src={activeImage}
+                alt={name}
+                width={200}
+                height={200}
+                className="object-fill rounded-lg"
+              />
             </div>
             <div className="md:col-span-2 flex flex-col leading-tight">
               <DialogHeader>
-                <DialogTitle className="text-md text-center md:text-start">{name}</DialogTitle>
-                <p className="text-sm text-center md:text-start text-gray-500">{activeSku}</p>
+                <DialogTitle className="text-md text-center md:text-start">
+                  {name}
+                </DialogTitle>
+                <p className="text-sm text-center md:text-start text-gray-500">
+                  {activeSku}
+                </p>
                 <div className="flex flex-row justify-between items-center">
-                  <p className="text-lg text-center md:text-start font-medium text-red-600">₱ {(activePrice * selectedQty).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                  <p className="text-sm text-center font-normal text-gray-500">Qty: {selectedQty}</p>
+                  <p className="text-lg text-center md:text-start font-medium text-red-600">
+                    ₱{" "}
+                    {(activePrice * selectedQty).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                  </p>
+                  <p className="text-sm text-center font-normal text-gray-500">
+                    Qty: {selectedQty}
+                  </p>
                 </div>
                 <div className="flex gap-3">
-                  <Button className="border border-gray-200 h-10 flex-1 text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 w-full mt-5 cursor-pointer" 
+                  <Button
+                    className="border border-gray-200 h-10 flex-1 text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 w-full mt-5 cursor-pointer"
                     variant="ghost"
                     onClick={() => setIsAddedtoCart(false)}
                   >
-                      Keep Browsing
-                    </Button>
+                    Keep Browsing
+                  </Button>
                   <Link href={"/cart"} className="flex-1">
-                    <Button className="h-10 bg-red-600 hover:bg-red-700 text-white w-full mt-5 cursor-pointer" onClick={() => setIsAddedtoCart(false)}>
+                    <Button
+                      className="h-10 bg-red-600 hover:bg-red-700 text-white w-full mt-5 cursor-pointer"
+                      onClick={() => setIsAddedtoCart(false)}
+                    >
                       View Cart
                     </Button>
                   </Link>

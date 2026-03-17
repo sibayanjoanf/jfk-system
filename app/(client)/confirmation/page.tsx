@@ -1,9 +1,9 @@
 "use client";
 
-import Image from 'next/image';
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/footer';
-import Link from 'next/link';
+import Image from "next/image";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import Link from "next/link";
 
 export default function ConfirmationPage() {
   return (
@@ -18,7 +18,7 @@ export default function ConfirmationPage() {
             fill
             className="object-cover"
             priority
-          /> 
+          />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 md:px-12">
@@ -33,8 +33,9 @@ export default function ConfirmationPage() {
             </div>
 
             <p className="text-base text-gray-700 leading-relaxed">
-              We&apos;ve sent a confirmation to your email address. Our team will reach out within 24 hours to confirm 
-              availability, pricing, and delivery details.
+              We&apos;ve sent a confirmation to your email address. Our team
+              will reach out within 24 hours to confirm availability, pricing,
+              and delivery details.
             </p>
 
             <div className="pt-2">

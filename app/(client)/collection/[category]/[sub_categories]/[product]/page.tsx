@@ -1,14 +1,20 @@
-import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import { notFound } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { Footer } from '@/components/footer';
-import { Navbar } from '@/components/navbar';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { ProductCard } from '@/components/product-card';
-import { Product } from '@/lib/types';
-import { ProductDetailVariant } from '@/components/product-detail-variant';
-import { Reveal } from '@/components/reveal';
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { notFound } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/navbar";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { ProductCard } from "@/components/product-card";
+import { Product } from "@/lib/types";
+import { ProductDetailVariant } from "@/components/product-detail-variant";
+import { Reveal } from "@/components/reveal";
 
 interface PageProps {
   params: Promise<{
@@ -30,8 +36,12 @@ function AlsoLikeSection({ title, products }: ProductFeatureProps) {
 
   return (
     <div className="container mx-auto flex flex-col justify-between">
-      <div className={cn("mb-8 flex flex-col lg:flex-row lg:justify-between gap-2",
-        title === "Tiles" ? "mt-0" : "mt-5")}>
+      <div
+        className={cn(
+          "mb-8 flex flex-col lg:flex-row lg:justify-between gap-2",
+          title === "Tiles" ? "mt-0" : "mt-5",
+        )}
+      >
         <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
       </div>
       <Carousel
@@ -47,14 +57,19 @@ function AlsoLikeSection({ title, products }: ProductFeatureProps) {
             if (!variant) return null;
 
             return (
-              <CarouselItem key={product.id} className="basis-3/4 sm:basis-1/3 md:basis-1/3 lg:basis-1/5">
+              <CarouselItem
+                key={product.id}
+                className="basis-3/4 sm:basis-1/3 md:basis-1/3 lg:basis-1/5"
+              >
                 <ProductCard
                   sku={variant.sku}
                   name={product.name}
                   price={variant.price}
-                  image={variant.image_url || '/placeholder.png'}
-                  category={product.sub_categories?.categories?.name || 'General'}
-                  sub_category={product.sub_categories?.name || 'General'}
+                  image={variant.image_url || "/placeholder.png"}
+                  category={
+                    product.sub_categories?.categories?.name || "General"
+                  }
+                  sub_category={product.sub_categories?.name || "General"}
                   stock_qty={variant.stock_qty}
                   description={product.description}
                   variants={product.product_variants}
@@ -69,20 +84,25 @@ function AlsoLikeSection({ title, products }: ProductFeatureProps) {
         </div>
       </Carousel>
     </div>
-  )
+  );
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
-  const urlName = (slug: string) => slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const urlName = (slug: string) =>
+    slug
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
 
   const categoryName = urlName(resolvedParams.category);
   const subcatName = urlName(resolvedParams.sub_categories);
   const productName = urlName(resolvedParams.product);
 
   const { data: product, error } = await supabase
-    .from('products')
-    .select(`
+    .from("products")
+    .select(
+      `
       *,
       sub_categories!inner (
         name,
@@ -91,10 +111,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
         )
       ),
       product_variants(*)
-    `)
-    .ilike('name', productName)
-    .eq('sub_categories.name', subcatName)
-    .eq('sub_categories.categories.name', categoryName)
+    `,
+    )
+    .ilike("name", productName)
+    .eq("sub_categories.name", subcatName)
+    .eq("sub_categories.categories.name", categoryName)
     .single();
 
   if (error || !product) return notFound();
@@ -102,8 +123,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
   if (!firstVariant) return notFound();
 
   const { data: relatedProducts } = await supabase
-    .from('products')
-    .select(`
+    .from("products")
+    .select(
+      `
       *,
       sub_categories!inner (
         name,
@@ -112,28 +134,34 @@ export default async function ProductDetailPage({ params }: PageProps) {
         )
       ),
       product_variants(*)
-    `)
-    .eq('sub_categories.categories.name', categoryName)
-    .neq('name', productName) 
+    `,
+    )
+    .eq("sub_categories.categories.name", categoryName)
+    .neq("name", productName)
     .limit(10);
 
   return (
-    <main className="min-h-screen bg-white">    
-    <Navbar />
+    <main className="min-h-screen bg-white">
+      <Navbar />
 
       <section className="relative h-[20vh] md:h-[30vh] overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/images/featured-photo-2.png" 
+            src="/images/featured-photo-2.png"
             alt="Background"
             fill
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-black/40" /> 
+          <div className="absolute inset-0 bg-black/40" />
         </div>
         <div className="container relative z-10 mx-auto px-4 h-full flex items-center justify-center">
-          <h1 className={cn("text-4xl md:text-7xl font-bold text-white text-center", "windsong-medium")}>
+          <h1
+            className={cn(
+              "text-4xl md:text-7xl font-bold text-white text-center",
+              "windsong-medium",
+            )}
+          >
             {product.sub_categories?.name || "Product Details"}
           </h1>
         </div>
@@ -153,7 +181,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
             />
           </section>
         </Reveal>
-
       </div>
 
       <Footer />
