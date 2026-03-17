@@ -54,7 +54,7 @@ ${items.map((item: any) => `- ${item.name} x${item.quantity} — ₱${(item.pric
 
 Total: ₱${totalAmount.toLocaleString()}
 
-We'll contact you via ${email} or ${phone} or pede namang hinde sino ka ba hehe
+We'll contact you via ${email} or ${phone}.
 
 — JFK Tile and Stone Builders 🪨
   `.trim();
@@ -66,7 +66,7 @@ We'll contact you via ${email} or ${phone} or pede namang hinde sino ka ba hehe
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'JFK Tiles <onboarding@resend.dev>',
+      from: 'JFK Tile and Stone Builders <noreply@jfktiles.me>',
       to: email,
       subject: 'We received your inquiry! 🧱',
       text: emailBody,

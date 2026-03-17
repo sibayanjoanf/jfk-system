@@ -71,7 +71,7 @@ export default function InquiryFormPage() {
   const [paymentPref, setPaymentPref] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
     if (!firstName.trim()) newErrors.firstName = "First name is required.";
     if (!lastName.trim()) newErrors.lastName = "Last name is required.";
@@ -84,7 +84,27 @@ export default function InquiryFormPage() {
     if (!paymentPref)
       newErrors.paymentPref = "Please select a payment preference.";
     setErrors(newErrors);
+
     if (Object.keys(newErrors).length === 0) {
+      await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-inquiry`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+          deliveryPreference: deliveryPref,
+          paymentPreference: paymentPref,
+          message,
+          items,
+          totalAmount,
+        }),
+      });
+
       clearCart();
       window.location.href = "/confirmation";
     }
