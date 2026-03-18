@@ -188,8 +188,44 @@ const InquiryManagement: React.FC = () => {
     setTimeout(() => setActiveInquiry(null), 300);
   };
 
-  const handleSendReply = () => {
-    // TODO: implement email send + mark as Resolved
+  const [sending, setSending] = useState(false);
+
+  const handleSendReply = async () => {
+    if (!activeInquiry || !replyText.trim()) return;
+    setSending(true);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-admin-reply`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          inquiryId: activeInquiry.id,
+          firstName: activeInquiry.first_name,
+          email: activeInquiry.email,
+          message: activeInquiry.message,
+          reply: replyText,
+          createdAt: activeInquiry.created_at,
+        }),
+      }
+    );
+
+    setSending(false);
+
+    if (!response.ok) {
+      console.error('Failed to send reply');
+      return;
+    }
+
+    // update status locally so UI reflects immediately without refetch
+    setInquiries((prev) =>
+      prev.map((i) => i.id === activeInquiry.id ? { ...i, status: 'Resolved' } : i)
+    );
+    setActiveInquiry({ ...activeInquiry, status: 'Resolved' });
+    setReplyText('');
   };
 
   const getStatusTextColor = (status: string) => {
@@ -628,12 +664,16 @@ const InquiryManagement: React.FC = () => {
               </button>
               <button
                 onClick={handleSendReply}
-                disabled={
-                  !replyText.trim() || activeInquiry.status === "Resolved"
-                }
+                disabled={!replyText.trim() || activeInquiry.status === 'Resolved' || sending}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send Reply
+                {sending ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Sending...
+                  </>
+                ) : (
+                  'Send Reply'
+                )}
               </button>
             </div>
           </>
