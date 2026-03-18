@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Menu,
   Minus,
   Package,
@@ -60,6 +62,10 @@ export function Navbar() {
     updateQuantity(itemId, newQuantity);
   };
 
+  const [announcements, setAnnouncements] = useState<
+    { id: string; text: string }[]
+  >([]);
+
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -77,6 +83,12 @@ export function Navbar() {
           );
           setCategories(sortedCategories);
         }
+      });
+
+    fetch("api/announcements")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setAnnouncements(data.data);
       });
   }, []);
 
@@ -123,22 +135,85 @@ export function Navbar() {
     },
   ];
 
+  const AnnouncementBar = ({
+    announcements,
+  }: {
+    announcements: { id: string; text: string }[];
+  }) => {
+    const [current, setCurrent] = useState(0);
+    const [visible, setVisible] = useState(true);
+    const [hovered, setHovered] = useState(false);
+
+    const switchTo = (index: number) => {
+      setVisible(false);
+      setTimeout(() => {
+        setCurrent(index);
+        setVisible(true);
+      }, 300);
+    };
+
+    const prev = () =>
+      switchTo((current - 1 + announcements.length) % announcements.length);
+    const next = () => switchTo((current + 1) % announcements.length);
+
+    useEffect(() => {
+      if (announcements.length === 0 || hovered) return;
+
+      const interval = setInterval(() => {
+        setVisible(false);
+        setTimeout(() => {
+          setCurrent((prev) => (prev + 1) % announcements.length);
+          setVisible(true);
+        }, 500);
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }, [announcements, hovered]);
+
+    if (announcements.length === 0) {
+      return (
+        <p className="text-center text-[10px] font-medium uppercase tracking-[0.2em]">
+          Welcome to JFK Tile and Stone Builders
+        </p>
+      );
+    }
+
+    return (
+      <div
+        className="relative flex items-center justify-center"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <button
+          onClick={prev}
+          className={`absolute left-4 transition-opacity duration-200 hover:text-white/70 ${hovered ? "opacity-100" : "opacity-0"}`}
+        >
+          <ChevronLeft size={14} />
+        </button>
+
+        {/* Announcement text */}
+        <p
+          className="text-center text-[10px] font-medium uppercase tracking-[0.2em] transition-opacity duration-300 px-10"
+          style={{ opacity: visible ? 1 : 0 }}
+        >
+          {announcements[current]?.text}
+        </p>
+
+        <button
+          onClick={next}
+          className={`absolute right-4 transition-opacity duration-200 hover:text-white/70 ${hovered ? "opacity-100" : "opacity-0"}`}
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <header className="fixed top-0 z-50 w-full">
       {/* Top Red Marquee */}
       <div className="bg-red-600 text-white py-2 overflow-hidden">
-        <div className="animate-marquee text-[10px] md:text-[10px] font-medium uppercase tracking-[0.2em]">
-          <span className="marquee-content">
-            Special Offer: Get 10% off on all Floor Tiles this month! • Free
-            delivery for orders over ₱50,000 • Visit our showrooms in Barit,
-            Bulangon, and Rizal • Quality Tile and Stone Builders since 2009
-          </span>
-          <span className="marquee-content">
-            Special Offer: Get 10% off on all Floor Tiles this month! • Free
-            delivery for orders over ₱50,000 • Visit our showrooms in Barit,
-            Bulangon, and Rizal • Quality Tile and Stone Builders since 2009
-          </span>
-        </div>
+        <AnnouncementBar announcements={announcements} />
       </div>
 
       {/* Main Navbar */}
