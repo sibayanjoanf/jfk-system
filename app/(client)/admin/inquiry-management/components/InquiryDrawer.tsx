@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import {
   Inquiry,
   formatDateFull,
@@ -14,6 +14,7 @@ import {
 interface InquiryDrawerProps {
   open: boolean;
   inquiry: Inquiry | null;
+  sending: boolean;
   onClose: () => void;
   onSendReply: (text: string) => void;
 }
@@ -21,6 +22,7 @@ interface InquiryDrawerProps {
 const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
   open,
   inquiry,
+  sending,
   onClose,
   onSendReply,
 }) => {
@@ -160,7 +162,7 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Write your reply to the customer here..."
                   rows={5}
-                  disabled={inquiry.status === "Resolved"}
+                  disabled={inquiry.status === "Resolved" || sending}
                   className="w-full px-3.5 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 {inquiry.status === "Resolved" && (
@@ -182,10 +184,18 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
               </button>
               <button
                 onClick={handleSend}
-                disabled={!replyText.trim() || inquiry.status === "Resolved"}
+                disabled={
+                  !replyText.trim() || inquiry.status === "Resolved" || sending
+                }
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send Reply
+                {sending ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Sending...
+                  </>
+                ) : (
+                  "Send Reply"
+                )}
               </button>
             </div>
           </>

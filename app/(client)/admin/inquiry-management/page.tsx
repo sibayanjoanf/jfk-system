@@ -27,6 +27,9 @@ const InquiryManagement: React.FC = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [sending, setSending] = useState(false);
+  const [replyText, setReplyText] = useState("");
+
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const filteredInquiries = inquiries.filter((i) => {
@@ -63,6 +66,7 @@ const InquiryManagement: React.FC = () => {
     } else {
       setActiveInquiry(inquiry);
     }
+    setReplyText("");
     setDrawerOpen(true);
   };
 
@@ -83,9 +87,37 @@ const InquiryManagement: React.FC = () => {
     setConfirmOpen(false);
   };
 
-  const handleSendReply = (text: string) => {
-    // TODO: implement email send + mark as Resolved
-    console.log("Reply:", text);
+  const handleSendReply = async (text: string) => {
+    if (!activeInquiry || !text.trim()) return;
+    setSending(true);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-admin-reply`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          inquiryId: activeInquiry.id,
+          firstName: activeInquiry.first_name,
+          email: activeInquiry.email,
+          message: activeInquiry.message,
+          reply: text,
+          createdAt: activeInquiry.created_at,
+        }),
+      },
+    );
+
+    setSending(false);
+
+    if (!response.ok) {
+      console.error("Failed to send reply");
+      return;
+    }
+
+    setActiveInquiry({ ...activeInquiry, status: "Resolved" });
   };
 
   return (
@@ -156,6 +188,7 @@ const InquiryManagement: React.FC = () => {
       <InquiryDrawer
         open={drawerOpen}
         inquiry={activeInquiry}
+        sending={sending}
         onClose={closeDrawer}
         onSendReply={handleSendReply}
       />

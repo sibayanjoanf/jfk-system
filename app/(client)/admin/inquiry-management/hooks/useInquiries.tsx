@@ -6,20 +6,6 @@ export function useInquiries() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchInquiries = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("contact")
-      .select(
-        "id, first_name, last_name, email, phone, message, status, created_at",
-      )
-      .order("created_at", { ascending: false });
-
-    if (error) console.error("Error fetching contacts:", error);
-    else if (data) setInquiries(data as Inquiry[]);
-    setLoading(false);
-  };
-
   useEffect(() => {
     let isMounted = true;
 
@@ -70,5 +56,5 @@ export function useInquiries() {
     return true;
   };
 
-  return { inquiries, loading, fetchInquiries, updateStatus, deleteInquiries };
+  return { inquiries, setInquiries, loading, updateStatus, deleteInquiries };
 }
