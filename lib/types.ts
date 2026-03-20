@@ -1,4 +1,4 @@
-// Database Types
+// Database Types (Client)
 
 export interface SubCategories {
   id: string;
