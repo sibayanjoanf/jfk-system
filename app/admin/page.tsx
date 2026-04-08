@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="w-[320px] md:w-[400px]">
+      <div className="max-w-[320px] md:max-w-[400px]">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
