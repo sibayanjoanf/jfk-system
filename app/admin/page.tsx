@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="w-[200px] md:w-[400px] overflow-x-hidden">
+      <div className="w-[300px] md:w-[400px] overflow-x-hidden">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
