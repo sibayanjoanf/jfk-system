@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="w-[300px] md:w-[400px]">
+      <div className="w-[200px] md:w-[400px] overflow-x-hidden">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
@@ -139,7 +139,7 @@ export default function AdminLoginPage() {
       </div>
 
       <div>
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 mt-10">
           &copy; {new Date().getFullYear()} JFK Tile and Stone Builders. All
           rights reserved.
         </p>

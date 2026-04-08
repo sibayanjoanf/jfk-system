@@ -45,7 +45,7 @@ export default function AdminLayout({
       {session && !isLoginPage && <Sidebar />}
 
       <main
-        className={`${!isLoginPage ? "lg:ml-20 -mt-[90px] p-8" : "-mt-[25px] lg:-mt-[90px]"} flex-1 p-8`}
+        className={`${!isLoginPage ? "lg:ml-20" : ""} flex-1 p-8 -mt-[25px]`}
       >
         {children}
       </main>

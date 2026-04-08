@@ -1,9 +1,7 @@
-"use client";
-
 import { Poppins, WindSong } from "next/font/google";
 import "./globals.css";
 import Providers from "./provider";
-import { usePathname } from "next/navigation";
+import MainWrapper from "./components/MainWrapper";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -21,16 +19,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isAdminLogin = pathname === "/admin";
-
   return (
     <html lang="en">
       <body className={`${poppins.className} ${windsong.variable}`}>
         <Providers>
-          <main className={`${isAdminLogin ? "pt-0" : "pt-[90px]"}`}>
-            {children}
-          </main>
+          <MainWrapper>{children}</MainWrapper>
         </Providers>
       </body>
     </html>
