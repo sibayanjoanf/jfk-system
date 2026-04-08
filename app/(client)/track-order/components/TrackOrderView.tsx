@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Order,
-  OrderStatus,
-} from "@/app/(client)/admin/order-management/types";
+import { Order, OrderStatus } from "@/app/admin/order-management/types";
 import { supabase } from "@/lib/supabase";
 import { CheckCircle2, Circle, Clock, Package, Printer } from "lucide-react";
 import Image from "next/image";
-import InvoiceDownload from "@/app/(client)/admin/order-management/[id]/components/InvoiceDownload";
+import InvoiceDownload from "@/app/admin/order-management/[id]/components/InvoiceDownload";
 
 interface Props {
   order: Order;

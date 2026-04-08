@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { QrCode, Upload, Loader2 } from "lucide-react";
 import { Reveal } from "@/components/reveal";
 import { supabase } from "@/lib/supabase";
-import { Order } from "@/app/(client)/admin/order-management/types";
+import { Order } from "@/app/admin/order-management/types";
 import TrackOrderView from "./components/TrackOrderView";
 
 export default function TrackOrderPage() {
