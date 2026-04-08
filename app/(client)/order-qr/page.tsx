@@ -1,32 +1,36 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-export default function OrderQRPage() {
+// 1. Separate the logic into a internal component
+function QRGeneratorContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id") ?? "UNKNOWN";
 
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    QRCode.toDataURL(orderId, {
-      width: 400,
-      margin: 2,
-      color: { dark: "#111111", light: "#ffffff" },
-    }).then(setQrDataUrl);
+    if (orderId) {
+      QRCode.toDataURL(orderId, {
+        width: 400,
+        margin: 2,
+        color: { dark: "#111111", light: "#ffffff" },
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch((err) => console.error("QR Generation Error:", err));
+    }
   }, [orderId]);
 
   const handleDownload = () => {
     if (!qrDataUrl) return;
     const link = document.createElement("a");
     link.href = qrDataUrl;
-    link.download = `${orderId}-qr.png`;
+    link.download = `order-${orderId}-qr.png`;
     link.click();
   };
 
@@ -103,7 +107,7 @@ export default function OrderQRPage() {
                 <button
                   onClick={handleDownload}
                   disabled={!qrDataUrl}
-                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all shadow-lg cursor-pointer justify-center"
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all shadow-lg cursor-pointer flex justify-center"
                 >
                   Download QR Code
                 </button>
@@ -115,5 +119,22 @@ export default function OrderQRPage() {
 
       <Footer />
     </div>
+  );
+}
+
+// 2. The main Page component that wraps the content in Suspense
+export default function OrderQRPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-pulse text-gray-400 font-medium">
+            Loading QR Page...
+          </div>
+        </div>
+      }
+    >
+      <QRGeneratorContent />
+    </Suspense>
   );
 }
