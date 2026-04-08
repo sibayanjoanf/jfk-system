@@ -206,6 +206,7 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
               <input
                 type="text"
                 value={productName}
+                maxLength={80}
                 onChange={(e) => setProductName(e.target.value)}
                 placeholder="e.g. Marble Flooring Tile"
                 className={inputClass}
@@ -218,6 +219,7 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
               <label className={labelClass}>Description</label>
               <textarea
                 value={productDescription}
+                maxLength={200}
                 onChange={(e) => setProductDescription(e.target.value)}
                 placeholder="Optional product description..."
                 rows={3}

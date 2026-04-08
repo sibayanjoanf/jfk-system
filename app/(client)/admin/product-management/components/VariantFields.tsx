@@ -89,7 +89,14 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
           <input
             type="text"
             value={v.sku}
-            onChange={(e) => onUpdate(v._key, "sku", e.target.value)}
+            maxLength={20}
+            onChange={(e) => {
+              const sanitizedValue = e.target.value.replace(
+                /[^a-zA-Z0-9\-]/g,
+                "",
+              );
+              onUpdate(v._key, "sku", sanitizedValue);
+            }}
             placeholder="e.g. GV AP11"
             className={inputClass}
           />
@@ -102,6 +109,7 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
           <input
             type="text"
             value={v.dimension}
+            maxLength={20}
             onChange={(e) => onUpdate(v._key, "dimension", e.target.value)}
             placeholder="e.g. 60x60cm"
             className={inputClass}
@@ -116,6 +124,7 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
         <input
           type="text"
           value={v.attribute_name}
+          maxLength={20}
           onChange={(e) => onUpdate(v._key, "attribute_name", e.target.value)}
           placeholder="e.g. Design, Color"
           className={inputClass}
@@ -126,6 +135,7 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
         <input
           type="text"
           value={v.attribute_value}
+          maxLength={20}
           onChange={(e) => onUpdate(v._key, "attribute_value", e.target.value)}
           placeholder="e.g. Black, White"
           className={inputClass}
@@ -139,11 +149,19 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
           Price (₱) <span className="text-red-500">*</span>
         </label>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={12}
           value={v.price}
-          onChange={(e) => onUpdate(v._key, "price", e.target.value)}
-          placeholder="0.00"
+          onChange={(e) => {
+            const val = e.target.value;
+            if (/^\d*(\.?\d{0,2})$/.test(val)) {
+              onUpdate(v._key, "price", e.target.value);
+            }
+          }}
           min="0"
+          placeholder="0.00"
           className={inputClass}
         />
         {errors[`${errorPrefix}_price_${i}`] && (
@@ -169,6 +187,7 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
       <input
         type="text"
         value={v.keywords}
+        maxLength={200}
         onChange={(e) => onUpdate(v._key, "keywords", e.target.value)}
         placeholder="e.g. kitchen,fixtures,white"
         className={inputClass}

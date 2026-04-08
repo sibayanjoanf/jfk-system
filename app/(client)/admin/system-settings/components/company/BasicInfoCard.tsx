@@ -5,22 +5,33 @@ interface BasicInfoCardProps {
   companyForm: CompanyForm;
   onFieldChange: (key: keyof CompanyForm, value: string) => void;
   onSave: () => void;
+  saving: boolean;
 }
 
 const fields = [
+  {
+    label: "Branch Name",
+    key: "branchName" as keyof CompanyForm,
+    placeholder: "Branch name",
+  },
   {
     label: "Address",
     key: "address" as keyof CompanyForm,
     placeholder: "Business address",
   },
   {
-    label: "Contact Number",
-    key: "contact" as keyof CompanyForm,
+    label: "Phone",
+    key: "phone" as keyof CompanyForm,
     placeholder: "Mobile number",
   },
   {
+    label: "Telephone",
+    key: "telephone" as keyof CompanyForm,
+    placeholder: "Telephone number",
+  },
+  {
     label: "Email Address",
-    key: "email" as keyof CompanyForm,
+    key: "companyEmail" as keyof CompanyForm,
     placeholder: "Business email",
   },
 ];
@@ -29,6 +40,7 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({
   companyForm,
   onFieldChange,
   onSave,
+  saving,
 }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
     <h2 className="text-base font-semibold text-gray-900 mb-1">
@@ -56,9 +68,10 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({
     <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
       <button
         onClick={onSave}
-        className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+        disabled={saving}
+        className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg transition-colors"
       >
-        Save Changes
+        {saving ? "Saving..." : "Save Changes"}
       </button>
     </div>
   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search,
   Plus,
@@ -51,7 +51,6 @@ const ProductManagement: React.FC = () => {
     pageSize,
     sortConfig,
     setSearchQuery,
-    setCategoryFilter,
     setCategoryFilterAndReset,
     setStatusFilter,
     setSubCategoryFilter,
@@ -61,13 +60,14 @@ const ProductManagement: React.FC = () => {
   } = useProductParams();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [isSubCategoryOpen, setIsSubCategoryOpen] = useState(false);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<
+    "status" | "category" | "subCategory" | null
+  >(null);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [allSubCategories, setAllSubCategories] = useState<SubCategoryOption[]>(
     [],
   );
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductRow | null>(null);
@@ -90,6 +90,19 @@ const ProductManagement: React.FC = () => {
       .then(({ data }) => {
         if (data) setAllSubCategories(data);
       });
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const visibleSubCategories = useMemo(() => {
@@ -205,12 +218,6 @@ const ProductManagement: React.FC = () => {
       setCurrentPage(newTotalPages);
   };
 
-  const closeAllDropdowns = () => {
-    setIsStatusOpen(false);
-    setIsCategoryOpen(false);
-    setIsSubCategoryOpen(false);
-  };
-
   return (
     <div className="p-0">
       {/* Page Header */}
@@ -230,7 +237,7 @@ const ProductManagement: React.FC = () => {
             </span>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search by name, SKU..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-9 pl-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
@@ -254,7 +261,10 @@ const ProductManagement: React.FC = () => {
               Total {products.length} product variants found in database.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 items-center shrink-0">
+          <div
+            ref={dropdownRef}
+            className="flex flex-wrap gap-2 items-center shrink-0"
+          >
             {selectedIds.length > 0 && (
               <button
                 onClick={() => setConfirmOpen(true)}
@@ -268,25 +278,23 @@ const ProductManagement: React.FC = () => {
             {/* Status filter */}
             <div className="relative">
               <button
-                onClick={() => {
-                  setIsStatusOpen(!isStatusOpen);
-                  setIsCategoryOpen(false);
-                  setIsSubCategoryOpen(false);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${isStatusOpen ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`}
+                onClick={() =>
+                  setOpenDropdown(openDropdown === "status" ? null : "status")
+                }
+                className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${openDropdown === "status" ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`}
               >
                 <span>{statusFilter === "All" ? "Status" : statusFilter}</span>
                 <ChevronDown size={14} />
               </button>
-              {isStatusOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+              {openDropdown === "status" && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-150 absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
                   {["All", "In Stock", "Low Stock", "Out of Stock"].map((s) => (
                     <button
                       key={s}
-                      className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${s === statusFilter ? "text-red-600 font-bold" : "text-gray-600"}`}
+                      className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${s === statusFilter ? "text-red-600 font-semibold" : "text-gray-600"}`}
                       onClick={() => {
                         setStatusFilter(s);
-                        setIsStatusOpen(false);
+                        setOpenDropdown(null);
                       }}
                     >
                       {s}
@@ -299,27 +307,27 @@ const ProductManagement: React.FC = () => {
             {/* Category filter */}
             <div className="relative">
               <button
-                onClick={() => {
-                  setIsCategoryOpen(!isCategoryOpen);
-                  setIsStatusOpen(false);
-                  setIsSubCategoryOpen(false);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${isCategoryOpen ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`}
+                onClick={() =>
+                  setOpenDropdown(
+                    openDropdown === "category" ? null : "category",
+                  )
+                }
+                className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${openDropdown === "category" ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`}
               >
                 <span>
                   {categoryFilter === "All" ? "Category" : categoryFilter}
                 </span>
                 <ChevronDown size={14} />
               </button>
-              {isCategoryOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+              {openDropdown === "category" && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-150 absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
                   {["All", ...categories.map((c) => c.name)].map((cat) => (
                     <button
                       key={cat}
-                      className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${cat === categoryFilter ? "text-red-600 font-bold" : "text-gray-600"}`}
+                      className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${cat === categoryFilter ? "text-red-600 font-semibold" : "text-gray-600"}`}
                       onClick={() => {
                         handleSetCategoryFilter(cat);
-                        setIsCategoryOpen(false);
+                        setOpenDropdown(null);
                       }}
                     >
                       {cat}
@@ -332,12 +340,12 @@ const ProductManagement: React.FC = () => {
             {/* Sub-category filter */}
             <div className="relative">
               <button
-                onClick={() => {
-                  setIsSubCategoryOpen(!isSubCategoryOpen);
-                  setIsCategoryOpen(false);
-                  setIsStatusOpen(false);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${isSubCategoryOpen ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`}
+                onClick={() =>
+                  setOpenDropdown(
+                    openDropdown === "subCategory" ? null : "subCategory",
+                  )
+                }
+                className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${openDropdown === "subCategory" ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`}
               >
                 <span>
                   {subCategoryFilter === "All"
@@ -346,13 +354,13 @@ const ProductManagement: React.FC = () => {
                 </span>
                 <ChevronDown size={14} />
               </button>
-              {isSubCategoryOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 py-1 overflow-hidden max-h-60 overflow-y-auto">
+              {openDropdown === "subCategory" && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-150 absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto">
                   <button
-                    className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${subCategoryFilter === "All" ? "text-red-600 font-bold" : "text-gray-600"}`}
+                    className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${subCategoryFilter === "All" ? "text-red-600 font-semibold" : "text-gray-600"}`}
                     onClick={() => {
                       setSubCategoryFilter("All");
-                      setIsSubCategoryOpen(false);
+                      setOpenDropdown(null);
                     }}
                   >
                     All
@@ -360,10 +368,10 @@ const ProductManagement: React.FC = () => {
                   {visibleSubCategories.map((s) => (
                     <button
                       key={s.id}
-                      className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${s.name === subCategoryFilter ? "text-red-600 font-bold" : "text-gray-600"}`}
+                      className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${s.name === subCategoryFilter ? "text-red-600 font-semibold" : "text-gray-600"}`}
                       onClick={() => {
                         setSubCategoryFilter(s.name);
-                        setIsSubCategoryOpen(false);
+                        setOpenDropdown(null);
                       }}
                     >
                       {s.name}
@@ -487,6 +495,7 @@ const ProductManagement: React.FC = () => {
                             src={product.image_url}
                             alt={product.name}
                             fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             className="object-cover"
                           />
                         </div>

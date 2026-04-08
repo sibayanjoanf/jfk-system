@@ -39,6 +39,7 @@ export interface InfoBranch {
   address: string;
   phone: string;
   telephone: string;
+  embed_url: string;
 }
 
 export interface ShowcaseProducts {

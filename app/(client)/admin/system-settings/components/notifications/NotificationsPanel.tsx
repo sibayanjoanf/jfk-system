@@ -14,7 +14,7 @@ const NotificationsPanel: React.FC = () => {
         Important updates about orders or account may still be sent to you, even
         with notifications disabled.
       </p>
-      <div className="space-y-8">
+      <div className="space-y-8 border-t border-gray-100 pt-8">
         <NotificationRow
           title="Inquiries"
           desc="Notifications for customer inquiries submitted through your website."
@@ -25,7 +25,7 @@ const NotificationsPanel: React.FC = () => {
         />
         <NotificationRow
           title="Reports"
-          desc="Notifications for when new inventory reports are generated or stock updates are available."
+          desc="Notifications for when stocks are updated."
           push={settings.reportPush}
           email={settings.reportEmail}
           onTogglePush={() => toggleSetting("reportPush")}

@@ -1,33 +1,105 @@
 "use client";
 
+import jsQR from "jsqr";
 import { useRef, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { QrCode, Upload } from "lucide-react";
+import { QrCode, Upload, Loader2 } from "lucide-react";
 import { Reveal } from "@/components/reveal";
+import { supabase } from "@/lib/supabase";
+import { Order } from "@/app/(client)/admin/order-management/types";
+import TrackOrderView from "./components/TrackOrderView";
 
-export default function ContactPage() {
+export default function TrackOrderPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [order, setOrder] = useState<Order | null>(null);
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleUploadClick = () => fileInputRef.current?.click();
+  const handleScanClick = () => cameraInputRef.current?.click();
 
-  const handleScanClick = () => {
-    cameraInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFileName(file.name);
+    if (!file) return;
+
+    setSelectedFileName(file.name);
+    setError("");
+    setLoading(true);
+
+    const imageBitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = imageBitmap.width;
+    canvas.height = imageBitmap.height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(imageBitmap, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    setLoading(false);
+
+    if (!code) {
+      setError("No QR code found in the image. Please try again.");
+      return;
     }
+
+    const scannedId = code.data.trim().toUpperCase();
+    setOrderId(scannedId);
+    await handleTrackById(scannedId);
+  };
+
+  const handleTrackById = async (id: string) => {
+    setLoading(true);
+    setError("");
+    setOrder(null);
+
+    const { data, error: fetchError } = await supabase
+      .from("inquiries")
+      .select("*")
+      .eq("order_number", id)
+      .single();
+
+    setLoading(false);
+
+    if (fetchError || !data) {
+      setError("Order not found. Check your QR or Order ID.");
+      return;
+    }
+
+    setOrder({
+      id: data.id,
+      order_number: data.order_number,
+      status: data.status,
+      order_type: data.order_type,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      delivery_preference: data.delivery_preference,
+      payment_preference: data.payment_preference,
+      message: data.message,
+      items: data.items ?? [],
+      total_amount: data.total_amount,
+      created_at: data.created_at,
+    });
+  };
+
+  const handleTrack = () => {
+    if (!orderId.trim()) {
+      setError("Please enter your Order ID.");
+      return;
+    }
+    handleTrackById(orderId.trim().toUpperCase());
   };
 
   return (
@@ -44,10 +116,10 @@ export default function ContactPage() {
                   Track Order Status
                 </h1>
                 <p className="text-gray-700 mb-4">
-                  To track your order, please enter your Order ID and email
-                  address. Alternatively, you can simply scan or upload your QR
-                  code. This was given to you on your receipt or in the order
-                  confirmation email.
+                  To track your order, please enter your Order ID.
+                  Alternatively, you can scan or upload your QR code. This was
+                  given to you on your receipt or in the order confirmation
+                  email.
                 </p>
               </div>
 
@@ -103,16 +175,13 @@ export default function ContactPage() {
 
                 {/* Hidden Inputs */}
                 <input
-                  id="file"
                   ref={fileInputRef}
                   type="file"
                   accept="image/png, image/jpeg, image/jpg"
                   className="hidden"
                   onChange={handleFileChange}
                 />
-
                 <input
-                  id="file-camera"
                   ref={cameraInputRef}
                   type="file"
                   accept="image/*"
@@ -145,30 +214,49 @@ export default function ContactPage() {
 
                 <div>
                   <FieldGroup>
-                    <Field>
+                    <Field className="mb-4">
                       <Input
                         id="order-id"
                         className="text-sm"
-                        placeholder="Enter your Order ID"
-                      />
-                    </Field>
-
-                    <Field className="mb-4">
-                      <Input
-                        id="email"
-                        autoComplete="email"
-                        className="text-sm"
-                        placeholder="Enter your email address"
+                        placeholder="Enter your Order ID (e.g. ORD-20260331-001)"
+                        value={orderId}
+                        onChange={(e) => {
+                          setOrderId(e.target.value);
+                          setError("");
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleTrack()}
                       />
                     </Field>
                   </FieldGroup>
 
-                  <Button className="w-full h-10 mt-4 bg-red-600 hover:bg-red-700">
-                    Track Order Status
+                  {error && (
+                    <p className="text-xs text-red-500 mb-3">{error}</p>
+                  )}
+
+                  <Button
+                    onClick={handleTrack}
+                    disabled={loading}
+                    className="w-full h-10 mt-2 bg-red-600 hover:bg-red-700"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />{" "}
+                        Searching...
+                      </span>
+                    ) : (
+                      "Track Order Status"
+                    )}
                   </Button>
                 </div>
               </div>
             </div>
+
+            {/* Order Result — shows below the form */}
+            {order && (
+              <div className="mt-16 border-t border-gray-100 pt-12">
+                <TrackOrderView order={order} />
+              </div>
+            )}
           </div>
         </section>
       </Reveal>

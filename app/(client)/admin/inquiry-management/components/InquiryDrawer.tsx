@@ -145,8 +145,8 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
                   Message
                 </h3>
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 max-h-48 overflow-y-auto">
+                  <p className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
                     {inquiry.message}
                   </p>
                 </div>

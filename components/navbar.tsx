@@ -13,6 +13,7 @@ import {
   Search,
   SearchIcon,
   ShoppingCart,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryWithSub } from "@/lib/types";
@@ -29,6 +30,13 @@ import { Spinner } from "./ui/spinner";
 import Image from "next/image";
 import { useCart } from "@/hooks/cart";
 import { LucideIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type NavItem = {
   label: string;
@@ -38,6 +46,7 @@ type NavItem = {
 };
 
 export function Navbar() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -90,10 +99,17 @@ export function Navbar() {
       .then((data) => {
         if (data.success) setAnnouncements(data.data);
       });
+
+    fetch("/api/company")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.company_logo) setLogo(data.company_logo);
+      });
   }, []);
 
-  const logo =
-    "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png";
+  const [logo, setLogo] = useState(
+    "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png",
+  );
   const { items, totalPrice, removeItem, clearCart } = useCart();
   const totalQty = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -249,6 +265,11 @@ export function Navbar() {
             <div className="hidden lg:flex items-center space-x-8">
               {navLinks.map((link) => {
                 const isCollection = link.label === "Collection";
+                const isActive = link.href
+                  ? pathname === link.href
+                  : isCollection
+                    ? pathname.startsWith("/collection")
+                    : false;
 
                 const content = (
                   <>
@@ -266,7 +287,7 @@ export function Navbar() {
 
                 const commonClasses = cn(
                   "flex items-center space-x-1 text-sm font-medium transition-colors",
-                  isCollection && isCollectionOpen
+                  isActive || (isCollection && isCollectionOpen)
                     ? "text-red-600"
                     : "text-black hover:text-red-600",
                 );
@@ -300,154 +321,203 @@ export function Navbar() {
 
             {/* Desktop Buttons */}
             <div className="hidden lg:flex md:space-x-4">
-              {navBtns.map((link) => {
-                const Icon = link.icon;
-                const commonClasses =
-                  "flex items-center space-x-1 text-sm font-normal text-black transition-colors hover:text-red-600";
-                const isCart = Icon === ShoppingCart;
-
-                if (link.onClick) {
-                  return (
-                    <button
-                      key={link.href}
-                      onClick={link.onClick}
-                      className={cn(
-                        commonClasses,
-                        "bg-transparent border-none cursor-pointer relative",
-                      )}
-                    >
-                      {Icon && <Icon className="h-4 w-4" />}
-
-                      {isCart && totalQty > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                          {totalQty}
-                        </span>
-                      )}
-                    </button>
+              <TooltipProvider delayDuration={200}>
+                {navBtns.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = pathname === link.href;
+                  const commonClasses = cn(
+                    "flex items-center space-x-1 text-sm font-normal transition-colors",
+                    isActive ? "text-red-600" : "text-black hover:text-red-600",
                   );
-                }
+                  const isCart = Icon === ShoppingCart;
 
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={commonClasses}
-                  >
-                    {Icon && <Icon className="h-4 w-4" />}
-                  </Link>
-                );
-              })}
+                  const tooltipLabel = link.isCart
+                    ? "Cart"
+                    : link.href.includes("search")
+                      ? "Search"
+                      : "Track Order Status";
+
+                  return (
+                    <Tooltip key={link.href}>
+                      <TooltipTrigger asChild>
+                        {link.onClick ? (
+                          <button
+                            onClick={link.onClick}
+                            className={cn(
+                              commonClasses,
+                              "bg-transparent border-none cursor-pointer relative",
+                            )}
+                          >
+                            {Icon && <Icon className="h-4 w-4" />}
+                            {isCart && totalQty > 0 && (
+                              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                                {totalQty}
+                              </span>
+                            )}
+                          </button>
+                        ) : (
+                          <Link href={link.href} className={commonClasses}>
+                            {Icon && <Icon className="h-4 w-4" />}
+                          </Link>
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        sideOffset={10}
+                        className="text-[10px] py-1 px-2 bg-red-600"
+                      >
+                        <p>{tooltipLabel}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </TooltipProvider>
             </div>
 
             {/* Mobile Burger Menu */}
-            <div className="flex lg:hidden items-center space-x-1">
-              <button onClick={() => setIsCartOpen(true)} className="relative">
-                <ShoppingCart className="h-4 w-4 hover:text-red-600"></ShoppingCart>
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                  {totalQty}
-                </span>
-              </button>
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild className="lg:hidden">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:text-red-600 hover:bg-transparent"
+            <TooltipProvider delayDuration={200}>
+              <div className="flex lg:hidden items-center space-x-2">
+                {/* Cart Button Tooltip */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setIsCartOpen(true)}
+                      className="relative p-2 mr-0"
+                    >
+                      <ShoppingCart size={18} className="hover:text-red-600" />
+                      <span className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                        {totalQty}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="text-[10px] py-1 px-2 bg-red-600"
                   >
-                    <Menu className="h-6 w-6 hover:text-red-600" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="left"
-                  className="w-full sm:w-100 flex flex-col h-full p-0"
-                >
-                  {/* Header Section */}
-                  <div className="p-auto pb-2">
-                    <SheetHeader>
-                      <SheetTitle className="flex items-center space-x-2">
-                        <img
-                          src={logo}
-                          alt="JFK Logo"
-                          className="h-9 w-auto object-contain"
-                        />
-                        <div className="flex flex-col leading-tight">
-                          <span className="text-xs font-semibold text-gray-900">
-                            Tile and{" "}
-                          </span>
-                          <span className="text-xs font-semibold text-gray-900">
-                            Stone Builders
-                          </span>
-                        </div>
-                      </SheetTitle>
-                      <SheetDescription className="sr-only">
-                        Categories
-                      </SheetDescription>
-                    </SheetHeader>
-                  </div>
+                    <p>Cart</p>
+                  </TooltipContent>
+                </Tooltip>
 
-                  {/* Navigations */}
-                  <div className="flex-1 overflow-y-auto mt-4 flex flex-col space-y-6 px-6">
-                    {navLinksMobile.map((link) => {
-                      const commonClasses =
-                        "flex items-center space-x-3 text-md font-normal text-gray-900 transition-colors hover:text-red-600";
+                <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SheetTrigger asChild className="lg:hidden">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:text-red-600 hover:bg-transparent"
+                        >
+                          <Menu size={18} className="hover:text-red-600" />
+                          <span className="sr-only">Toggle Menu</span>
+                        </Button>
+                      </SheetTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      className="text-[10px] py-1 px-2 bg-red-600"
+                    >
+                      <p>Menu</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <SheetContent
+                    side="left"
+                    className="w-full sm:w-100 flex flex-col h-full p-0"
+                  >
+                    {/* Header Section */}
+                    <div className="p-auto pb-2">
+                      <SheetHeader>
+                        <SheetTitle className="flex items-center space-x-2">
+                          <img
+                            src={logo}
+                            alt="JFK Logo"
+                            className="h-9 w-auto object-contain"
+                          />
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-xs font-semibold text-gray-900">
+                              Tile and{" "}
+                            </span>
+                            <span className="text-xs font-semibold text-gray-900">
+                              Stone Builders
+                            </span>
+                          </div>
+                        </SheetTitle>
+                        <SheetDescription className="sr-only">
+                          Categories
+                        </SheetDescription>
+                      </SheetHeader>
+                    </div>
 
-                      if (link.href) {
+                    {/* Navigations */}
+                    <div className="flex-1 overflow-y-auto mt-4 flex flex-col space-y-6 px-6">
+                      {navLinksMobile.map((link) => {
+                        const isActive = link.href
+                          ? pathname === link.href
+                          : false;
+
+                        const commonClasses = cn(
+                          "flex items-center space-x-3 text-md font-normal transition-colors",
+                          isActive
+                            ? "text-red-600"
+                            : "text-gray-900 hover:text-red-600",
+                        );
+
+                        if (link.href) {
+                          return (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setIsOpen(false)}
+                              className={commonClasses}
+                            >
+                              <span>{link.label}</span>
+                            </Link>
+                          );
+                        }
                         return (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setIsOpen(false)}
-                            className={commonClasses}
+                          <div
+                            key={link.label}
+                            className={cn(commonClasses, "cursor-pointer")}
+                            onClick={() => {
+                              link.onClick?.();
+                              setIsOpen(false);
+                            }}
                           >
                             <span>{link.label}</span>
-                          </Link>
+                            {link.icon && <link.icon className="h-4 w-4" />}
+                          </div>
                         );
-                      }
-                      return (
-                        <div
-                          key={link.label}
-                          className={cn(commonClasses, "cursor-pointer")}
-                          onClick={() => {
-                            link.onClick?.();
-                            setIsOpen(false);
-                          }}
-                        >
-                          <span>{link.label}</span>
-                          {link.icon && <link.icon className="h-4 w-4" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Button Section (Search & Track) */}
-                  <div className="mt-auto p-6">
-                    <div className="flex justify-between gap-4">
-                      <Link
-                        href="/search"
-                        className="flex-1"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
-                          <SearchIcon className="mb-1" />
-                          <span className="text-sm">Search</span>
-                        </div>
-                      </Link>
-                      <Link
-                        href="/track-order"
-                        className="flex-1"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
-                          <Package className="mb-1" />
-                          <span className="text-sm">Track Order</span>
-                        </div>
-                      </Link>
+                      })}
                     </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+
+                    {/* Button Section (Search & Track) */}
+                    <div className="mt-auto p-6">
+                      <div className="flex justify-between gap-4">
+                        <Link
+                          href="/search"
+                          className="flex-1"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
+                            <SearchIcon className="mb-1" />
+                            <span className="text-sm">Search</span>
+                          </div>
+                        </Link>
+                        <Link
+                          href="/track-order"
+                          className="flex-1"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <div className="bg-gray-100 rounded-lg py-5 flex flex-col items-center justify-center text-gray-800 font-medium transition-colors hover:bg-gray-200">
+                            <Package className="mb-1" />
+                            <span className="text-sm">Track Order</span>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </TooltipProvider>
 
             {/* Mobile Category Menu */}
             <Sheet open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
@@ -522,15 +592,15 @@ export function Navbar() {
               >
                 <SheetTitle className="sr-only"></SheetTitle>
                 <SheetDescription className="sr-only"></SheetDescription>
-                <div className="mt-5 flex flex-col">
-                  <div className="py-3 mx-6 flex justify-between font-medium text-sm text-gray-600 border-b">
+                <div className="mt-3 flex flex-col">
+                  <div className="py-3 mx-6 flex justify-between items-center font-medium text-sm text-gray-600 border-b">
                     <p className="uppercase">Items in Cart ({items.length})</p>
-                    <p
-                      onClick={() => clearCart()}
-                      className="text-red-600 cursor-pointer"
+                    <button
+                      onClick={() => setIsCartOpen(false)}
+                      className="text-gray-400 hover:text-gray-500 hover:bg-gray-100 p-1 rounded-sm transition-all"
                     >
-                      Clear Cart
-                    </p>
+                      <X size={18} />
+                    </button>
                   </div>
                 </div>
 
@@ -672,11 +742,11 @@ export function Navbar() {
                     </div>
                     <div className="flex w-full mt-5 gap-3">
                       <Button
-                        onClick={() => setIsCartOpen(false)}
+                        onClick={() => clearCart()}
                         variant="ghost"
-                        className="flex-1 h-11 border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 rounded-lg font-medium text-sm cursor-pointer"
+                        className="flex-1 h-11 border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 rounded-lg font-medium text-sm cursor-pointer transition-colors"
                       >
-                        Keep Browsing
+                        Clear Cart
                       </Button>
                       <Link
                         href="/cart"
@@ -704,7 +774,7 @@ export function Navbar() {
               className={cn(
                 "absolute left-0 top-22.5 w-full bg-[#f8f8f8] border-b border-gray-200 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[-1] overflow-hidden",
                 isCollectionOpen
-                  ? "max-h-fit opacity-100"
+                  ? "max-h-100 opacity-100 overflow-y-auto"
                   : "max-h-0 opacity-0",
               )}
             >

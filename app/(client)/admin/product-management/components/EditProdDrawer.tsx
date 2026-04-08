@@ -311,6 +311,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                   <input
                     type="text"
                     value={name}
+                    maxLength={80}
                     onChange={(e) => setName(e.target.value)}
                     className={`${inputClass} bg-gray-50`}
                   />
@@ -320,6 +321,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                   <label className={labelClass}>Description</label>
                   <textarea
                     value={description}
+                    maxLength={200}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
                     className={`${inputClass} bg-gray-50 resize-none`}
@@ -445,9 +447,14 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                             <input
                               type="text"
                               value={v.sku}
-                              onChange={(e) =>
-                                updateExisting(v.id, "sku", e.target.value)
-                              }
+                              maxLength={20}
+                              onChange={(e) => {
+                                const sanitizedValue = e.target.value.replace(
+                                  /[^a-zA-Z0-9\-]/g,
+                                  "",
+                                );
+                                updateExisting(v.id, "sku", sanitizedValue);
+                              }}
                               className={inputClass}
                             />
                             {errors[`ex_sku_${i}`] && (
@@ -461,6 +468,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                             <input
                               type="text"
                               value={v.dimension}
+                              maxLength={20}
                               onChange={(e) =>
                                 updateExisting(
                                   v.id,
@@ -480,6 +488,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                           <input
                             type="text"
                             value={v.attribute_name}
+                            maxLength={20}
                             onChange={(e) =>
                               updateExisting(
                                 v.id,
@@ -496,6 +505,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                           <input
                             type="text"
                             value={v.attribute_value}
+                            maxLength={20}
                             onChange={(e) =>
                               updateExisting(
                                 v.id,
@@ -514,11 +524,17 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                             Price (₱) <span className="text-red-500">*</span>
                           </label>
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={12}
                             value={v.price}
-                            onChange={(e) =>
-                              updateExisting(v.id, "price", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (/^\d*(\.?\d{0,2})$/.test(val)) {
+                                updateExisting(v.id, "price", e.target.value);
+                              }
+                            }}
                             min="0"
                             className={inputClass}
                           />
@@ -536,6 +552,9 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                             readOnly
                             className={`${inputClass} bg-gray-100 cursor-not-allowed`}
                           />
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            Manage stock via Inventory.
+                          </p>
                         </div>
                       </div>
                       <div>
@@ -543,6 +562,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                         <input
                           type="text"
                           value={v.keywords}
+                          maxLength={200}
                           onChange={(e) =>
                             updateExisting(v.id, "keywords", e.target.value)
                           }

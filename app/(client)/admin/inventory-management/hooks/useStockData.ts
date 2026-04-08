@@ -6,6 +6,8 @@ interface RawStockVariant {
   id: string;
   sku: string;
   stock_qty: number;
+  reserved_qty: number;
+  available_qty: number;
   image_url: string;
   products: {
     name: string;
@@ -28,9 +30,9 @@ export function useStockData() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("product_variants")
+        .from("product_variants_available")
         .select(`
-          id, sku, stock_qty, image_url,
+          id, sku, stock_qty, reserved_qty, available_qty, image_url,
           products (
             name,
             sub_categories (
@@ -54,8 +56,8 @@ export function useStockData() {
 
       const flattened: StockRow[] = (data as unknown as RawStockVariant[]).map((v) => {
         let status: StockRow["status"] = "In Stock";
-        if (v.stock_qty <= 0)        status = "Out of Stock";
-        else if (v.stock_qty <= 10)  status = "Low Stock";
+        if (v.available_qty <= 0)       status = "Out of Stock";
+        else if (v.available_qty <= 10) status = "Low Stock";
 
         const lastMovement = v.StockMovement?.[0] ?? null;
 
@@ -66,10 +68,12 @@ export function useStockData() {
           category:           v.products?.sub_categories?.categories?.name ?? "—",
           sub_category:       v.products?.sub_categories?.name ?? "—",
           stock_qty:          v.stock_qty,
+          reserved_qty:       v.reserved_qty,
+          available_qty:      v.available_qty,
           status,
           last_movement_type: lastMovement?.movement_type ?? null,
           last_movement_at:   lastMovement?.created_at ?? null,
-          image_url: v.image_url || "/placeholder.png",
+          image_url:          v.image_url || "/placeholder.png",
         };
       });
 

@@ -22,9 +22,6 @@ import {
 import HeaderUser from "./HeaderUser";
 import HeaderNotifications from "./HeaderNotif";
 
-const logo =
-  "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png";
-
 const Sidebar: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -32,6 +29,17 @@ const Sidebar: React.FC = () => {
   const [activeBell, setActiveBell] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const [logo, setLogo] = useState(
+    "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png",
+  );
+
+  useEffect(() => {
+    fetch("/api/company")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.company_logo) setLogo(data.company_logo);
+      });
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

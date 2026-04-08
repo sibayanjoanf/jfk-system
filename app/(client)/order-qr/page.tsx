@@ -1,11 +1,35 @@
 "use client";
 
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import QRCode from "qrcode";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import Link from "next/link";
 
 export default function OrderQRPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("order_id") ?? "UNKNOWN";
+
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    QRCode.toDataURL(orderId, {
+      width: 400,
+      margin: 2,
+      color: { dark: "#111111", light: "#ffffff" },
+    }).then(setQrDataUrl);
+  }, [orderId]);
+
+  const handleDownload = () => {
+    if (!qrDataUrl) return;
+    const link = document.createElement("a");
+    link.href = qrDataUrl;
+    link.download = `${orderId}-qr.png`;
+    link.click();
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -51,25 +75,36 @@ export default function OrderQRPage() {
             <div className="flex flex-col items-center lg:items-end w-full">
               <div className="w-full max-w-xs flex flex-col gap-6">
                 <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center">
-                  <Image
-                    src="/images/sample-qr.png"
-                    alt="Order QR Code"
-                    width={500}
-                    height={500}
-                    className="object-fit"
-                  />
+                  {qrDataUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={qrDataUrl}
+                      alt="Order QR Code"
+                      width={300}
+                      height={300}
+                      className="object-fit"
+                    />
+                  ) : (
+                    <div className="w-[300px] h-[300px] flex items-center justify-center text-gray-400 text-sm">
+                      Generating QR...
+                    </div>
+                  )}
 
                   <div className="text-center border-t border-gray-100 pt-6 w-full">
                     <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-1 font-semibold">
                       Order ID
                     </p>
                     <p className="text-xl font-mono font-bold text-gray-900 tracking-wider">
-                      267676GHERT105467
+                      {orderId}
                     </p>
                   </div>
                 </div>
 
-                <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg cursor-pointer justify-center">
+                <button
+                  onClick={handleDownload}
+                  disabled={!qrDataUrl}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-all shadow-lg cursor-pointer justify-center"
+                >
                   Download QR Code
                 </button>
               </div>

@@ -1,11 +1,19 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Search, ChevronDown, Plus, RotateCcw, X, Loader2 } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  Plus,
+  RotateCcw,
+  Loader2,
+  ChevronUp,
+} from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { AdjustmentRow } from "../types";
 import Pagination from "./Pagination";
+import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 
 interface VariantOption {
   id: string;
@@ -24,7 +32,37 @@ interface AdjustmentTableProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  sortConfig: { field: string; dir: "asc" | "desc" };
+  onSort: (field: string) => void;
 }
+
+const SortArrows = ({
+  field,
+  current,
+}: {
+  field: string;
+  current: { field: string; dir: string };
+}) => {
+  const isActive = current.field === field;
+  return (
+    <span className="flex flex-col -space-y-1">
+      <ChevronUp
+        size={12}
+        strokeWidth={2}
+        className={
+          isActive && current.dir === "asc" ? "text-gray-400" : "text-gray-200"
+        }
+      />
+      <ChevronDown
+        size={12}
+        strokeWidth={2}
+        className={
+          isActive && current.dir === "desc" ? "text-gray-400" : "text-gray-200"
+        }
+      />
+    </span>
+  );
+};
 
 const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   rows,
@@ -34,11 +72,13 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  sortConfig,
+  onSort,
 }) => {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [typeOpen, setTypeOpen] = useState(false);
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [variantOptions, setVariantOptions] = useState<VariantOption[]>([]);
@@ -46,6 +86,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [quantityError, setQuantityError] = useState("");
+  const typeRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState({
     variant_id: "",
@@ -69,10 +110,29 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
           typeFilter === "All" ||
           a.adjustment_type.toLowerCase() === typeFilter.toLowerCase();
         const matchesDate =
-          !dateFilter || (a.created_at ?? "").includes(dateFilter);
+          !dateFilter ||
+          (() => {
+            const d = new Date(a.created_at ?? "");
+            if (dateFilter.type === "year")
+              return d.getFullYear() === dateFilter.year;
+            if (dateFilter.type === "month")
+              return (
+                d.getFullYear() === dateFilter.year &&
+                d.getMonth() === dateFilter.month
+              );
+            if (dateFilter.type === "day") {
+              const f = dateFilter.date;
+              return (
+                d.getFullYear() === f.getFullYear() &&
+                d.getMonth() === f.getMonth() &&
+                d.getDate() === f.getDate()
+              );
+            }
+            return true;
+          })();
         return matchesSearch && matchesType && matchesDate;
       }),
-    [rows, search, typeFilter, dateFilter],
+    [rows, search, typeFilter, dateFilter, sortConfig],
   );
 
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
@@ -82,16 +142,13 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   );
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
+    const handler = (e: MouseEvent) => {
+      if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
+        setTypeOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const fetchVariants = async () => {
@@ -236,7 +293,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
               className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-48"
             />
           </div>
-          <div className="relative">
+          <div className="relative" ref={typeRef}>
             <button
               onClick={() => setTypeOpen(!typeOpen)}
               className={filterBtnClass(typeOpen)}
@@ -244,7 +301,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
               {typeFilter} <ChevronDown size={13} />
             </button>
             {typeOpen && (
-              <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+              <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                 {["All", "Add", "Deduct", "Set"].map((f) => (
                   <button
                     key={f}
@@ -261,23 +318,15 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
               </div>
             )}
           </div>
-          <input
-            type="month"
+
+          <CalendarPicker
             value={dateFilter}
-            onChange={(e) => {
-              setDateFilter(e.target.value);
+            onChange={(f) => {
+              setDateFilter(f);
               onPageChange(1);
             }}
-            className="px-3 py-2 text-xs border border-red-200 text-red-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 bg-white transition-all"
           />
-          {dateFilter && (
-            <button
-              onClick={() => setDateFilter("")}
-              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-            >
-              <X size={13} />
-            </button>
-          )}
+
           <button
             onClick={handleOpenForm}
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
@@ -445,11 +494,15 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                 Quantity
               </label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={15}
                 placeholder="0"
                 value={form.quantity}
                 onChange={(e) => {
-                  setForm({ ...form, quantity: e.target.value });
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) setForm({ ...form, quantity: val });
                   setQuantityError("");
                 }}
                 className={`w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${quantityError ? "border-red-400" : "border-gray-200"}`}
@@ -518,10 +571,34 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 text-xs uppercase tracking-wider text-gray-400 border-b border-gray-100">
-                <th className="py-3 pl-5 font-semibold">Ref ID</th>
-                <th className="py-3 px-4 font-semibold">Product</th>
+                <th
+                  className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("adjustment_code")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Ref ID
+                    <SortArrows field="adjustment_code" current={sortConfig} />
+                  </span>
+                </th>
+                <th
+                  className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("product_name")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Product
+                    <SortArrows field="product_name" current={sortConfig} />
+                  </span>
+                </th>
                 <th className="py-3 px-4 font-semibold text-center">Type</th>
-                <th className="py-3 px-4 font-semibold text-center">Qty</th>
+                <th
+                  className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("quantity")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Quantity
+                    <SortArrows field="quantity" current={sortConfig} />
+                  </span>
+                </th>
                 <th className="py-3 px-4 font-semibold">Reason</th>
                 <th className="py-3 px-4 font-semibold">Adjusted By</th>
                 <th className="py-3 pr-5 font-semibold text-center">Date</th>
@@ -561,7 +638,13 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                       </span>
                     </td>
                     <td
-                      className={`py-3.5 px-4 text-sm font-semibold text-center ${adj.adjustment_type === "add" ? "text-green-600" : "text-red-600"}`}
+                      className={`py-3.5 px-4 text-sm font-semibold text-center ${
+                        adj.adjustment_type === "add"
+                          ? "text-green-600"
+                          : adj.adjustment_type === "deduct"
+                            ? "text-red-600"
+                            : "text-blue-600"
+                      }`}
                     >
                       {adj.adjustment_type === "add"
                         ? "+"
@@ -570,18 +653,27 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                           : "="}
                       {adj.quantity}
                     </td>
-                    <td className="py-3.5 px-4 text-sm text-gray-500">
+                    <td className="py-3.5 px-4 text-xs text-gray-500">
                       {adj.notes ?? "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-sm text-gray-500">
+                    <td className="py-3.5 px-4 text-xs text-gray-500">
                       {adj.adjusted_by ?? "—"}
                     </td>
-                    <td className="py-3.5 pr-5 text-xs text-gray-400 text-center whitespace-nowrap">
-                      {new Date(adj.created_at).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                    <td className="py-3.5 pr-5 text-xs text-gray-500 text-center whitespace-nowrap">
+                      <p>
+                        {new Date(adj.created_at).toLocaleDateString("en-PH", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        {new Date(adj.created_at).toLocaleTimeString("en-PH", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </p>
                     </td>
                   </tr>
                 ))

@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronUp, ShoppingCart } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ShoppingCart,
+  Loader2,
+} from "lucide-react";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -13,30 +20,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/cart";
 import Image from "next/image";
 
 export default function InquiryFormPage() {
-  const logo =
-    "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png";
-  const inputStyles =
-    "border-gray-200 bg-transparent h-12 text-sm focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500";
-  const { items, clearCart } = useCart();
-
+  const [logo, setLogo] = useState(
+    "https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png",
+  );
+  const [announcements, setAnnouncements] = useState<
+    { id: string; text: string }[]
+  >([]);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deliveryPref, setDeliveryPref] = useState("");
+  const [paymentPref, setPaymentPref] = useState("");
+  const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { items, clearCart } = useCart();
   const totalAmount = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  useEffect(() => {
+    fetch("/api/company")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.company_logo) setLogo(data.company_logo);
+      });
+
+    fetch("/api/announcements")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setAnnouncements(data.data);
+      });
+  }, []);
+
+  const inputStyles =
+    "border-gray-200 bg-transparent h-12 text-sm focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:border-red-500";
 
   const formatName = (value: string) => {
     return value
@@ -67,10 +96,6 @@ export default function InquiryFormPage() {
     if (phone === "+63") setPhone("");
   };
 
-  const [deliveryPref, setDeliveryPref] = useState("");
-  const [paymentPref, setPaymentPref] = useState("");
-  const [message, setMessage] = useState("");
-
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
     if (!firstName.trim()) newErrors.firstName = "First name is required.";
@@ -86,50 +111,119 @@ export default function InquiryFormPage() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-inquiry`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          phone,
-          deliveryPreference: deliveryPref,
-          paymentPreference: paymentPref,
-          message,
-          items,
-          totalAmount,
-        }),
-      });
+      setIsSubmitting(true);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-inquiry`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              firstName,
+              lastName,
+              email,
+              phone,
+              deliveryPreference: deliveryPref,
+              paymentPreference: paymentPref,
+              message,
+              items,
+              totalAmount,
+            }),
+          },
+        );
 
-      clearCart();
-      window.location.href = "/confirmation";
+        if (!res.ok) throw new Error("Submission failed");
+
+        const data = await res.json();
+        const orderNumber = data.order_number;
+
+        clearCart();
+        window.location.href = `/order-qr?order_id=${orderNumber}`;
+      } catch (error) {
+        console.error(error);
+        setIsSubmitting(false);
+      }
     }
+  };
+
+  const AnnouncementBar = ({
+    announcements,
+  }: {
+    announcements: { id: string; text: string }[];
+  }) => {
+    const [current, setCurrent] = useState(0);
+    const [visible, setVisible] = useState(true);
+    const [hovered, setHovered] = useState(false);
+
+    const switchTo = (index: number) => {
+      setVisible(false);
+      setTimeout(() => {
+        setCurrent(index);
+        setVisible(true);
+      }, 300);
+    };
+
+    const prev = () =>
+      switchTo((current - 1 + announcements.length) % announcements.length);
+    const next = () => switchTo((current + 1) % announcements.length);
+
+    useEffect(() => {
+      if (announcements.length === 0 || hovered) return;
+      const interval = setInterval(() => {
+        setVisible(false);
+        setTimeout(() => {
+          setCurrent((prev) => (prev + 1) % announcements.length);
+          setVisible(true);
+        }, 500);
+      }, 10000);
+      return () => clearInterval(interval);
+    }, [announcements, hovered]);
+
+    if (announcements.length === 0) {
+      return (
+        <p className="text-center text-[10px] font-medium uppercase tracking-[0.2em]">
+          Welcome to JFK Tile and Stone Builders
+        </p>
+      );
+    }
+
+    return (
+      <div
+        className="relative flex items-center justify-center"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <button
+          onClick={prev}
+          className={`absolute left-4 transition-opacity duration-200 hover:text-white/70 ${hovered ? "opacity-100" : "opacity-0"}`}
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <p
+          className="text-center text-[10px] font-medium uppercase tracking-[0.2em] transition-opacity duration-300 px-10"
+          style={{ opacity: visible ? 1 : 0 }}
+        >
+          {announcements[current]?.text}
+        </p>
+        <button
+          onClick={next}
+          className={`absolute right-4 transition-opacity duration-200 hover:text-white/70 ${hovered ? "opacity-100" : "opacity-0"}`}
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+    );
   };
 
   return (
     <div className="bg-white">
       <header className="fixed top-0 z-50 w-full">
-        {/* Top Red Marquee */}
         <div className="bg-red-600 text-white py-2 overflow-hidden">
-          <div className="animate-marquee text-[10px] font-medium uppercase tracking-[0.2em]">
-            <span className="marquee-content">
-              Special Offer: Get 10% off on all Floor Tiles this month! • Free
-              delivery for orders over ₱50,000 • Visit our showrooms in Barit,
-              Bulangon, and Rizal • Quality Tile and Stone Builders since 2009
-            </span>
-            <span className="marquee-content">
-              Special Offer: Get 10% off on all Floor Tiles this month! • Free
-              delivery for orders over ₱50,000 • Visit our showrooms in Barit,
-              Bulangon, and Rizal • Quality Tile and Stone Builders since 2009
-            </span>
-          </div>
+          <AnnouncementBar announcements={announcements} />
         </div>
-
-        {/* Navbar */}
         <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-sm">
           <div className="container mx-auto px-4">
             <div className="flex h-16 items-center justify-between">
@@ -158,7 +252,6 @@ export default function InquiryFormPage() {
 
       <main className="pt-10">
         <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-start pb-10">
-          {/* Form */}
           <div className="flex flex-col gap-5 order-2 lg:order-1 lg:sticky lg:top-32 self-start">
             <div>
               <h1 className="font-semibold text-xl md:text-2xl text-gray-900">
@@ -170,7 +263,6 @@ export default function InquiryFormPage() {
               <Field>
                 <Input
                   id="firstName"
-                  autoComplete="given-name"
                   placeholder="First Name"
                   className={cn(
                     inputStyles,
@@ -178,6 +270,7 @@ export default function InquiryFormPage() {
                   )}
                   value={firstName}
                   onChange={(e) => setFirstName(formatName(e.target.value))}
+                  disabled={isSubmitting}
                 />
                 {errors.firstName && (
                   <p className="text-xs text-red-500 mt-1">
@@ -188,7 +281,6 @@ export default function InquiryFormPage() {
               <Field>
                 <Input
                   id="lastName"
-                  autoComplete="family-name"
                   placeholder="Last Name"
                   className={cn(
                     inputStyles,
@@ -196,6 +288,7 @@ export default function InquiryFormPage() {
                   )}
                   value={lastName}
                   onChange={(e) => setLastName(formatName(e.target.value))}
+                  disabled={isSubmitting}
                 />
                 {errors.lastName && (
                   <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
@@ -207,12 +300,12 @@ export default function InquiryFormPage() {
               <Input
                 id="email"
                 type="email"
-                autoComplete="email"
                 placeholder="Email Address"
                 className={cn(inputStyles, errors.email && "border-red-400")}
                 value={email}
                 onChange={(e) => setEmail(formatEmail(e.target.value))}
                 onKeyDown={(e) => e.key === " " && e.preventDefault()}
+                disabled={isSubmitting}
               />
               {errors.email && (
                 <p className="text-xs text-red-500 mt-1">{errors.email}</p>
@@ -223,13 +316,13 @@ export default function InquiryFormPage() {
               <Input
                 id="phone"
                 type="tel"
-                autoComplete="tel"
                 placeholder="Phone"
                 className={cn(inputStyles, errors.phone && "border-red-400")}
                 value={phone}
                 onChange={handlePhoneChange}
                 onFocus={handlePhoneFocus}
                 onBlur={handlePhoneBlur}
+                disabled={isSubmitting}
               />
               {errors.phone && (
                 <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
@@ -239,6 +332,7 @@ export default function InquiryFormPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Select
+                  disabled={isSubmitting}
                   onValueChange={(val) => {
                     setDeliveryPref(val);
                     setErrors((p) => ({ ...p, deliveryPref: "" }));
@@ -267,6 +361,7 @@ export default function InquiryFormPage() {
               </div>
               <div>
                 <Select
+                  disabled={isSubmitting}
                   onValueChange={(val) => {
                     setPaymentPref(val);
                     setErrors((p) => ({ ...p, paymentPref: "" }));
@@ -300,14 +395,23 @@ export default function InquiryFormPage() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Message / Notes (optional)"
+              disabled={isSubmitting}
               className="min-h-[120px] md:min-h-[160px] border-gray-200 bg-transparent p-4 text-sm placeholder:text-gray-400 resize-none"
             />
 
             <Button
               onClick={handleSubmit}
-              className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors cursor-pointer disabled:bg-red-400 disabled:cursor-not-allowed"
             >
-              Submit Inquiry
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </div>
+              ) : (
+                "Submit Inquiry"
+              )}
             </Button>
 
             <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100 text-xs text-gray-400 justify-center lg:justify-start">
@@ -332,9 +436,7 @@ export default function InquiryFormPage() {
             </div>
           </div>
 
-          {/* Order Summary */}
           <div className="flex flex-col order-1 lg:order-2 lg:sticky lg:top-32 self-start">
-            {/* Mobile toggle */}
             <button
               onClick={() => setIsOrderOpen(!isOrderOpen)}
               className="flex lg:hidden items-center justify-between w-full py-2 border-b border-gray-100"
@@ -354,7 +456,6 @@ export default function InquiryFormPage() {
               )}
             </button>
 
-            {/* Desktop heading */}
             <div className="hidden lg:block mb-4">
               <p className="text-xs uppercase tracking-widest text-gray-400 mb-1">
                 Your Order
@@ -417,7 +518,6 @@ export default function InquiryFormPage() {
                   })}
                 </p>
               </div>
-
               <p className="text-xs text-gray-400">
                 Final pricing will be confirmed upon processing your inquiry.
               </p>

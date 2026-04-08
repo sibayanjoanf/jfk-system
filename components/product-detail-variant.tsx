@@ -61,12 +61,14 @@ export function ProductDetailVariant({ product, variants }: Props) {
           <div className="flex flex-col space-y-2 md:space-y-5">
             <nav className="text-sm font-medium text-gray-400 flex">
               <Link
+                className="hover:text-gray-500"
                 href={`/collection/${category.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 {category}
               </Link>
-              <span className="px-3">•</span>
+              <span className="px-3">/</span>
               <Link
+                className="hover:text-gray-500"
                 href={{
                   pathname: `/collection/${category.toLowerCase().replace(/\s+/g, "-")}`,
                   query: { sub: sub_category },
@@ -74,6 +76,8 @@ export function ProductDetailVariant({ product, variants }: Props) {
               >
                 {sub_category}
               </Link>
+              <span className="px-3">/</span>
+              <span>{product.name}</span>
             </nav>
 
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -81,7 +85,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
             </h2>
 
             <p className="text-xl md:text-2xl font-medium text-red-600">
-              ₱{" "}
+              ₱
               {selectedVariant.price.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
               })}
@@ -159,7 +163,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
           <div className="container mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Technical Details */}
-              <div className="bg-gray-50/50 border border-gray-100 p-8 rounded-xl h-fit">
+              <div className="bg-gray-100/40 border border-gray-200 p-8 rounded-xl h-fit">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900 mb-6 border-b pb-4">
                   Technical Details
                 </h3>
@@ -209,7 +213,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
               {/* Feature Cards */}
               <div className="lg:col-span-2 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-gray-100">
-                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 bg-gray-100/40">
                     <div className="p-2 bg-white rounded-md shadow-sm">
                       <Hammer size={24} className="text-red-600" />
                     </div>
@@ -224,7 +228,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 bg-gray-100/40">
                     <div className="p-2 bg-white rounded-md shadow-sm">
                       <Palette size={24} className="text-red-600" />
                     </div>
@@ -240,7 +244,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 bg-gray-100/40">
                     <div className="p-2 bg-white rounded-md shadow-sm">
                       <Wrench size={24} className="text-red-600" />
                     </div>
@@ -256,7 +260,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 bg-gray-50/50">
+                  <div className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 bg-gray-100/40">
                     <div className="p-2 bg-white rounded-md shadow-sm">
                       <ShieldCheck size={24} className="text-red-600" />
                     </div>

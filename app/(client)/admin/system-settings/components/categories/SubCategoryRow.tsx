@@ -1,11 +1,14 @@
 import React from "react";
-import { ChevronRight, Images, Pencil, Trash2 } from "lucide-react";
+import { Images, Pencil, Trash2 } from "lucide-react";
 import { SubCategory } from "../../types";
 
 interface SubCategoryRowProps {
   sub: SubCategory;
+  hasSelection: boolean;
   editingSubCategory: string | null;
   editingSubCategoryName: string;
+  isSelected: boolean;
+  onCheckboxToggle: (id: string) => void;
   onEditStart: (subId: string, name: string) => void;
   onEditChange: (name: string) => void;
   onEditSave: (subId: string) => void;
@@ -15,8 +18,11 @@ interface SubCategoryRowProps {
 
 const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
   sub,
+  hasSelection,
   editingSubCategory,
   editingSubCategoryName,
+  isSelected,
+  onCheckboxToggle,
   onEditStart,
   onEditChange,
   onEditSave,
@@ -26,8 +32,19 @@ const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
   const subThumbRef = React.createRef<HTMLInputElement>();
 
   return (
-    <div className="flex items-center gap-3 pl-6 pr-2 py-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-      <ChevronRight size={12} className="text-gray-300 shrink-0" />
+    <div
+      className={`flex items-center gap-3 pl-4 pr-2 py-2.5 rounded-lg border transition-colors ${
+        isSelected
+          ? "border-red-200 bg-red-50/50"
+          : "border-gray-100 hover:bg-gray-50"
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => onCheckboxToggle(sub.id)}
+        className="w-3.5 h-3.5 rounded border-gray-300 accent-red-600 cursor-pointer shrink-0"
+      />
 
       <div
         onClick={() => subThumbRef.current?.click()}
@@ -74,16 +91,18 @@ const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
 
       <div className="flex items-center gap-1 shrink-0">
         <button
+          onClick={() => onDelete(sub.id)}
+          className={`p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all ${
+            hasSelection ? "opacity-0 pointer-events-none" : ""
+          }`}
+        >
+          <Trash2 size={12} />
+        </button>
+        <button
           onClick={() => onEditStart(sub.id, sub.name)}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
           <Pencil size={12} />
-        </button>
-        <button
-          onClick={() => onDelete(sub.id)}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <Trash2 size={12} />
         </button>
       </div>
     </div>

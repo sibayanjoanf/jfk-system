@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   BookMarked,
   AlertTriangle,
@@ -13,14 +13,12 @@ import {
 import MetricCard from "@/components/admin/dashboard/MetricCard";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
-
 import { useStockData } from "./hooks/useStockData";
 import { useInboundData } from "./hooks/useInboundData";
 import { useAdjustmentData } from "./hooks/useAdjustmentData";
 import { useMovementData } from "./hooks/useMovementData";
 import { useInventoryParams } from "./hooks/useInventoryParams";
-import { TabType } from "./types";
-
+import { AdjustmentRow, InboundRow, MovementRow, TabType } from "./types";
 import StockTable from "./components/StockTable";
 import InboundTable from "./components/InboundTable";
 import AdjustmentTable from "./components/AdjustmentTable";
@@ -75,6 +73,93 @@ const InventoryManagement: React.FC = () => {
     fetchStockData();
     fetchMovementData();
   };
+
+  const [sortConfig, setSortConfig] = useState<{
+    field: string;
+    dir: "asc" | "desc";
+  }>({
+    field: "product_name",
+    dir: "asc",
+  });
+
+  const handleSort = (field: string) => {
+    setSortConfig((prev) => ({
+      field,
+      dir: prev.field === field && prev.dir === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const sortedStockRows = useMemo(() => {
+    return [...stockRows].sort((a, b) => {
+      const dir = sortConfig.dir === "asc" ? 1 : -1;
+      const field = sortConfig.field as keyof typeof a;
+
+      const valA = a[field];
+      const valB = b[field];
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return (valA - valB) * dir;
+      }
+      return String(valA || "").localeCompare(String(valB || "")) * dir;
+    });
+  }, [stockRows, sortConfig]);
+
+  const sortedInboundRows = useMemo(() => {
+    return [...inboundRows].sort((a, b) => {
+      const dir = sortConfig.dir === "asc" ? 1 : -1;
+      const field = sortConfig.field as keyof InboundRow;
+
+      const valA = a[field];
+      const valB = b[field];
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return (valA - valB) * dir;
+      }
+
+      return (
+        String(valA || "")
+          .toLowerCase()
+          .localeCompare(String(valB || "").toLowerCase()) * dir
+      );
+    });
+  }, [inboundRows, sortConfig]);
+
+  const sortedAdjustmentRows = useMemo(() => {
+    return [...adjustmentRows].sort((a, b) => {
+      const dir = sortConfig.dir === "asc" ? 1 : -1;
+      const field = sortConfig.field as keyof AdjustmentRow;
+
+      const valA = a[field];
+      const valB = b[field];
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return (valA - valB) * dir;
+      }
+
+      return (
+        String(valA || "")
+          .toLowerCase()
+          .localeCompare(String(valB || "").toLowerCase()) * dir
+      );
+    });
+  }, [adjustmentRows, sortConfig]);
+
+  const sortedMovementRows = useMemo(() => {
+    return [...movementRows].sort((a, b) => {
+      const dir = sortConfig.dir === "asc" ? 1 : -1;
+      const field = sortConfig.field as keyof MovementRow;
+
+      if (typeof a[field] === "number") {
+        return ((a[field] as number) - (b[field] as number)) * dir;
+      }
+
+      return (
+        String(a[field] || "")
+          .toLowerCase()
+          .localeCompare(String(b[field] || "").toLowerCase()) * dir
+      );
+    });
+  }, [movementRows, sortConfig]);
 
   return (
     <div className="p-0">
@@ -146,44 +231,52 @@ const InventoryManagement: React.FC = () => {
 
       {activeTab === "overview" && (
         <StockTable
-          rows={stockRows}
+          rows={sortedStockRows}
           loading={stockLoading}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          sortConfig={sortConfig}
+          onSort={handleSort}
         />
       )}
       {activeTab === "inbound" && (
         <InboundTable
-          rows={inboundRows}
+          rows={sortedInboundRows}
           loading={inboundLoading}
           onSaved={handleInboundSaved}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          sortConfig={sortConfig}
+          onSort={handleSort}
         />
       )}
       {activeTab === "adjustments" && (
         <AdjustmentTable
-          rows={adjustmentRows}
+          rows={sortedAdjustmentRows}
           loading={adjustmentLoading}
           onSaved={handleAdjustmentSaved}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          sortConfig={sortConfig}
+          onSort={handleSort}
         />
       )}
       {activeTab === "audit" && (
         <AuditLogTable
-          rows={movementRows}
+          rows={sortedMovementRows}
           loading={movementLoading}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          sortConfig={sortConfig}
+          onSort={handleSort}
         />
       )}
     </div>

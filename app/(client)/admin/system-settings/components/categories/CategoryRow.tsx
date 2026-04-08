@@ -12,12 +12,17 @@ import SubCategoryRow from "./SubCategoryRow";
 
 interface CategoryRowProps {
   cat: Category;
+  hasSelection: boolean;
   editingCategory: string | null;
   editingCategoryName: string;
   editingSubCategory: string | null;
   editingSubCategoryName: string;
   showAddSubMap: Record<string, boolean>;
   newSubMap: Record<string, { name: string; image_url: string }>;
+  selectedCatIds: string[];
+  selectedSubIds: string[];
+  onCategoryCheckboxToggle: (id: string) => void;
+  onSubCheckboxToggle: (id: string) => void;
   onCategoryEditStart: (id: string, name: string) => void;
   onCategoryEditChange: (name: string) => void;
   onCategoryEditSave: (id: string) => void;
@@ -34,16 +39,22 @@ interface CategoryRowProps {
   onNewSubChange: (catId: string, name: string) => void;
   onNewSubThumbnail: (catId: string, file: File) => void;
   onAddSubCategory: (catId: string) => void;
+  onSelectAllSubs: (catId: string) => void;
 }
 
 const CategoryRow: React.FC<CategoryRowProps> = ({
   cat,
+  hasSelection,
   editingCategory,
   editingCategoryName,
   editingSubCategory,
   editingSubCategoryName,
   showAddSubMap,
   newSubMap,
+  selectedCatIds,
+  selectedSubIds,
+  onCategoryCheckboxToggle,
+  onSubCheckboxToggle,
   onCategoryEditStart,
   onCategoryEditChange,
   onCategoryEditSave,
@@ -60,13 +71,30 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   onNewSubChange,
   onNewSubThumbnail,
   onAddSubCategory,
+  onSelectAllSubs,
 }) => {
   const catThumbInputRef = React.createRef<HTMLInputElement>();
 
+  const isCategorySelected = selectedCatIds.includes(cat.id);
+  const allSubsSelected =
+    cat.subCategories.length > 0 &&
+    cat.subCategories.every((sub) => selectedSubIds.includes(sub.id));
+  const someSubsSelected =
+    !allSubsSelected &&
+    cat.subCategories.some((sub) => selectedSubIds.includes(sub.id));
+
   return (
     <div className="rounded-xl border border-gray-100 overflow-hidden">
-      {/* Category Row */}
       <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+        <input
+          type="checkbox"
+          className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+          checked={isCategorySelected}
+          onChange={(e) => {
+            e.stopPropagation();
+            onCategoryCheckboxToggle(cat.id);
+          }}
+        />
         <div
           onClick={() => catThumbInputRef.current?.click()}
           className="w-10 h-10 rounded-lg border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-red-300 transition-colors shrink-0 overflow-hidden relative group"
@@ -95,6 +123,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           }
         />
 
+        {/* Name / edit */}
         <div className="flex-1 min-w-0">
           {editingCategory === cat.id ? (
             <input
@@ -107,27 +136,33 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
               className="w-full px-2 py-1 text-sm bg-white border border-red-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500"
             />
           ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-gray-900">{cat.name}</p>
-              <span className="text-xs text-gray-400">
-                {cat.subCategories.length} sub-categories
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-gray-900">
+                  {cat.name}
+                </p>
+                <span className="text-xs text-gray-400">
+                  {cat.subCategories.length} sub-categories
+                </span>
+              </div>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
           <button
+            onClick={() => onCategoryDelete(cat.id)}
+            className={`p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all ${
+              hasSelection ? "opacity-0 pointer-events-none" : ""
+            }`}
+          >
+            <Trash2 size={13} />
+          </button>
+          <button
             onClick={() => onCategoryEditStart(cat.id, cat.name)}
             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
           >
             <Pencil size={13} />
-          </button>
-          <button
-            onClick={() => onCategoryDelete(cat.id)}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
-          >
-            <Trash2 size={13} />
           </button>
           <button
             onClick={() => onToggleExpand(cat.id)}
@@ -141,12 +176,39 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
       {/* Sub-categories */}
       {cat.expanded && (
         <div className="px-4 pb-3 pt-2 space-y-2 bg-white">
+          {cat.subCategories.length > 0 && (
+            <div className="flex items-center gap-2 pl-4 py-3">
+              <input
+                type="checkbox"
+                className="w-3.5 h-3.5 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                checked={allSubsSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSubsSelected;
+                }}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onSelectAllSubs(cat.id);
+                }}
+              />
+              <span className="text-xs text-gray-400 font-medium">
+                {allSubsSelected
+                  ? "Deselect all sub-categories"
+                  : someSubsSelected
+                    ? `${cat.subCategories.filter((s) => selectedSubIds.includes(s.id)).length} of ${cat.subCategories.length} selected`
+                    : "Select all sub-categories"}
+              </span>
+            </div>
+          )}
+
           {cat.subCategories.map((sub) => (
             <SubCategoryRow
               key={sub.id}
               sub={sub}
+              hasSelection={hasSelection}
               editingSubCategory={editingSubCategory}
               editingSubCategoryName={editingSubCategoryName}
+              isSelected={selectedSubIds.includes(sub.id)}
+              onCheckboxToggle={onSubCheckboxToggle}
               onEditStart={onSubEditStart}
               onEditChange={onSubEditChange}
               onEditSave={onSubEditSave}

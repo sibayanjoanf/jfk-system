@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, Minus, Plus } from "lucide-react";
+import { Eye, Minus, Plus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/cart";
 import { cn } from "@/lib/utils";
 import { ProductVariant } from "@/lib/types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProductCardProps {
   sku: string;
@@ -49,6 +55,16 @@ export function ProductCard({
       : null,
   );
   const { items, addItem } = useCart();
+
+  useEffect(() => {
+    if (isAddedtoCart) {
+      const timer = setTimeout(() => {
+        setIsAddedtoCart(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAddedtoCart, setIsAddedtoCart]);
 
   const activePrice = selectedVariant?.price ?? price;
   const activeImage = selectedVariant?.image_url || image;
@@ -164,19 +180,33 @@ export function ProductCard({
                 {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </div>
-            <div
-              onClick={handleQuickView}
-              className="lg:hidden absolute bottom-4 right-4 bg-white hover:bg-gray-100 p-2 rounded-full border border-gray-200 text-gray-900 pointer-events-auto"
-            >
-              <Eye size={20} />
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleQuickView}
+                    className="lg:hidden absolute bottom-4 right-4 bg-white hover:bg-red-50 p-2 rounded-full border border-red-100 text-red-600 pointer-events-auto"
+                  >
+                    <Eye size={20} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  align="center"
+                  sideOffset={5}
+                  className="text-[10px] py-1 px-2 bg-red-600"
+                >
+                  <p>Quick View</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </CardContent>
         </Card>
       </Link>
 
       {/* Quick View Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-sm md:max-w-2xl lg:max-w-4xl h-[90vh] md:h-fit p-0 overflow-hidden border-none shadow-none">
+        <DialogContent className="w-[95vw] sm:max-w-sm md:max-w-2xl lg:max-w-4xl h-[90vh] md:h-fit p-0 overflow-hidden border-none shadow-none [&>button]:hidden">
           <DialogHeader className="sr-only">
             <DialogTitle>{name}</DialogTitle>
             <DialogDescription>
@@ -196,6 +226,12 @@ export function ProductCard({
             </div>
 
             <div className="flex flex-col justify-between p-6 md:p-12">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="absolute top-3 right-3 z-10 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-color rounded-sm p-1"
+              >
+                <X size={18} />
+              </button>
               <div>
                 <h2 className="text-md md:text-xl font-semibold text-center md:text-left">
                   {name}
@@ -239,6 +275,9 @@ export function ProductCard({
                             </button>
                           ))}
                         </div>
+                        <p className="mt-3 text-xs text-gray-500 font-medium">
+                          Stock: <span>{activeStockQty}</span>
+                        </p>
                       </div>
                     ))
                   ) : (

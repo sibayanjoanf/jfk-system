@@ -1,14 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: false, 
+  reactStrictMode: false,
+  allowedDevOrigins: ['192.168.1.42'], 
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'jfkbuilderstorage.blob.core.windows.net',
         port: '',
-        pathname: '/**', 
+        pathname: '/**',
       },
     ],
   },

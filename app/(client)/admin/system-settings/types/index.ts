@@ -13,13 +13,6 @@ export interface Category {
   subCategories: SubCategory[];
 }
 
-export interface Branch {
-  id: string;
-  name: string;
-  phone: string;
-  telephone: string;
-}
-
 export interface Announcement {
   id: string;
   text: string;
@@ -55,10 +48,13 @@ export interface NotificationSettings {
 }
 
 export interface CompanyForm {
-  name: string;
+  companyName: string;
+  companyLogo: string;
+  branchName: string;
   address: string;
-  contact: string;
-  email: string;
+  phone: string;
+  telephone: string;
+  companyEmail: string;
 }
 
 export type MainTab = "categories" | "notifications" | "company" | "storefront";

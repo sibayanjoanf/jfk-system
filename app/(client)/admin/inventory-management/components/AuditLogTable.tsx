@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Search,
   ChevronDown,
   ArrowUpCircle,
   ArrowDownCircle,
   RotateCcw,
-  X,
   Loader2,
+  ChevronUp,
+  Download,
 } from "lucide-react";
 import { MovementRow } from "../types";
 import Pagination from "./Pagination";
+import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AuditLogTableProps {
   rows: MovementRow[];
@@ -20,7 +28,72 @@ interface AuditLogTableProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  sortConfig: { field: string; dir: "asc" | "desc" };
+  onSort: (field: string) => void;
 }
+
+const SortArrows = ({
+  field,
+  current,
+}: {
+  field: string;
+  current: { field: string; dir: string };
+}) => {
+  const isActive = current.field === field;
+  return (
+    <span className="flex flex-col -space-y-1">
+      <ChevronUp
+        size={12}
+        strokeWidth={2}
+        className={
+          isActive && current.dir === "asc" ? "text-gray-400" : "text-gray-200"
+        }
+      />
+      <ChevronDown
+        size={12}
+        strokeWidth={2}
+        className={
+          isActive && current.dir === "desc" ? "text-gray-400" : "text-gray-200"
+        }
+      />
+    </span>
+  );
+};
+
+const exportToCSV = (data: MovementRow[]) => {
+  const headers = [
+    "Movement,Product,SKU,Qty Change,Before,After,Reference,Date",
+  ];
+
+  const rows = data.map((entry) => {
+    return [
+      entry.movement_type,
+      `"${entry.product_name}"`,
+      entry.sku,
+      entry.quantity_change,
+      entry.quantity_before,
+      entry.quantity_after,
+      entry.reference_type || "N/A",
+      new Date(entry.created_at).toLocaleString("en-PH"),
+    ].join(",");
+  });
+
+  const csvContent = headers.concat(rows).join("\n");
+  const blob = new Blob(["\ufeff" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute(
+    "download",
+    `audit_log_${new Date().toISOString().split("T")[0]}.csv`,
+  );
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 const AuditLogTable: React.FC<AuditLogTableProps> = ({
   rows,
@@ -29,11 +102,27 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  sortConfig,
+  onSort,
 }) => {
   const [search, setSearch] = useState("");
   const [movFilter, setMovFilter] = useState("All");
   const [movFilterOpen, setMovFilterOpen] = useState(false);
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
+  const movFilterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        movFilterRef.current &&
+        !movFilterRef.current.contains(e.target as Node)
+      ) {
+        setMovFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const filtered = useMemo(
     () =>
@@ -46,10 +135,29 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
           movFilter === "All" ||
           h.movement_type.toLowerCase() === movFilter.toLowerCase();
         const matchesDate =
-          !dateFilter || (h.created_at ?? "").includes(dateFilter);
+          !dateFilter ||
+          (() => {
+            const d = new Date(h.created_at ?? "");
+            if (dateFilter.type === "year")
+              return d.getFullYear() === dateFilter.year;
+            if (dateFilter.type === "month")
+              return (
+                d.getFullYear() === dateFilter.year &&
+                d.getMonth() === dateFilter.month
+              );
+            if (dateFilter.type === "day") {
+              const f = dateFilter.date;
+              return (
+                d.getFullYear() === f.getFullYear() &&
+                d.getMonth() === f.getMonth() &&
+                d.getDate() === f.getDate()
+              );
+            }
+            return true;
+          })();
         return matchesSearch && matchesMovement && matchesDate;
       }),
-    [rows, search, movFilter, dateFilter],
+    [rows, search, movFilter, dateFilter, sortConfig],
   );
 
   const formatReference = (ref: string | null) => {
@@ -129,7 +237,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
               className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-48"
             />
           </div>
-          <div className="relative">
+          <div className="relative" ref={movFilterRef}>
             <button
               onClick={() => setMovFilterOpen(!movFilterOpen)}
               className={filterBtnClass(movFilterOpen)}
@@ -137,7 +245,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
               {movFilter} <ChevronDown size={13} />
             </button>
             {movFilterOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                 {["All", "Inbound", "Adjustment", "Consumed", "Returned"].map(
                   (f) => (
                     <button
@@ -156,23 +264,36 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
               </div>
             )}
           </div>
-          <input
-            type="month"
+
+          <CalendarPicker
             value={dateFilter}
-            onChange={(e) => {
-              setDateFilter(e.target.value);
+            onChange={(f) => {
+              setDateFilter(f);
               onPageChange(1);
             }}
-            className="px-3 py-2 text-xs border border-red-200 text-red-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 bg-white transition-all"
           />
-          {dateFilter && (
-            <button
-              onClick={() => setDateFilter("")}
-              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-            >
-              <X size={13} />
-            </button>
-          )}
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => exportToCSV(filtered)}
+                    className="cursor-pointer flex items-center gap-1.5 px-2 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <Download size={14} className="text-red-600" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  sideOffset={5}
+                  className="text-[10px] py-1 px-2 bg-red-600"
+                >
+                  <p>Export to CSV</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
 
@@ -187,9 +308,23 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
             <thead>
               <tr className="bg-gray-50 text-xs uppercase tracking-wider text-gray-400 border-b border-gray-100">
                 <th className="py-3 pl-5 font-semibold">Movement</th>
-                <th className="py-3 px-4 font-semibold">Product</th>
-                <th className="py-3 px-4 font-semibold text-center">
-                  Qty Change
+                <th
+                  className="py-3 px-4 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("product_name")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Product
+                    <SortArrows field="product_name" current={sortConfig} />
+                  </span>
+                </th>
+                <th
+                  className="py-3 px-4 font-semibold text-center cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("quantity_change")}
+                >
+                  <span className="inline-flex items-center gap-1 justify-center">
+                    Qty Change
+                    <SortArrows field="quantity_change" current={sortConfig} />
+                  </span>
                 </th>
                 <th className="py-3 px-4 font-semibold text-center">Before</th>
                 <th className="py-3 px-4 font-semibold text-center">After</th>
@@ -229,11 +364,22 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
                       <p className="text-xs text-gray-400">{entry.sku}</p>
                     </td>
                     <td
-                      className={`py-3.5 px-4 text-sm font-semibold text-center ${entry.quantity_change > 0 ? "text-green-600" : "text-red-600"}`}
+                      className={`py-3.5 px-4 text-sm font-semibold text-center ${
+                        entry.movement_type === "adjustment" &&
+                        entry.quantity_change === entry.quantity_after
+                          ? "text-blue-600"
+                          : entry.quantity_change > 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                      }`}
                     >
-                      {entry.quantity_change > 0
-                        ? `+${entry.quantity_change}`
-                        : entry.quantity_change}
+                      {entry.movement_type === "adjustment" &&
+                      entry.quantity_before !== entry.quantity_after &&
+                      entry.quantity_change === entry.quantity_after
+                        ? `=${entry.quantity_change}`
+                        : entry.quantity_change > 0
+                          ? `+${entry.quantity_change}`
+                          : entry.quantity_change}
                     </td>
                     <td className="py-3.5 px-4 text-sm text-gray-500 text-center">
                       {entry.quantity_before}
@@ -244,12 +390,27 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
                     <td className="py-3.5 px-4 text-xs font-mono text-gray-500">
                       {formatReference(entry.reference_type) ?? "—"}
                     </td>
-                    <td className="py-3.5 pr-5 text-xs text-gray-400 text-center whitespace-nowrap">
-                      {new Date(entry.created_at).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                    <td className="py-3.5 pr-5 text-xs text-gray-500 text-center whitespace-nowrap">
+                      <p>
+                        {new Date(entry.created_at).toLocaleDateString(
+                          "en-PH",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        {new Date(entry.created_at).toLocaleTimeString(
+                          "en-PH",
+                          {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          },
+                        )}
+                      </p>
                     </td>
                   </tr>
                 ))

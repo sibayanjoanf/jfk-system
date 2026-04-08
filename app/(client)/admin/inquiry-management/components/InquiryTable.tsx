@@ -2,12 +2,11 @@
 
 import React from "react";
 import {
-  Search,
   Trash2,
   ChevronDown,
-  Calendar,
   MessageSquare,
   Loader2,
+  ChevronUp,
 } from "lucide-react";
 import {
   Inquiry,
@@ -17,6 +16,7 @@ import {
   getStatusBg,
   initials,
 } from "../types";
+import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 
 interface InquiryTableProps {
   inquiries: Inquiry[];
@@ -25,39 +25,41 @@ interface InquiryTableProps {
   filterStatus: string;
   selectedIds: string[];
   isFilterOpen: boolean;
-  isCalendarOpen: boolean;
-  calendarRef: React.RefObject<HTMLDivElement | null>;
+  filterRef: React.RefObject<HTMLDivElement | null>;
+  dateFilter: DateFilter | null;
   onSearchChange: (v: string) => void;
   onFilterChange: (v: string) => void;
   onFilterOpenToggle: () => void;
-  onCalendarToggle: () => void;
+  onDateFilterChange: (f: DateFilter | null) => void;
   onRowClick: (inquiry: Inquiry) => void;
   onToggleAll: () => void;
   onToggleOne: (id: string) => void;
   onDeleteClick: () => void;
   allSelected: boolean;
   someSelected: boolean;
+  sortConfig: { field: string; dir: "asc" | "desc" };
+  onSort: (field: string) => void;
 }
 
 const InquiryTable: React.FC<InquiryTableProps> = ({
   inquiries,
   loading,
-  searchQuery,
   filterStatus,
   selectedIds,
   isFilterOpen,
-  isCalendarOpen,
-  calendarRef,
-  onSearchChange,
+  filterRef,
+  dateFilter,
   onFilterChange,
   onFilterOpenToggle,
-  onCalendarToggle,
+  onDateFilterChange,
   onRowClick,
   onToggleAll,
   onToggleOne,
   onDeleteClick,
   allSelected,
   someSelected,
+  sortConfig,
+  onSort,
 }) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -82,20 +84,9 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
             </button>
           )}
 
-          <div className="relative" ref={calendarRef}>
-            <button
-              onClick={onCalendarToggle}
-              className={`flex items-center gap-2 p-2 border rounded-lg transition-colors ${
-                isCalendarOpen
-                  ? "bg-red-600 text-white border-red-600"
-                  : "border-red-200 text-red-600 hover:bg-red-50"
-              }`}
-            >
-              <Calendar size={16} />
-            </button>
-          </div>
+          <CalendarPicker value={dateFilter} onChange={onDateFilterChange} />
 
-          <div className="relative">
+          <div className="relative" ref={filterRef}>
             <button
               onClick={onFilterOpenToggle}
               className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${
@@ -109,7 +100,7 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
             </button>
 
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                 {["All", "New", "Viewed", "Resolved"].map((s) => (
                   <button
                     key={s}
@@ -148,7 +139,36 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
                     className="w-3.5 h-3.5 rounded border-gray-300 accent-red-600 cursor-pointer"
                   />
                 </th>
-                <th className="py-3 px-4 font-semibold text-left">Customer</th>
+                <th
+                  className="py-3 px-4 font-semibold text-left cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("first_name")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Customer
+                    <span className="flex flex-col -space-y-1">
+                      <ChevronUp
+                        size={12}
+                        strokeWidth={2}
+                        className={
+                          sortConfig.field === "first_name" &&
+                          sortConfig.dir === "asc"
+                            ? "text-gray-400"
+                            : "text-gray-300"
+                        }
+                      />
+                      <ChevronDown
+                        size={12}
+                        strokeWidth={2}
+                        className={
+                          sortConfig.field === "first_name" &&
+                          sortConfig.dir === "desc"
+                            ? "text-gray-400"
+                            : "text-gray-300"
+                        }
+                      />
+                    </span>
+                  </span>
+                </th>
                 <th className="py-3 px-4 font-semibold text-center">Phone</th>
                 <th className="py-3 px-4 font-semibold text-center">Date</th>
                 <th className="py-3 pr-5 font-semibold text-center">Status</th>

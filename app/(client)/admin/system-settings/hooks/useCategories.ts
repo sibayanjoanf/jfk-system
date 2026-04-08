@@ -35,13 +35,17 @@ export const useCategories = () => {
       return;
     }
 
-    const shaped = (data ?? []).map((cat: RawCategory) => ({
-      ...cat,
-      expanded: false,
-      subCategories: cat.sub_categories ?? [],
-    }));
+    setCategories((prev) => {
+      const expandedIds = new Set(
+        prev.filter((c) => c.expanded).map((c) => c.id)
+      );
 
-    setCategories(shaped);
+      return (data ?? []).map((cat: RawCategory) => ({
+        ...cat,
+        subCategories: cat.sub_categories ?? [],
+        expanded: expandedIds.has(cat.id),
+      }));
+    });
     setLoading(false);
   }, []);
 
@@ -59,13 +63,15 @@ export const useCategories = () => {
   };
 
   const deleteCategory = async (id: string) => {
-    const { error } = await supabase
-      .from("categories")
-      .delete()
-      .eq("id", id);
-    if (error) { console.error(error.message); return; }
-    await fetchCategories();
-  };
+  const { error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await fetchCategories();
+};
 
   const saveCategoryName = async (id: string, name: string) => {
     if (!name.trim()) return;
@@ -96,13 +102,26 @@ export const useCategories = () => {
   };
 
   const deleteSubCategory = async (id: string) => {
-    const { error } = await supabase
-      .from("sub_categories")
-      .delete()
-      .eq("id", id);
-    if (error) { console.error(error.message); return; }
-    await fetchCategories();
-  };
+  const { count, error: countError } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("sub_category_id", id);
+
+  if (countError) throw new Error(countError.message);
+
+  if (count && count > 0) {
+    throw new Error("has_products");
+  }
+
+  const { error } = await supabase
+    .from("sub_categories")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await fetchCategories();
+};
 
   const saveSubCategoryName = async (id: string, name: string) => {
     if (!name.trim()) return;

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
-import { SlidersHorizontal, Loader2, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, Loader2, ChevronDown, Search } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
@@ -49,6 +49,7 @@ export default function CategoryPage({ params }: PageProps) {
     null,
   );
   const [sortExpand, setSortExpand] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const searchParams = useSearchParams();
   const subQuery = searchParams.get("sub");
 
@@ -73,32 +74,14 @@ export default function CategoryPage({ params }: PageProps) {
       const { data: bySubCat } = await supabase
         .from("products")
         .select(
-          `
-          *,
-          sub_categories!inner (
-            name,
-            categories!inner (
-              name
-            )
-          ),
-          product_variants (*)
-        `,
+          `*, sub_categories!inner (name, categories!inner (name)), product_variants (*)`,
         )
         .eq("sub_categories.name", name);
 
       const { data: byCat } = await supabase
         .from("products")
         .select(
-          `
-          *,
-          sub_categories!inner (
-            name,
-            categories!inner (
-              name
-            )
-          ),
-          product_variants (*)
-        `,
+          `*, sub_categories!inner (name, categories!inner (name)), product_variants (*)`,
         )
         .eq("sub_categories.categories.name", name);
 
@@ -114,7 +97,6 @@ export default function CategoryPage({ params }: PageProps) {
 
       setProducts(productData);
       if (catData) setNavCategories(catData);
-
       setLoading(false);
     }
     loadData();
@@ -122,6 +104,12 @@ export default function CategoryPage({ params }: PageProps) {
 
   const displayProducts = useMemo(() => {
     let result = [...products];
+
+    if (searchQuery.trim()) {
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    }
 
     if (activeSubCategory) {
       result = result.filter(
@@ -160,7 +148,7 @@ export default function CategoryPage({ params }: PageProps) {
         break;
     }
     return result;
-  }, [products, inStockOnly, sortBy, activeSubCategory]);
+  }, [products, inStockOnly, sortBy, activeSubCategory, searchQuery]);
 
   if (loading)
     return (
@@ -197,231 +185,213 @@ export default function CategoryPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* Filters (Stock & Categories) */}
       <div className="container mx-auto px-4 pb-10 md:py-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-6 gap-4">
-          <div className="flex items-center justify-between w-full md:w-auto">
-            <div className="hidden lg:flex items-center">
-              <SlidersHorizontal className="text-gray-900 mr-3" size={18} />
-              <h2 className="text-md font-semibold text-gray-900">Filters</h2>
-            </div>
+        <div className="flex items-center gap-4 mb-8 pb-2">
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
+            <SlidersHorizontal className="text-gray-900" size={16} />
+            <h2 className="text-sm font-semibold text-gray-900">Filters</h2>
+          </div>
 
-            <div className="lg:hidden fixed bottom-8 left-0 right-0 z-40 flex justify-center">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <button className="cursor-pointer shadow-2xl text-sm font-semibold text-white bg-red-600 px-6 py-3 rounded-full flex items-center gap-2">
-                    <SlidersHorizontal size={16} />
-                    Filters & Sort
-                  </button>
-                </SheetTrigger>
-                <SheetContent
-                  side="bottom"
-                  className="h-[60vh] rounded-t-4xl p-0 border-none bg-white flex flex-col [&>button]:hidden"
-                >
-                  <SheetHeader className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <SheetTitle className="sr-only"></SheetTitle>
-                      <SheetDescription className="sr-only"></SheetDescription>
-                    </div>
-                  </SheetHeader>
+          {/* Mobile floating button */}
+          <div className="lg:hidden fixed bottom-8 left-0 right-0 z-40 flex justify-center">
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="cursor-pointer shadow-2xl text-sm font-semibold text-white bg-red-600 px-6 py-3 rounded-full flex items-center gap-2">
+                  <SlidersHorizontal size={16} />
+                  Filters & Sort
+                </button>
+              </SheetTrigger>
+              <SheetContent
+                side="bottom"
+                className="h-[60vh] rounded-t-4xl p-0 border-none bg-white flex flex-col [&>button]:hidden"
+              >
+                <SheetHeader className="px-6 py-2">
+                  <SheetTitle className="sr-only" />
+                  <SheetDescription className="sr-only" />
+                </SheetHeader>
 
-                  <div className="flex-1 overflow-y-auto px-6 pb-10">
-                    {/* Stock Toggle */}
-                    <div className="flex flex-row justify-between items-center pb-6">
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">
-                          In Stock Only
-                        </p>
-                      </div>
-                      <Switch
-                        checked={inStockOnly}
-                        onCheckedChange={setInStockOnly}
-                        className="data-[state=checked]:bg-red-600"
-                      />
-                    </div>
+                <div className="flex-1 overflow-y-auto px-6 pb-10">
+                  {/* Mobile Search */}
+                  <div className="relative mb-8">
+                    <Search
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 h-10 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-red-600 focus:border-2 transition-colors"
+                    />
+                  </div>
 
-                    {/* Sort Selection */}
-                    <div className="border-y py-2 mb-7">
-                      <button
-                        onClick={() => setSortExpand(!sortExpand)}
-                        className="flex flex-row justify-between items-center w-full py-4 outline-none"
-                      >
-                        <p className={"font-semibold text-gray-900 text-sm"}>
-                          Sort by
-                        </p>
-                        <ChevronDown
-                          size={20}
-                          className={cn(
-                            "transition-transform duration-200",
-                            sortExpand && "rotate-180",
-                          )}
-                        />
-                      </button>
+                  {/* Stock Toggle */}
+                  <div className="flex flex-row justify-between items-center pb-6">
+                    <p className="font-semibold text-gray-900 text-sm">
+                      In Stock Only
+                    </p>
+                    <Switch
+                      checked={inStockOnly}
+                      onCheckedChange={setInStockOnly}
+                      className="data-[state=checked]:bg-red-600"
+                    />
+                  </div>
 
-                      <div
+                  {/* Sort Selection */}
+                  <div className="border-y py-2 mb-7">
+                    <button
+                      onClick={() => setSortExpand(!sortExpand)}
+                      className="flex flex-row justify-between items-center w-full py-4 outline-none"
+                    >
+                      <p className="font-semibold text-gray-900 text-sm">
+                        Sort by
+                      </p>
+                      <ChevronDown
+                        size={20}
                         className={cn(
-                          "grid transition-all duration-300 ease-in-out",
-                          sortExpand
-                            ? "grid-rows-[1fr] opacity-100 mb-6"
-                            : "grid-rows-[0fr] opacity-0",
+                          "transition-transform duration-200",
+                          sortExpand && "rotate-180",
                         )}
-                      >
-                        <div className="overflow-hidden">
-                          <RadioGroup
-                            value={sortBy}
-                            onValueChange={(value) => {
-                              setSortBy(value);
-                            }}
-                            className="space-y-4 pt-2"
-                          >
-                            <div className="flex items-center justify-between">
+                      />
+                    </button>
+                    <div
+                      className={cn(
+                        "grid transition-all duration-300 ease-in-out",
+                        sortExpand
+                          ? "grid-rows-[1fr] opacity-100 mb-6"
+                          : "grid-rows-[0fr] opacity-0",
+                      )}
+                    >
+                      <div className="overflow-hidden">
+                        <RadioGroup
+                          value={sortBy}
+                          onValueChange={setSortBy}
+                          className="space-y-4 pt-2"
+                        >
+                          {[
+                            { value: "all", label: "All Items" },
+                            { value: "a-to-z", label: "A to Z" },
+                            { value: "z-to-a", label: "Z to A" },
+                            {
+                              value: "price-low-to-high",
+                              label: "Price: Low to High",
+                            },
+                            {
+                              value: "price-high-to-low",
+                              label: "Price: High to Low",
+                            },
+                          ].map((opt) => (
+                            <div
+                              key={opt.value}
+                              className="flex items-center justify-between"
+                            >
                               <Label
-                                htmlFor="all"
+                                htmlFor={opt.value}
                                 className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
                               >
-                                All Items
+                                {opt.label}
                               </Label>
                               <RadioGroupItem
-                                value="all"
-                                id="all"
+                                value={opt.value}
+                                id={opt.value}
                                 className="border-gray-300"
                               />
                             </div>
-                            <div className="flex items-center justify-between">
-                              <Label
-                                htmlFor="a-to-z"
-                                className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
-                              >
-                                A to Z
-                              </Label>
-                              <RadioGroupItem
-                                value="a-to-z"
-                                id="a-to-z"
-                                className="border-gray-300"
-                              />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Label
-                                htmlFor="z-to-a"
-                                className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
-                              >
-                                Z to A
-                              </Label>
-                              <RadioGroupItem
-                                value="z-to-a"
-                                id="z-to-a"
-                                className="border-gray-300"
-                              />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Label
-                                htmlFor="price-low-to-high"
-                                className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
-                              >
-                                Price: Low to High
-                              </Label>
-                              <RadioGroupItem
-                                value="price-low-to-high"
-                                id="price-low-to-high"
-                                className="border-gray-300"
-                              />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Label
-                                htmlFor="price-high-to-low"
-                                className="text-sm font-medium text-gray-700 cursor-pointer flex-1"
-                              >
-                                Price: High to Low
-                              </Label>
-                              <RadioGroupItem
-                                value="price-high-to-low"
-                                id="price-high-to-low"
-                                className="border-gray-300"
-                              />
-                            </div>
-                          </RadioGroup>
-                        </div>
+                          ))}
+                        </RadioGroup>
                       </div>
-                    </div>
-
-                    {/* SubCategories */}
-                    <div className="space-y-6">
-                      <ul className="space-y-4">
-                        {navCategories.map((cat) => {
-                          const catSlug = cat.name
-                            .toLowerCase()
-                            .replace(/\s+/g, "-");
-                          const isCatActive = categoryName === cat.name;
-                          const hasActiveSub = cat.sub_categories?.some(
-                            (sub) => sub.name === categoryName,
-                          );
-                          const shouldBeOpen = isCatActive || hasActiveSub;
-
-                          return (
-                            <li key={cat.id} className="space-y-3">
-                              <Link
-                                href={`/collection/${catSlug}`}
-                                className={cn(
-                                  "block text-sm font-semibold transition-colors",
-                                  isCatActive
-                                    ? "text-red-600"
-                                    : "text-gray-900",
-                                )}
-                              >
-                                <div className="flex justify-between">
-                                  {cat.name}
-                                  <ChevronDown
-                                    size={20}
-                                    className={cn(isCatActive && "rotate-180")}
-                                  />
-                                </div>
-                              </Link>
-
-                              <div
-                                className={cn(
-                                  "grid grid-cols-2 gap-2 overflow-hidden transition-all",
-                                  shouldBeOpen
-                                    ? "max-h-[500px] opacity-100"
-                                    : "max-h-0 opacity-0",
-                                )}
-                              >
-                                {cat.sub_categories?.map((sub) => (
-                                  <button
-                                    key={sub.id}
-                                    onClick={() =>
-                                      setActiveSubCategory((prev) =>
-                                        prev === sub.name ? null : sub.name,
-                                      )
-                                    }
-                                    className={cn(
-                                      "px-4 py-3 rounded-xl text-xs font-medium transition-all text-center border",
-                                      activeSubCategory === sub.name
-                                        ? "bg-red-50 border-red-200 text-red-600 shadow-sm"
-                                        : "bg-white border-gray-100 text-gray-600",
-                                    )}
-                                  >
-                                    {sub.name}
-                                  </button>
-                                ))}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
                     </div>
                   </div>
-                </SheetContent>
-              </Sheet>
+
+                  {/* Mobile SubCategories */}
+                  <div className="space-y-6">
+                    <ul className="space-y-4">
+                      {navCategories.map((cat) => {
+                        const catSlug = cat.name
+                          .toLowerCase()
+                          .replace(/\s+/g, "-");
+                        const isCatActive = categoryName === cat.name;
+                        const hasActiveSub = cat.sub_categories?.some(
+                          (sub) => sub.name === categoryName,
+                        );
+                        const shouldBeOpen = isCatActive || hasActiveSub;
+                        return (
+                          <li key={cat.id} className="space-y-3">
+                            <Link
+                              href={`/collection/${catSlug}`}
+                              className={cn(
+                                "block text-sm font-semibold transition-colors",
+                                isCatActive ? "text-red-600" : "text-gray-900",
+                              )}
+                            >
+                              <div className="flex justify-between">
+                                {cat.name}
+                                <ChevronDown
+                                  size={20}
+                                  className={cn(isCatActive && "rotate-180")}
+                                />
+                              </div>
+                            </Link>
+                            <div
+                              className={cn(
+                                "grid grid-cols-2 gap-2 overflow-hidden transition-all",
+                                shouldBeOpen
+                                  ? "max-h-[500px] opacity-100"
+                                  : "max-h-0 opacity-0",
+                              )}
+                            >
+                              {cat.sub_categories?.map((sub) => (
+                                <button
+                                  key={sub.id}
+                                  onClick={() =>
+                                    setActiveSubCategory((prev) =>
+                                      prev === sub.name ? null : sub.name,
+                                    )
+                                  }
+                                  className={cn(
+                                    "px-4 py-3 rounded-xl text-xs font-medium transition-all text-center border",
+                                    activeSubCategory === sub.name
+                                      ? "bg-red-50 border-red-200 text-red-600 shadow-sm"
+                                      : "bg-white border-gray-100 text-gray-600",
+                                  )}
+                                >
+                                  {sub.name}
+                                </button>
+                              ))}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Search */}
+          <div className="hidden lg:flex flex-1 mx-4">
+            <div className="relative w-full max-w-md mx-auto">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-red-600 focus:border-2 transition-colors"
+              />
             </div>
           </div>
 
-          {/* Sort Selection */}
-          <div className="hidden lg:flex flex-row items-center w-full md:w-auto justify-between md:justify-end">
-            <h2 className="text-sm md:text-md font-semibold text-gray-900 mr-4">
-              Sort by:
-            </h2>
+          {/* Sort */}
+          <div className="hidden lg:flex items-center gap-4 shrink-0">
+            <h2 className="text-sm font-semibold text-gray-900">Sort by:</h2>
             <Select onValueChange={setSortBy} defaultValue="all">
-              <SelectTrigger className="w-[140px] md:w-[180px]">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
@@ -442,7 +412,7 @@ export default function CategoryPage({ params }: PageProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-20 md:gap-12">
-          {/* Desktop Sidebar Filter */}
+          {/* Desktop Sidebar */}
           <aside className="sticky top-30 self-start hidden lg:block lg:col-span-1 space-y-5">
             <div className="flex flex-row justify-between items-center border-y py-7">
               <p className="text-md font-semibold text-gray-900">
@@ -470,17 +440,17 @@ export default function CategoryPage({ params }: PageProps) {
                         href={`/collection/${catSlug}`}
                         className={cn(
                           "block py-2 text-md font-semibold transition-colors hover:text-red-600",
-                          isCatActive
-                            ? "text-red-600 font-semibold"
-                            : "text-gray-800",
+                          isCatActive ? "text-red-600" : "text-gray-800",
                         )}
                       >
                         {cat.name}
                       </Link>
                       <ul
                         className={cn(
-                          "pl-4 space-y-2 border-l-2 border-gray-100 ml-1 transition-all",
-                          shouldBeOpen ? "block" : "hidden group-hover:block",
+                          "pl-4 space-y-2 border-l-2 border-gray-100 ml-1 overflow-hidden transition-all duration-600 ease-in-out",
+                          shouldBeOpen
+                            ? "max-h-96 opacity-100"
+                            : "max-h-0 opacity-0 group-hover:max-h-96 group-hover:opacity-100",
                         )}
                       >
                         {cat.sub_categories?.map((sub) => (
@@ -535,11 +505,9 @@ export default function CategoryPage({ params }: PageProps) {
                   product.product_variants?.find((v) => v.stock_qty > 0) ??
                   product.product_variants?.[0];
                 if (!variant) return null;
-
                 return (
                   <Reveal key={product.id} delay={i * 30}>
                     <ProductCard
-                      key={product.id}
                       sku={variant.sku}
                       name={product.name}
                       price={variant.price}

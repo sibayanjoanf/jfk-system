@@ -2,6 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Bell } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const HeaderNotifications: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,12 +24,25 @@ const HeaderNotifications: React.FC = () => {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`p-2 rounded-lg transition-all ${isOpen ? "bg-red-600 text-white" : "text-gray-900 hover:bg-gray-200"}`}
-      >
-        <Bell size={18} />
-      </button>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className={`p-2 rounded-lg transition-all ${isOpen ? "bg-red-600 text-white" : "text-gray-900 hover:bg-gray-200"}`}
+            >
+              <Bell size={18} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            sideOffset={5}
+            className="text-[10px] py-1 px-2 bg-red-600"
+          >
+            <p>Notifications</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">

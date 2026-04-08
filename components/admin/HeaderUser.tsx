@@ -3,6 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { CircleUserRound, User, Settings, LogOut, Laptop } from "lucide-react";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const HeaderUser: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,12 +25,25 @@ const HeaderUser: React.FC = () => {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`p-2 rounded-lg transition-all ${isOpen ? "bg-red-600 text-white" : "text-gray-900 hover:bg-gray-200"}`}
-      >
-        <CircleUserRound size={18} strokeWidth={1.75} />
-      </button>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className={`p-2 rounded-lg transition-all ${isOpen ? "bg-red-600 text-white" : "text-gray-900 hover:bg-gray-200"}`}
+            >
+              <CircleUserRound size={18} strokeWidth={1.75} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            sideOffset={5}
+            className="text-[10px] py-1 px-2 bg-red-600"
+          >
+            <p>User Menu</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-auto bg-white border border-gray-100 rounded-xl shadow-2xl py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">

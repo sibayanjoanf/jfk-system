@@ -55,11 +55,11 @@ export default function FAQPage() {
           <div className="max-w-[100vh]">
             <h1
               className={cn(
-                "mb-6 text-5xl md:text-7xl text-gray-900 leading-[1.1]",
+                "mb-6 text-4xl md:text-6xl text-gray-900 leading-[1.1]",
                 "windsong-medium",
               )}
             >
-              <span className="mr-[25px]">Faq</span>
+              <span className="mr-[25px]">Frequently Asked Questions</span>
             </h1>
             <p className="mb-8 leading-relaxed text-gray-700 text-sm">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
@@ -11,6 +11,7 @@ import { Inquiry } from "./types";
 import InquiryTable from "./components/InquiryTable";
 import InquiryDrawer from "./components/InquiryDrawer";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import { DateFilter } from "@/components/admin/CalendarPicker";
 
 const InquiryManagement: React.FC = () => {
   const { inquiries, loading, updateStatus, deleteInquiries } = useInquiries();
@@ -19,7 +20,7 @@ const InquiryManagement: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
@@ -30,9 +31,30 @@ const InquiryManagement: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [replyText, setReplyText] = useState("");
 
-  const calendarRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    field: string;
+    dir: "asc" | "desc";
+  }>({
+    field: "first_name",
+    dir: "asc",
+  });
 
-  const filteredInquiries = inquiries.filter((i) => {
+  const handleSort = (field: string) => {
+    setSortConfig((prev) => ({
+      field,
+      dir: prev.field === field && prev.dir === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const sortedInquiries = useMemo(() => {
+    return [...inquiries].sort((a, b) => {
+      const dir = sortConfig.dir === "asc" ? 1 : -1;
+      return a.first_name.localeCompare(b.first_name) * dir;
+    });
+  }, [inquiries, sortConfig]);
+
+  const filteredInquiries = sortedInquiries.filter((i) => {
     const matchesStatus = filterStatus === "All" || i.status === filterStatus;
     const q = searchQuery.toLowerCase();
     const matchesSearch =
@@ -41,8 +63,39 @@ const InquiryManagement: React.FC = () => {
       i.last_name.toLowerCase().includes(q) ||
       i.email.toLowerCase().includes(q) ||
       i.phone.toLowerCase().includes(q);
-    return matchesStatus && matchesSearch;
+    const matchesDate =
+      !dateFilter ||
+      (() => {
+        const d = new Date(i.created_at ?? "");
+        if (dateFilter.type === "year")
+          return d.getFullYear() === dateFilter.year;
+        if (dateFilter.type === "month")
+          return (
+            d.getFullYear() === dateFilter.year &&
+            d.getMonth() === dateFilter.month
+          );
+        if (dateFilter.type === "day") {
+          const f = dateFilter.date;
+          return (
+            d.getFullYear() === f.getFullYear() &&
+            d.getMonth() === f.getMonth() &&
+            d.getDate() === f.getDate()
+          );
+        }
+        return true;
+      })();
+    return matchesStatus && matchesSearch && matchesDate;
   });
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const allSelected =
     filteredInquiries.length > 0 &&
@@ -158,21 +211,23 @@ const InquiryManagement: React.FC = () => {
         filterStatus={filterStatus}
         selectedIds={selectedIds}
         isFilterOpen={isFilterOpen}
-        isCalendarOpen={isCalendarOpen}
-        calendarRef={calendarRef}
+        filterRef={filterRef}
+        dateFilter={dateFilter}
         onSearchChange={setSearchQuery}
         onFilterChange={(v) => {
           setFilterStatus(v);
           setIsFilterOpen(false);
         }}
         onFilterOpenToggle={() => setIsFilterOpen(!isFilterOpen)}
-        onCalendarToggle={() => setIsCalendarOpen(!isCalendarOpen)}
+        onDateFilterChange={setDateFilter}
         onRowClick={openDrawer}
         onToggleAll={toggleAll}
         onToggleOne={toggleOne}
         onDeleteClick={() => setConfirmOpen(true)}
         allSelected={allSelected}
         someSelected={selectedIds.length > 0}
+        sortConfig={sortConfig}
+        onSort={handleSort}
       />
 
       {/* Delete Modal */}

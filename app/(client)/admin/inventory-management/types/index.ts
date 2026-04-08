@@ -39,6 +39,8 @@ export interface StockRow {
   category: string;
   sub_category: string;
   stock_qty: number;
+  reserved_qty: number;
+  available_qty: number;
   status: "In Stock" | "Low Stock" | "Out of Stock";
   last_movement_type: "inbound" | "adjustment" | "consumed" | "returned" | null;
   last_movement_at: string | null;

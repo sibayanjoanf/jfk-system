@@ -1,11 +1,19 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { Search, Plus, Layers, X, Loader2, ChevronDown } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Layers,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { InboundRow } from "../types";
 import Pagination from "./Pagination";
+import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 
 interface VariantOption {
   id: string;
@@ -24,7 +32,51 @@ interface InboundTableProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  sortConfig: { field: string; dir: "asc" | "desc" };
+  onSort: (field: string) => void;
 }
+
+interface RawVariantRow {
+  id: string;
+  sku: string;
+  stock_qty: number;
+  image_url: string | null;
+  products: {
+    name: string;
+    sub_categories: {
+      name: string;
+      categories: { name: string } | null;
+    } | null;
+  } | null;
+}
+
+const SortArrows = ({
+  field,
+  current,
+}: {
+  field: string;
+  current: { field: string; dir: string };
+}) => {
+  const isActive = current.field === field;
+  return (
+    <span className="flex flex-col -space-y-1">
+      <ChevronUp
+        size={12}
+        strokeWidth={2}
+        className={
+          isActive && current.dir === "asc" ? "text-gray-400" : "text-gray-200"
+        }
+      />
+      <ChevronDown
+        size={12}
+        strokeWidth={2}
+        className={
+          isActive && current.dir === "desc" ? "text-gray-400" : "text-gray-200"
+        }
+      />
+    </span>
+  );
+};
 
 const InboundTable: React.FC<InboundTableProps> = ({
   rows,
@@ -34,9 +86,12 @@ const InboundTable: React.FC<InboundTableProps> = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  sortConfig,
+  onSort,
 }) => {
   const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [variantOptions, setVariantOptions] = useState<VariantOption[]>([]);
@@ -55,6 +110,11 @@ const InboundTable: React.FC<InboundTableProps> = ({
     notes: "",
   });
 
+  // (YYYY-MM-DD)
+  const dateFilterStr = selectedDate
+    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
+    : "";
+
   const filtered = useMemo(
     () =>
       rows.filter((b) => {
@@ -63,7 +123,29 @@ const InboundTable: React.FC<InboundTableProps> = ({
           b.product_name.toLowerCase().includes(q) ||
           b.sku.toLowerCase().includes(q) ||
           (b.supplier ?? "").toLowerCase().includes(q);
-        const matchesDate = !dateFilter || b.created_at.includes(dateFilter);
+
+        const matchesDate =
+          !dateFilter ||
+          (() => {
+            const d = new Date(b.created_at);
+            if (dateFilter.type === "year")
+              return d.getFullYear() === dateFilter.year;
+            if (dateFilter.type === "month")
+              return (
+                d.getFullYear() === dateFilter.year &&
+                d.getMonth() === dateFilter.month
+              );
+            if (dateFilter.type === "day") {
+              const f = dateFilter.date;
+              return (
+                d.getFullYear() === f.getFullYear() &&
+                d.getMonth() === f.getMonth() &&
+                d.getDate() === f.getDate()
+              );
+            }
+            return true;
+          })();
+
         return matchesSearch && matchesDate;
       }),
     [rows, search, dateFilter],
@@ -76,16 +158,15 @@ const InboundTable: React.FC<InboundTableProps> = ({
   );
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handler = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node)
-      ) {
+      )
         setDropdownOpen(false);
-      }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const fetchVariants = async () => {
@@ -93,15 +174,14 @@ const InboundTable: React.FC<InboundTableProps> = ({
       .from("product_variants")
       .select(
         `
-        id, sku, stock_qty, image_url,
-        products (
-          name,
-          sub_categories ( name, categories ( name ) )
-        )
-      `,
+      id, sku, stock_qty, image_url,
+      products (
+        name,
+        sub_categories ( name, categories ( name ) )
+      )
+    `,
       )
       .order("sku");
-
     if (data) {
       setVariantOptions(
         (
@@ -198,6 +278,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          {/* Search */}
           <div className="relative group">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
@@ -213,23 +294,16 @@ const InboundTable: React.FC<InboundTableProps> = ({
               className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-52"
             />
           </div>
-          <input
-            type="month"
+
+          {/* Calendar date filter */}
+          <CalendarPicker
             value={dateFilter}
-            onChange={(e) => {
-              setDateFilter(e.target.value);
+            onChange={(f) => {
+              setDateFilter(f);
               onPageChange(1);
             }}
-            className="px-3 py-2 text-xs border border-red-200 text-red-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 bg-white transition-all"
           />
-          {dateFilter && (
-            <button
-              onClick={() => setDateFilter("")}
-              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-            >
-              <X size={13} />
-            </button>
-          )}
+
           <button
             onClick={handleOpenForm}
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
@@ -247,7 +321,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
             New Inbound Entry
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            {/* ── Product picker ── */}
+            {/* Product picker */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Product / SKU <span className="text-red-600">*</span>
@@ -372,10 +446,16 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 Quantity Received <span className="text-red-600">*</span>
               </label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={15}
                 placeholder="0"
                 value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) setForm({ ...form, quantity: val });
+                }}
                 className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
               />
             </div>
@@ -386,6 +466,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
               <input
                 type="text"
                 placeholder="Supplier name"
+                maxLength={30}
                 value={form.supplier}
                 onChange={(e) => setForm({ ...form, supplier: e.target.value })}
                 className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
@@ -393,11 +474,12 @@ const InboundTable: React.FC<InboundTableProps> = ({
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Notes (optional)
+                Notes
               </label>
               <input
                 type="text"
                 placeholder="Any notes about this batch"
+                maxLength={200}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
@@ -439,9 +521,33 @@ const InboundTable: React.FC<InboundTableProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 text-xs uppercase tracking-wider text-gray-400 border-b border-gray-100">
-                <th className="py-3 pl-5 font-semibold">Batch ID</th>
-                <th className="py-3 px-4 font-semibold">Product</th>
-                <th className="py-3 px-4 font-semibold text-center">Qty</th>
+                <th
+                  className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("batch_code")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Batch ID
+                    <SortArrows field="batch_code" current={sortConfig} />
+                  </span>
+                </th>
+                <th
+                  className="py-3 px-4 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("product_name")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Product
+                    <SortArrows field="product_name" current={sortConfig} />
+                  </span>
+                </th>
+                <th
+                  className="py-3 px-4 font-semibold text-center cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  onClick={() => onSort("quantity")}
+                >
+                  <span className="inline-flex items-center gap-1 justify-center">
+                    Qty
+                    <SortArrows field="quantity" current={sortConfig} />
+                  </span>
+                </th>
                 <th className="py-3 px-4 font-semibold">Supplier</th>
                 <th className="py-3 px-4 font-semibold">Received By</th>
                 <th className="py-3 pr-5 font-semibold text-center">Date</th>
@@ -481,12 +587,27 @@ const InboundTable: React.FC<InboundTableProps> = ({
                     <td className="py-3.5 px-4 text-sm text-gray-500">
                       {batch.received_by ?? "—"}
                     </td>
-                    <td className="py-3.5 pr-5 text-xs text-gray-400 text-center whitespace-nowrap">
-                      {new Date(batch.created_at).toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                    <td className="py-3.5 pr-5 text-xs text-gray-500 text-center whitespace-nowrap">
+                      <p>
+                        {new Date(batch.created_at).toLocaleDateString(
+                          "en-PH",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        {new Date(batch.created_at).toLocaleTimeString(
+                          "en-PH",
+                          {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          },
+                        )}
+                      </p>
                     </td>
                   </tr>
                 ))

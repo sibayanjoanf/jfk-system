@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Reveal } from "@/components/reveal";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin, Phone, Pin } from "lucide-react";
 
 export default function ContactPage() {
   const [infoCategories, setInfoCategories] = useState<InfoBranch[]>([]);
@@ -141,16 +141,35 @@ export default function ContactPage() {
               <div className="flex flex-col gap-4 order-2 lg:order-1">
                 {infoCategories.length > 0 ? (
                   infoCategories.map((info) => (
-                    <div
-                      key={info.id}
-                      className="text-black flex flex-col gap-2 mb-5"
-                    >
+                    <div key={info.id} className="flex flex-col gap-2 mb-5">
                       <h1 className="font-semibold text-2xl">{info.name}</h1>
-                      <p className="text-gray-600">{info.address}</p>
-                      <p className="text-red-600 font-medium">{info.phone}</p>
-                      <p className="text-red-600 font-medium">
-                        {info.telephone}
-                      </p>
+                      <div className="flex gap-2 justify-start items-center">
+                        <MapPin size={15} className="text-gray-400" />
+                        <p className="text-gray-600">{info.address}</p>
+                      </div>
+                      <div className="flex gap-2 justify-start items-center">
+                        <Phone size={15} className="text-red-600" />
+                        <p className="text-red-600 font-medium">{info.phone}</p>
+                      </div>
+                      <div className="flex gap-2 justify-start items-center">
+                        <Phone size={15} className="text-red-600" />
+                        <p className="text-red-600 font-medium">
+                          {info.telephone}
+                        </p>
+                      </div>
+
+                      {/* GMaps Embed */}
+                      <div className="mt-4 w-full rounded-lg overflow-hidden aspect-video">
+                        <iframe
+                          title={`Map for ${info.name}`}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          loading="lazy"
+                          allowFullScreen
+                          src={info.embed_url}
+                        />
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -270,7 +289,7 @@ export default function ContactPage() {
                       value={messageBox}
                       onChange={(e) => setMessage(e.target.value)}
                       className={cn(
-                        "min-h-[180px] border-2 shadow-xs selection:bg-gray-200 focus-visible:ring-transparent focus-visible:border-red-600 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
+                        "h-[180px] border-2 shadow-xs selection:bg-gray-200 focus-visible:ring-transparent focus-visible:border-red-600 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
                         "resize-none overflow-y-auto transition-colors",
                         errors.messageBox && "border-red-500",
                       )}

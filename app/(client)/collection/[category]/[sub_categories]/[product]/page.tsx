@@ -150,6 +150,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             src="/images/featured-photo-2.png"
             alt="Background"
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover"
             priority
           />

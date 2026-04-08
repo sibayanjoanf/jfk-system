@@ -1,9 +1,42 @@
+"use client";
+
 import Link from "next/link";
-import { Package, Mail, Phone, MapPin, UserRound } from "lucide-react";
+import { Mail, Phone, MapPin, UserRound } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useEffect, useState } from "react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [info, setInfo] = useState({
+    company_name: "JFK Tile and Stone Builders",
+    address: "Laoag City, Ilocos Norte",
+    phone: "0960 288 7539",
+    telephone: "",
+    company_email: "jesusforeverking2009@gmail.com",
+  });
+
+  useEffect(() => {
+    const fetchInfo = () => {
+      fetch("/api/company")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setInfo({
+              company_name: data.company_name || "JFK Tile and Stone Builders",
+              address: data.address || "Laoag City, Ilocos Norte",
+              phone: data.phone || "0960 288 7539",
+              telephone: data.telephone || "",
+              company_email:
+                data.company_email || "jesusforeverking2009@gmail.com",
+            });
+          }
+        });
+    };
+
+    fetchInfo();
+    const interval = setInterval(fetchInfo, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <footer className="bg-[#f8f8f8]">
@@ -13,7 +46,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <span className="text-lg text-gray-800 font-semibold">
-                JFK Tile and Stone Builders
+                {info.company_name}
               </span>
             </div>
             <p className="text-sm text-gray-600">
@@ -106,16 +139,22 @@ export function Footer() {
             </h3>
             <ul className="space-y-3 text-sm text-gray-600">
               <li className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4" />
-                <span>Laoag City, Ilocos Norte</span>
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span>{info.address}</span>
               </li>
               <li className="flex items-center space-x-2">
-                <Phone className="h-4 w-4" />
-                <span>0960 288 7539</span>
+                <Phone className="h-4 w-4 shrink-0" />
+                <span>{info.phone}</span>
               </li>
+              {info.telephone && (
+                <li className="flex items-center space-x-2">
+                  <Phone className="h-4 w-4 shrink-0" />
+                  <span>{info.telephone}</span>
+                </li>
+              )}
               <li className="flex items-center space-x-2">
-                <Mail className="h-4 w-4" />
-                <span>jesusforeverking2009@gmail.com</span>
+                <Mail className="h-4 w-4 shrink-0" />
+                <span>{info.company_email}</span>
               </li>
             </ul>
           </div>
@@ -125,13 +164,19 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between space-y-4 text-sm text-gray-600 md:flex-row md:space-y-0">
           <p>
-            © {currentYear} JFK Tile and Stone Builders. All rights reserved.
+            © {currentYear} {info.company_name}. All rights reserved.
           </p>
           <div className="flex space-x-4">
-            <Link href="/terms-and-conditions" className="hover:text-red-600">
+            <Link
+              href="/terms-and-conditions"
+              className="hover:text-red-600 underline"
+            >
               Terms & Conditions
             </Link>
-            <Link href="/privacy-policy" className="hover:text-red-600">
+            <Link
+              href="/privacy-policy"
+              className="hover:text-red-600 underline"
+            >
               Privacy Policy
             </Link>
           </div>
