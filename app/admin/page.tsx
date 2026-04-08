@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-between bg-[#1a1a16] p-4">
+    <div className="h-full w-full flex flex-col items-center justify-between bg-transparent p-4">
       <div className="flex justify-center w-full">
         <Image
           src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="min-w-[380px]">
+      <div className="max-w-[320px]">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
