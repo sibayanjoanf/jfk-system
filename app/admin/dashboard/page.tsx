@@ -16,6 +16,7 @@ import {
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
 
+// Interfaces kept as you had them
 interface RevenueItem {
   name: string;
   facebook: number;
@@ -45,6 +46,7 @@ interface BranchItem {
 }
 
 const Dashboard: React.FC = () => {
+  // Data kept exactly as you had it
   const revenueData: RevenueItem[] = [
     { name: "Jan", facebook: 40, website: 100 },
     { name: "Feb", facebook: 50, website: 90 },
@@ -129,7 +131,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-0">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8 w-full gap-4">
         <div className="flex items-center gap-6 flex-1">
           <div className="shrink-0">
@@ -138,7 +139,6 @@ const Dashboard: React.FC = () => {
             </p>
             <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
           </div>
-
           <div className="relative flex-1 max-w-sm group">
             <span className="absolute inset-y-0 right-3.5 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={15} strokeWidth={2} />
@@ -150,15 +150,12 @@ const Dashboard: React.FC = () => {
             />
           </div>
         </div>
-
-        {/* Desktop here */}
         <div className="hidden lg:flex items-center gap-1">
           <HeaderNotifications />
           <HeaderUser />
         </div>
       </div>
 
-      {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <MetricCard
           title="Total Orders"
@@ -194,7 +191,6 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
         <div className="xl:col-span-2">
           <RevenueChart data={revenueData} />
@@ -204,7 +200,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-4">
         <div className="xl:col-span-2">
           <ProductTable products={productData} />

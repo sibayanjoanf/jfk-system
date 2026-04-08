@@ -19,7 +19,7 @@ import {
 } from "../types";
 import StatusBadge from "./StatusBadge";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
-import Pagination from "@/app/(client)/admin/inventory-management/components/Pagination";
+import Pagination from "@/app/admin/inventory-management/components/Pagination";
 import { useOrderMutations } from "../hooks/useOrderMutations";
 
 interface OrderTableProps {
