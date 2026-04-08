@@ -66,54 +66,55 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-transparent px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 md:p-10">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4">
-            <Image
-              src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
-              alt="JFK Logo"
-              width={50}
-              height={50}
-              style={{ height: "auto", width: "auto" }}
-              className="mx-auto mb-4"
-            />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+    <div className="h-full w-full flex flex-col items-center justify-between bg-[#1a1a16] p-4">
+      <div className="flex justify-center w-full">
+        <Image
+          src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
+          alt="JFK Logo"
+          width={45}
+          height={45}
+          className="opacity-90"
+        />
+      </div>
+
+      <div className="min-w-[380px]">
+        <div className="text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
           </h2>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 mt-2 mb-10">
             Sign in to manage JFK Tile and Stone Builders
           </p>
         </div>
-
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
               Email
             </label>
-            <div className="relative">
+            <div className="mt-1 relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 type="email"
                 placeholder="admin@jfkbuilders.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-14 border-gray-100 bg-gray-50 rounded-xl"
+                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full"
                 required
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
               Password
             </label>
-            <div className="relative">
+            <div className="mt-1 relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-14 border-gray-100 bg-gray-50 rounded-xl"
+                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full"
                 required
               />
             </div>
@@ -126,7 +127,7 @@ export default function AdminLoginPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all"
+            className="cursor-pointer w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -135,6 +136,13 @@ export default function AdminLoginPage() {
             )}
           </Button>
         </form>
+      </div>
+
+      <div>
+        <p className="text-center text-sm text-gray-500">
+          &copy; {new Date().getFullYear()} JFK Tile and Stone Builders. All
+          rights reserved.
+        </p>
       </div>
     </div>
   );

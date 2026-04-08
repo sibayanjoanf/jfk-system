@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import { WindSong } from "next/font/google";
+"use client";
+
+import { Poppins, WindSong } from "next/font/google";
 import "./globals.css";
 import Providers from "./provider";
+import { usePathname } from "next/navigation";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -15,21 +16,21 @@ const windsong = WindSong({
   variable: "--font-windsong",
 });
 
-export const metadata: Metadata = {
-  title: "JFK Tile & Stone Builders",
-  description: "Order Inquiry and Inventory Management System",
-};
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isAdminLogin = pathname === "/admin";
+
   return (
     <html lang="en">
       <body className={`${poppins.className} ${windsong.variable}`}>
         <Providers>
-          <main className="pt-[90px]">{children}</main>
+          <main className={`${isAdminLogin ? "pt-0" : "pt-[90px]"}`}>
+            {children}
+          </main>
         </Providers>
       </body>
     </html>
