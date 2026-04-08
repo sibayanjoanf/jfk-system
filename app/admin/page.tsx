@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="max-w-[320px]">
+      <div className="w-[320px] md:w-[400px]">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
@@ -86,19 +86,19 @@ export default function AdminLoginPage() {
             Sign in to manage JFK Tile and Stone Builders
           </p>
         </div>
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin}>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
               Email
             </label>
-            <div className="mt-1 relative">
+            <div className="mt-1 mb-2 relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 type="email"
                 placeholder="admin@jfkbuilders.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full"
+                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                 required
               />
             </div>
@@ -107,14 +107,14 @@ export default function AdminLoginPage() {
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
               Password
             </label>
-            <div className="mt-1 relative">
+            <div className="mt-1 mb-5 relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full"
+                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                 required
               />
             </div>
