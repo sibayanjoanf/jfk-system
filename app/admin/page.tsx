@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // New state for eye toggle
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState("");
@@ -78,10 +78,10 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="w-[290px] md:w-[400px] overflow-x-hidden">
+      <div className="w-[250px] md:w-[400px] overflow-x-hidden">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-            Admin Portal
+            Staff Portal
           </h2>
           <p className="text-sm text-gray-500 mt-2 mb-10">
             Sign in to manage JFK Tile and Stone Builders
@@ -111,8 +111,8 @@ export default function AdminLoginPage() {
               </label>
               <button
                 type="button"
+                className="text-[11px] font-medium text-red-600 hover:text-red-700 transition-colors"
                 onClick={() => router.push("/admin/forgot-password")}
-                className="text-[11px] font-medium text-red-600 hover:text-red-700 transition-colors cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -127,10 +127,11 @@ export default function AdminLoginPage() {
                 className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                 required
               />
+              {/* Eye Toggle Button */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none cursor-pointer"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -159,18 +160,18 @@ export default function AdminLoginPage() {
         </form>
       </div>
 
-      <div className="mt-10 text-center">
-        <p className="text-sm text-gray-500">
+      <div className="mt-10">
+        <p className="text-center text-sm text-gray-500">
           Don&apos;t have an account?{" "}
           <button
             type="button"
             onClick={() => router.push("/admin/register")}
-            className="font-semibold text-red-600 hover:text-red-700 hover:underline transition-all cursor-pointer"
+            className="font-semibold text-red-600 hover:text-red-700 transition-colors"
           >
             Register here
           </button>
         </p>
-        <p className="text-[11px] text-gray-400 mt-2 tracking-tight">
+        <p className="text-center text-[11px] text-gray-400 mt-2 tracking-tight">
           &copy; {new Date().getFullYear()} JFK Tile and Stone Builders
         </p>
       </div>

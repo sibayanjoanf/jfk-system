@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const router = useRouter();
 
@@ -36,10 +36,10 @@ export default function ForgotPasswordPage() {
     );
 
     if (resetError) {
-      setError(resetError.message);
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     } else {
-      setSubmitted(true);
+      setSent(true);
       setLoading(false);
     }
   };
@@ -56,87 +56,81 @@ export default function ForgotPasswordPage() {
         />
       </div>
 
-      <div className="w-[290px] md:w-[400px] overflow-x-hidden">
-        <button
-          onClick={() => router.push("/admin")}
-          className="flex items-center text-xs text-gray-500 hover:text-red-600 mb-6 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="h-3 w-3 mr-1" /> Back to Login
-        </button>
+      <div className="w-[250px] md:w-[400px] overflow-x-hidden">
+        <div className="text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+            Forgot Password
+          </h2>
+          <p className="text-sm text-gray-500 mt-2 mb-10">
+            Enter your email and we&apos;ll send you a reset link
+          </p>
+        </div>
 
-        {submitted ? (
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Check your email
-            </h2>
-            <p className="text-sm text-gray-500 mt-2 mb-8">
-              We&apos;ve sent a password reset link to{" "}
-              <span className="font-semibold text-gray-700">{email}</span>.
+        {sent ? (
+          <div className="flex flex-col items-center gap-4 text-center">
+            <CheckCircle2 className="h-12 w-12 text-red-600" />
+            <p className="text-sm text-gray-600">
+              Reset link sent! Check your inbox at{" "}
+              <span className="font-semibold text-gray-900">{email}</span>.
             </p>
             <Button
               onClick={() => router.push("/admin")}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg"
+              className="mt-4 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
             >
-              Return to Login
+              Back to Login
             </Button>
           </div>
         ) : (
-          <>
-            <div className="text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-                Reset Password
-              </h2>
-              <p className="text-sm text-gray-500 mt-2 mb-10">
-                Enter your email address and we&apos;ll send you a link to reset
-                your password.
-              </p>
+          <form onSubmit={handleReset}>
+            <div className="space-y-1.5 mb-5">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+                Email
+              </label>
+              <div className="mt-1 mb-2 relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <Input
+                  type="email"
+                  placeholder="admin@jfkbuilders.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                  required
+                />
+              </div>
             </div>
 
-            <form onSubmit={handleReset}>
-              <div className="space-y-1.5 mb-6">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
-                  Registered Email
-                </label>
-                <div className="mt-1 relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                  <Input
-                    type="email"
-                    placeholder="admin@jfkbuilders.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
-                    required
-                  />
-                </div>
+            {error && (
+              <div className="bg-red-50 text-red-600 px-4 py-3 mb-3 rounded-xl text-xs font-medium text-center">
+                {error}
               </div>
+            )}
 
-              {error && (
-                <div className="bg-red-50 text-red-600 px-4 py-3 mb-4 rounded-xl text-xs font-medium text-center">
-                  {error}
-                </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+            >
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                "Send Reset Link"
               )}
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="cursor-pointer w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Send Reset Link"
-                )}
-              </Button>
-            </form>
-          </>
+            </Button>
+          </form>
         )}
       </div>
 
-      <div className="mt-10 text-center">
-        <p className="text-xs text-gray-400 uppercase tracking-tight">
+      <div className="mt-10">
+        <p className="text-center text-sm text-gray-500">
+          Remember your password?{" "}
+          <button
+            onClick={() => router.push("/admin")}
+            className="font-semibold text-red-600 hover:text-red-700 transition-colors"
+          >
+            Back to login
+          </button>
+        </p>
+        <p className="text-center text-[11px] text-gray-400 mt-2 tracking-tight">
           &copy; {new Date().getFullYear()} JFK Tile and Stone Builders
         </p>
       </div>

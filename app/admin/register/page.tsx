@@ -5,7 +5,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Lock, Mail, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, Lock, Mail, Eye, EyeOff, User } from "lucide-react";
 import Image from "next/image";
 
 export default function RegisterPage() {
@@ -16,34 +16,48 @@ export default function RegisterPage() {
     ),
   );
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setLoading(true);
 
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { full_name: `${firstName} ${lastName}` },
       },
     });
 
     if (signUpError) {
-      setError(signUpError.message);
+      setError(signUpError.message || "Registration failed. Please try again.");
       setLoading(false);
     } else {
-      setSuccess(true);
-      setLoading(false);
+      router.push("/admin/dashboard");
+      router.refresh();
     }
   };
 
@@ -59,50 +73,30 @@ export default function RegisterPage() {
         />
       </div>
 
-      <div className="w-[290px] md:w-[400px] overflow-x-hidden">
-        <button
-          onClick={() => router.push("/admin")}
-          className="flex items-center text-xs text-gray-500 hover:text-red-600 mb-6 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="h-3 w-3 mr-1" /> Back to Login
-        </button>
-
+      <div className="w-[250px] md:w-[400px] overflow-x-hidden">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Create Account
           </h2>
           <p className="text-sm text-gray-500 mt-2 mb-10">
-            Register as an administrator for JFK Builders
+            Register to access the JFK staff portal
           </p>
         </div>
 
-        {success ? (
-          <div className="bg-green-50 text-green-700 p-6 rounded-xl text-center">
-            <p className="font-semibold">Registration Successful!</p>
-            <p className="text-sm mt-2">
-              Please check your email to verify your account before logging in.
-            </p>
-            <Button
-              onClick={() => router.push("/admin")}
-              className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg"
-            >
-              Go to Login
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleRegister}>
-            <div className="space-y-1.5 mb-5">
+        <form onSubmit={handleRegister}>
+          {/* Full Name */}
+          <div className="flex gap-4 mb-1">
+            <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
-                Admin Email
+                First Name
               </label>
-              <div className="mt-1 relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <div className="mt-1 mb-2 relative">
                 <Input
-                  type="email"
-                  placeholder="name@jfkbuilders.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                  type="text"
+                  placeholder="Maria"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                   required
                 />
               </div>
@@ -110,62 +104,129 @@ export default function RegisterPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
-                Set Password
+                Last Name
               </label>
-              <div className="mt-1 mb-5 relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <div className="mt-1 mb-2 relative">
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                  type="text"
+                  placeholder="Juana"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
               </div>
             </div>
+          </div>
 
-            {error && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 mb-4 rounded-xl text-xs font-medium text-center">
-                {error}
-              </div>
+          {/* Email */}
+          <div className="space-y-1.5 mb-4">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+              Email
+            </label>
+            <div className="mt-1 mb-2 relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Input
+                type="email"
+                placeholder="admin@jfkbuilders.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5 mb-4">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+              Password
+            </label>
+            <div className="mt-1 mb-2 relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
+              Confirm Password
+            </label>
+            <div className="mt-1 mb-5 relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Input
+                type={showConfirm ? "text" : "password"}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              >
+                {showConfirm ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 mb-1 rounded-xl text-xs font-medium text-center">
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+          >
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              "Create Account"
             )}
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
-            >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                "Register Account"
-              )}
-            </Button>
-          </form>
-        )}
+          </Button>
+        </form>
       </div>
 
-      <div className="mt-10 text-center">
-        <p className="text-sm text-gray-500">
+      <div className="mt-10">
+        <p className="text-center text-sm text-gray-500">
           Already have an account?{" "}
           <button
             onClick={() => router.push("/admin")}
-            className="font-semibold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
+            className="font-semibold text-red-600 hover:text-red-700 transition-colors"
           >
-            Login here
+            Sign in here
           </button>
+        </p>
+        <p className="text-center text-[11px] text-gray-400 mt-2 tracking-tight">
+          &copy; {new Date().getFullYear()} JFK Tile and Stone Builders
         </p>
       </div>
     </div>

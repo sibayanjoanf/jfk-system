@@ -59,14 +59,19 @@ export async function middleware(request: NextRequest) {
   // --- SEC LOGIC ---
   const pathname = request.nextUrl.pathname
   const isPathAdmin = pathname.startsWith('/admin')
-  const isLoginPage = pathname === '/admin'
+  const isPublicAuthPage = [
+    '/admin',
+    '/admin/forgot-password',
+    '/admin/reset-password',
+    '/admin/register', 
+  ].includes(pathname)
 
-  if (isPathAdmin && !isLoginPage && !user) {
+  if (isPathAdmin && !isPublicAuthPage && !user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/admin'
     return NextResponse.redirect(redirectUrl)
   }
-  if (isLoginPage && user) {
+  if (isPublicAuthPage && user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/admin/dashboard'
     return NextResponse.redirect(redirectUrl)

@@ -37,14 +37,20 @@ export default function AdminLayout({
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  const isLoginPage = pathname === "/admin";
+  const authOnlyPages = [
+    "/admin",
+    "/admin/forgot-password",
+    "/admin/reset-password",
+    "/admin/register",
+  ];
+  const isAuthPage = authOnlyPages.includes(pathname);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {session && !isLoginPage && <Sidebar />}
+      {session && !isAuthPage && <Sidebar />}
 
       <main
-        className={`${!isLoginPage ? "lg:ml-20" : ""} flex-1 p-8 -mt-[25px]`}
+        className={`${!isAuthPage ? "lg:ml-20" : ""} flex-1 p-8 -mt-[25px]`}
       >
         {children}
       </main>
