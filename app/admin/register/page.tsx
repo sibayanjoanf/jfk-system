@@ -129,7 +129,7 @@ export default function RegisterPage() {
                   <div className="mt-1 mb-2 relative">
                     <Input
                       type="text"
-                      placeholder="Maria"
+                      placeholder="Mary"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
