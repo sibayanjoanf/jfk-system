@@ -14,10 +14,6 @@ import {
   Settings,
   Menu,
   X,
-  Bell,
-  CircleUserRound,
-  LogOut,
-  User,
 } from "lucide-react";
 import HeaderUser from "./HeaderUser";
 import HeaderNotifications from "./HeaderNotif";
@@ -26,7 +22,6 @@ const Sidebar: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [activeBell, setActiveBell] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const [logo, setLogo] = useState(
@@ -60,7 +55,7 @@ const Sidebar: React.FC = () => {
   }, [pathname]);
 
   const menuItems = [
-    { icon: <Home size={18} />, label: "Dashboard", path: "/admin" },
+    { icon: <Home size={18} />, label: "Dashboard", path: "/admin/dashboard" },
     {
       icon: <Package size={18} />,
       label: "Order",

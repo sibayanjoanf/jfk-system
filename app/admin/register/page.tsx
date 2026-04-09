@@ -129,7 +129,7 @@ export default function RegisterPage() {
                   <div className="mt-1 mb-2 relative">
                     <Input
                       type="text"
-                      placeholder="Mary"
+                      placeholder="Maria"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
@@ -258,7 +258,7 @@ export default function RegisterPage() {
               </p>
             </div>
             <form onSubmit={handleVerifyOtp}>
-              <div className="flex justify-between gap-2 mb-6">
+              <div className="flex justify-center gap-2 mb-6">
                 {otp.map((digit, index) => (
                   <input
                     key={index}

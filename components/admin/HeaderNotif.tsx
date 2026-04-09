@@ -1,37 +1,118 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import NotificationsDrawer from "@/components/admin/NotificationsDrawer";
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
+
+type NotificationType =
+  | "new_order"
+  | "order_status"
+  | "new_inquiry"
+  | "low_stock"
+  | "out_of_stock";
+
+interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
 
 const HeaderNotifications: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setIsOpen(false);
+    supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => {
+        if (data) setNotifications(data);
+      });
+
+    const channel = supabase
+      .channel(`realtime:notifications-${Date.now()}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        (payload) => {
+          setNotifications((prev) => [payload.new as Notification, ...prev]);
+        },
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      supabase
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50)
+        .then(({ data }) => {
+          if (data) setNotifications(data);
+        });
+    }, 1000);
+
+    return () => {
+      channel.unsubscribe();
+      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const markAsRead = async (id: string) => {
+    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+    );
+  };
+
+  const markAllAsRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
+    if (!unreadIds.length) return;
+    await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .in("id", unreadIds);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  };
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   return (
-    <div className="relative" ref={ref}>
+    <>
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className={`p-2 rounded-lg transition-all ${isOpen ? "bg-red-600 text-white" : "text-gray-900 hover:bg-gray-200"}`}
+              onClick={() => setIsDrawerOpen(true)}
+              className={`relative p-2 rounded-lg transition-all ${
+                isDrawerOpen
+                  ? "bg-red-600 text-white"
+                  : "text-gray-900 hover:bg-gray-200"
+              }`}
             >
               <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute bottom-4 left-4 w-4 h-4 bg-red-600 text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
           </TooltipTrigger>
           <TooltipContent
@@ -44,53 +125,14 @@ const HeaderNotifications: React.FC = () => {
         </Tooltip>
       </TooltipProvider>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">Notifications</p>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {[
-              {
-                title: "New inquiry received",
-                time: "2 min ago",
-                unread: true,
-              },
-              {
-                title: "Order #1023 updated",
-                time: "1 hour ago",
-                unread: true,
-              },
-              {
-                title: "Low stock alert: EL-00550",
-                time: "3 hours ago",
-                unread: false,
-              },
-            ].map((notif, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${notif.unread ? "bg-red-50/40" : ""}`}
-              >
-                <div
-                  className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.unread ? "bg-red-500" : "bg-gray-200"}`}
-                />
-                <div>
-                  <p className="text-xs font-medium text-gray-900">
-                    {notif.title}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">{notif.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="px-4 py-3 border-t border-gray-100">
-            <button className="text-xs text-red-600 hover:underline font-medium">
-              View all notifications
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+      <NotificationsDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+      />
+    </>
   );
 };
 

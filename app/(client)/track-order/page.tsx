@@ -251,7 +251,7 @@ export default function TrackOrderPage() {
               </div>
             </div>
 
-            {/* Order Result — shows below the form */}
+            {/* Order Result */}
             {order && (
               <div className="mt-16 border-t border-gray-100 pt-12">
                 <TrackOrderView order={order} />
