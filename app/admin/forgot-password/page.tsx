@@ -178,7 +178,7 @@ export default function ForgotPasswordPage() {
               </p>
             </div>
             <form onSubmit={handleVerifyOtp}>
-              <div className="flex justify-between gap-2 mb-6">
+              <div className="flex justify-between gap-2 mb-6 w-full">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
