@@ -50,7 +50,7 @@ export default function AdminLayout({
       {session && !isAuthPage && <Sidebar />}
 
       <main
-        className={`${!isAuthPage ? "lg:ml-20" : ""} flex-1 p-8 -mt-[25px]`}
+        className={`${!isAuthPage ? "lg:ml-20" : ""} flex-1 p-8 -mt-[25px] overflow-y-auto`}
       >
         {children}
       </main>
