@@ -20,7 +20,6 @@ export default function AdminLayout({
   );
 
   useEffect(() => {
-    // 1. Check current session
     const getSession = async () => {
       const {
         data: { session: currentSession },

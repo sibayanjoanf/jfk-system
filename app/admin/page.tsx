@@ -5,7 +5,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Lock, Mail } from "lucide-react";
+import { Loader2, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
 export default function AdminLoginPage() {
@@ -18,6 +18,7 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState("");
@@ -77,7 +78,7 @@ export default function AdminLoginPage() {
         />
       </div>
 
-      <div className="w-[300px] md:w-[400px] overflow-x-hidden">
+      <div className="w-[290px] md:w-[400px] overflow-x-hidden">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Admin Portal
@@ -87,7 +88,7 @@ export default function AdminLoginPage() {
           </p>
         </div>
         <form onSubmit={handleLogin}>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 mb-5">
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
               Email
             </label>
@@ -104,30 +105,50 @@ export default function AdminLoginPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
-              Password
-            </label>
+            <div className="flex items-center justify-between px-1">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => router.push("/admin/forgot-password")}
+                className="text-[11px] font-medium text-red-600 hover:text-red-700 transition-colors cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+            </div>
             <div className="mt-1 mb-5 relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none cursor-pointer"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
           </div>
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-xs font-medium text-center">
+            <div className="bg-red-50 text-red-600 px-4 py-3 mb-1 rounded-xl text-xs font-medium text-center">
               {error}
             </div>
           )}
           <Button
             type="submit"
             disabled={loading}
-            className="cursor-pointer w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+            className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -138,10 +159,19 @@ export default function AdminLoginPage() {
         </form>
       </div>
 
-      <div>
-        <p className="text-center text-sm text-gray-500 mt-10">
-          &copy; {new Date().getFullYear()} JFK Tile and Stone Builders. All
-          rights reserved.
+      <div className="mt-10 text-center">
+        <p className="text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <button
+            type="button"
+            onClick={() => router.push("/admin/register")}
+            className="font-semibold text-red-600 hover:text-red-700 hover:underline transition-all cursor-pointer"
+          >
+            Register here
+          </button>
+        </p>
+        <p className="text-[11px] text-gray-400 mt-2 tracking-tight">
+          &copy; {new Date().getFullYear()} JFK Tile and Stone Builders
         </p>
       </div>
     </div>
