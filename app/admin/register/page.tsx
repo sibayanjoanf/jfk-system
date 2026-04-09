@@ -132,7 +132,7 @@ export default function RegisterPage() {
                       placeholder="Maria"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                      className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                       required
                     />
                   </div>
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                       placeholder="Dela Cruz"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                      className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
                       required
                     />
                   </div>
@@ -272,7 +272,7 @@ export default function RegisterPage() {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={handleOtpPaste}
-                    className="w-9 md:w-10 h-12 text-center text-lg font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                    className="w-8 md:w-10 h-12 text-center text-lg font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
                   />
                 ))}
               </div>
