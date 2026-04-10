@@ -37,58 +37,100 @@ const HeaderNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    supabase
-      .from("notifications")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (data) setNotifications(data);
-      });
+    let channel: ReturnType<typeof supabase.channel>;
 
-    const channel = supabase
-      .channel(`realtime:notifications-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications" },
-        (payload) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev]);
-        },
-      )
-      .subscribe();
+    const init = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      console.log("USER:", user);
+      if (!user) return;
 
-    const interval = setInterval(() => {
-      supabase
+      const { data, error } = await supabase
         .from("notifications")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(50)
-        .then(({ data }) => {
-          if (data) setNotifications(data);
-        });
-    }, 1000);
+        .limit(50);
+
+      console.log("NOTIFICATIONS DATA:", data);
+      console.log("NOTIFICATIONS ERROR:", error);
+
+      if (data) setNotifications(data);
+
+      channel = supabase
+        .channel(`realtime:notifications-${Date.now()}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            setNotifications((prev) => [payload.new as Notification, ...prev]);
+          },
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            setNotifications((prev) =>
+              prev.map((n) =>
+                n.id === payload.new.id ? (payload.new as Notification) : n,
+              ),
+            );
+          },
+        )
+        .subscribe();
+    };
+
+    init();
 
     return () => {
-      channel.unsubscribe();
-      supabase.removeChannel(channel);
-      clearInterval(interval);
+      if (channel) {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
   const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", id)
+      .eq("user_id", user.id);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
     );
   };
 
   const markAllAsRead = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
     const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
     if (!unreadIds.length) return;
+
     await supabase
       .from("notifications")
       .update({ is_read: true })
-      .in("id", unreadIds);
+      .in("id", unreadIds)
+      .eq("user_id", user.id);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   };
 
