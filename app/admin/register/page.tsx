@@ -104,7 +104,7 @@ export default function RegisterPage() {
           alt="JFK Logo"
           width={45}
           height={45}
-          className="opacity-90"
+          className="opacity-90 mb-10"
         />
       </div>
 

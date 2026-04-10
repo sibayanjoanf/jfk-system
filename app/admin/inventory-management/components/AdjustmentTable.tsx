@@ -523,7 +523,6 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                 >
                   <option value="">Select a reason</option>
                   <option>Damaged goods</option>
-                  <option>Consumed in showroom</option>
                   <option>Returned by customer</option>
                   <option>Counting discrepancy</option>
                   <option>Theft / Loss</option>
