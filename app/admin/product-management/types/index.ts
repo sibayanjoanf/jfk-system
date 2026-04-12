@@ -14,6 +14,7 @@ export interface DbVariant {
   attribute_name: string | null;
   dimension: string | null;
   keywords: string | null;
+  is_archived: boolean;
 }
 
 export interface DbProduct {

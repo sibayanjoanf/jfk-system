@@ -29,6 +29,7 @@ export interface Order {
   payment_preference: string;
   message: string | null;
   items: OrderItem[];
+  refunded_items: OrderItem[];
   total_amount: number;
   created_at: string;
 }

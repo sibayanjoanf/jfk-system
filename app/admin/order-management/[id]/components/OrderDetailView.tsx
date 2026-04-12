@@ -172,7 +172,16 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left — Order Items + Timeline */}
         <div className="lg:col-span-2 space-y-6">
-          <OrderItems order={order} />
+          <OrderItems
+            order={order}
+            onRefunded={(refundedItems, newStatus) =>
+              setOrder((prev) => ({
+                ...prev,
+                refunded_items: refundedItems,
+                ...(newStatus ? { status: newStatus as OrderStatus } : {}),
+              }))
+            }
+          />
           <OrderTimeline order={order} key={order.status} />
         </div>
 
@@ -398,16 +407,49 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   <span className="text-xs text-gray-700">{value}</span>
                 </div>
               ))}
-              <div className="pt-2 mt-2 border-t border-gray-100 flex justify-between items-center">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Total
-                </span>
-                <span className="text-base font-semibold text-gray-900">
-                  <span className="text-sm font-medium">₱</span>
-                  {order.total_amount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
+              <div className="pt-2 mt-2 border-t border-gray-100 space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">Original Total</span>
+                  <span className="text-xs text-gray-700">
+                    ₱
+                    {order.total_amount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                {(order.refunded_items ?? []).length > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-400">Refunded</span>
+                    <span className="text-xs text-red-500">
+                      −₱
+                      {(order.refunded_items ?? [])
+                        .reduce(
+                          (sum, item) => sum + item.price * item.quantity,
+                          0,
+                        )
+                        .toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1 border-t border-gray-100">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {(order.refunded_items ?? []).length > 0
+                      ? "Net Total"
+                      : "Total"}
+                  </span>
+                  <span className="text-base font-semibold text-gray-900">
+                    <span className="text-sm font-medium">₱</span>
+                    {(
+                      order.total_amount -
+                      (order.refunded_items ?? []).reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0,
+                      )
+                    ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

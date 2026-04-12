@@ -103,6 +103,7 @@ export interface ProductVariant {
   image_url?: string | null;
   keywords?: string;
   created_at: string;
+  is_archived: boolean;
 }
 
 export type OrderStatus = 

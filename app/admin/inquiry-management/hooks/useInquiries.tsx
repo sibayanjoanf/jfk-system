@@ -16,6 +16,7 @@ export function useInquiries() {
         .select(
           "id, first_name, last_name, email, phone, message, status, created_at",
         )
+        .eq("is_archived", false)
         .order("created_at", { ascending: false });
 
       if (!isMounted) return;
@@ -46,15 +47,41 @@ export function useInquiries() {
     return true;
   };
 
-  const deleteInquiries = async (ids: string[]) => {
-    const { error } = await supabase.from("contact").delete().in("id", ids);
+  // Archive instead of delete
+  const archiveInquiries = async (ids: string[]) => {
+    const { error } = await supabase
+      .from("contact")
+      .update({ is_archived: true })
+      .in("id", ids);
+
     if (error) {
-      console.error("Error deleting records:", error);
+      console.error("Error archiving records:", error);
       return false;
     }
     setInquiries((prev) => prev.filter((i) => !ids.includes(i.id)));
     return true;
   };
 
-  return { inquiries, setInquiries, loading, updateStatus, deleteInquiries };
+  // Restore archived inquiries
+  const restoreInquiries = async (ids: string[]) => {
+    const { error } = await supabase
+      .from("contact")
+      .update({ is_archived: false })
+      .in("id", ids);
+
+    if (error) {
+      console.error("Error restoring records:", error);
+      return false;
+    }
+    return true;
+  };
+
+  return {
+    inquiries,
+    setInquiries,
+    loading,
+    updateStatus,
+    archiveInquiries,
+    restoreInquiries,
+  };
 }

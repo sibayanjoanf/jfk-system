@@ -3,30 +3,27 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search,
-  Plus,
-  Archive,
+  ArchiveRestore,
   ChevronDown,
   ChevronUp,
   Loader2,
   Package,
   Inbox,
+  Archive,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
-import { useInventory } from "./hooks/useInventory";
-import { useProductParams } from "./hooks/useProductParams";
+import { useArchivedInventory } from "../hooks/useArchivedInventory";
 import {
   ProductRow,
   SortField,
   CategoryOption,
   SubCategoryOption,
-} from "./types";
-import Pagination from "./components/Pagination";
-import AddProductDrawer from "./components/AddProdDrawer";
-import EditProductDrawer from "./components/EditProdDrawer";
+} from "../types";
+import Pagination from "../components/Pagination";
 import ConfirmModal from "@/app/admin/components/ConfirmModal";
 
 const getStatusStyles = (status: string) => {
@@ -42,25 +39,15 @@ const getStatusStyles = (status: string) => {
   }
 };
 
-const ProductManagement: React.FC = () => {
-  const { products, setProducts, loading, fetchInventory } = useInventory();
-  const {
-    searchQuery,
-    categoryFilter,
-    statusFilter,
-    subCategoryFilter,
-    currentPage,
-    pageSize,
-    sortConfig,
-    setSearchQuery,
-    setCategoryFilterAndReset,
-    setStatusFilter,
-    setSubCategoryFilter,
-    setCurrentPage,
-    setPageSize,
-    setSortConfig,
-  } = useProductParams();
+const ArchivedProductManagement: React.FC = () => {
+  const { products, loading, restoreVariants } = useArchivedInventory();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [subCategoryFilter, setSubCategoryFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openDropdown, setOpenDropdown] = useState<
     "status" | "category" | "subCategory" | null
@@ -69,13 +56,17 @@ const ProductManagement: React.FC = () => {
   const [allSubCategories, setAllSubCategories] = useState<SubCategoryOption[]>(
     [],
   );
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const [addDrawerOpen, setAddDrawerOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<ProductRow | null>(null);
-  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [archiving, setArchiving] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{
+    field: SortField | "";
+    dir: "asc" | "desc";
+  }>({
+    field: "name",
+    dir: "asc",
+  });
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase
@@ -127,6 +118,7 @@ const ProductManagement: React.FC = () => {
         matchesSearch && matchesCategory && matchesSubCategory && matchesStatus
       );
     });
+
     if (sortConfig.field) {
       result.sort((a, b) => {
         const dir = sortConfig.dir === "asc" ? 1 : -1;
@@ -182,56 +174,12 @@ const ProductManagement: React.FC = () => {
     );
   };
 
-  // Archive instead of delete
-  const confirmArchive = async () => {
-    setArchiving(true);
-
-    // Archive selected variants
-    const { error: variantError } = await supabase
-      .from("product_variants")
-      .update({ is_archived: true })
-      .in("id", selectedIds);
-
-    if (variantError) {
-      console.error("Variant archive error:", variantError);
-      setArchiving(false);
-      setConfirmOpen(false);
-      return;
-    }
-
-    // Check if any parent products now have zero active variants → archive them too
-    const productIds = [
-      ...new Set(
-        products
-          .filter((p) => selectedIds.includes(p.id))
-          .map((p) => p.product_id),
-      ),
-    ];
-
-    for (const productId of productIds) {
-      const { count } = await supabase
-        .from("product_variants")
-        .select("id", { count: "exact", head: true })
-        .eq("product_id", productId)
-        .eq("is_archived", false);
-
-      if (count === 0) {
-        await supabase
-          .from("products")
-          .update({ is_archived: true })
-          .eq("id", productId);
-      }
-    }
-
-    setProducts((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
-    setSelectedIds([]);
-    setArchiving(false);
+  const handleConfirmRestore = async () => {
+    setRestoring(true);
+    const ok = await restoreVariants(selectedIds);
+    if (ok) setSelectedIds([]);
+    setRestoring(false);
     setConfirmOpen(false);
-
-    const remaining = filteredProducts.length - selectedIds.length;
-    const newTotalPages = Math.ceil(remaining / pageSize);
-    if (currentPage > newTotalPages && newTotalPages > 0)
-      setCurrentPage(newTotalPages);
   };
 
   return (
@@ -270,14 +218,14 @@ const ProductManagement: React.FC = () => {
       <div className="flex gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5 mb-6 overflow-x-auto">
         <Link
           href="/admin/product-management"
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors bg-red-600 text-white shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
         >
           <Inbox size={13} />
           Active
         </Link>
         <Link
           href="/admin/product-management/archived"
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors bg-red-600 text-white shadow-sm"
         >
           <Archive size={13} />
           Archived
@@ -289,10 +237,10 @@ const ProductManagement: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
           <div>
             <h2 className="text-base font-semibold text-gray-900">
-              Product Management
+              Archived Products
             </h2>
             <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-              Total {products.length} product variants found in database.
+              Total {products.length} archived product variants found.
             </p>
           </div>
           <div
@@ -302,10 +250,10 @@ const ProductManagement: React.FC = () => {
             {selectedIds.length > 0 && (
               <button
                 onClick={() => setConfirmOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors animate-in fade-in duration-150"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors animate-in fade-in duration-150"
               >
-                <Archive size={13} />
-                Archive ({selectedIds.length})
+                <ArchiveRestore size={13} />
+                Restore ({selectedIds.length})
               </button>
             )}
 
@@ -360,7 +308,8 @@ const ProductManagement: React.FC = () => {
                       key={cat}
                       className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${cat === categoryFilter ? "text-red-600 font-semibold" : "text-gray-600"}`}
                       onClick={() => {
-                        setCategoryFilterAndReset(cat);
+                        setCategoryFilter(cat);
+                        setSubCategoryFilter("All");
                         setOpenDropdown(null);
                       }}
                     >
@@ -414,14 +363,6 @@ const ProductManagement: React.FC = () => {
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => setAddDrawerOpen(true)}
-              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-            >
-              <Plus size={14} />
-              Add Product
-            </button>
           </div>
         </div>
 
@@ -430,12 +371,12 @@ const ProductManagement: React.FC = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
               <Loader2 className="animate-spin" />
-              <p className="text-sm">Fetching products...</p>
+              <p className="text-sm">Fetching archived products...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 gap-2 text-gray-400">
               <Package size={24} strokeWidth={1.5} />
-              <p className="text-sm">No products found.</p>
+              <p className="text-sm">No archived products found.</p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
@@ -504,11 +445,7 @@ const ProductManagement: React.FC = () => {
                 {paginatedProducts.map((product) => (
                   <tr
                     key={product.id}
-                    onClick={() => {
-                      setEditProduct(product);
-                      setEditDrawerOpen(true);
-                    }}
-                    className={`hover:bg-gray-100 transition-colors cursor-pointer ${selectedIds.includes(product.id) ? "bg-red-50/80" : ""}`}
+                    className={`hover:bg-gray-100 transition-colors ${selectedIds.includes(product.id) ? "bg-green-50/80" : ""}`}
                   >
                     <td
                       className="py-3.5 pl-5"
@@ -571,7 +508,6 @@ const ProductManagement: React.FC = () => {
           )}
         </div>
 
-        {/* Pagination */}
         {!loading && filteredProducts.length > 0 && (
           <Pagination
             currentPage={currentPage}
@@ -584,33 +520,18 @@ const ProductManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Archive Confirm Modal */}
       <ConfirmModal
         open={confirmOpen}
-        title={`Archive ${selectedIds.length} ${selectedIds.length === 1 ? "variant" : "variants"}?`}
-        description="Archived variants will be hidden from the product list. If all variants of a product are archived, the product will be archived too. You can restore them later."
-        confirmLabel="Yes, archive"
-        loading={archiving}
-        variant="archive"
-        onConfirm={confirmArchive}
-        onCancel={() => setConfirmOpen(false)}
-      />
-
-      <AddProductDrawer
-        open={addDrawerOpen}
-        categories={categories}
-        onClose={() => setAddDrawerOpen(false)}
-        onSaved={fetchInventory}
-      />
-      <EditProductDrawer
-        product={editProduct}
-        open={editDrawerOpen}
-        categories={categories}
-        onClose={() => setEditDrawerOpen(false)}
-        onSaved={fetchInventory}
+        title={`Restore ${selectedIds.length} ${selectedIds.length === 1 ? "variant" : "variants"}?`}
+        description="These variants will be moved back to the active product list. Their parent products will also be restored if they were archived."
+        confirmLabel="Yes, restore"
+        loading={restoring}
+        variant="restore"
+        onConfirm={handleConfirmRestore}
+        onCancel={() => !restoring && setConfirmOpen(false)}
       />
     </div>
   );
 };
 
-export default ProductManagement;
+export default ArchivedProductManagement;

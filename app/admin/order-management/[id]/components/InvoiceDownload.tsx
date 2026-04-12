@@ -33,11 +33,16 @@ const InvoiceDownload: React.FC<Props> = ({ order, onClose }) => {
 
   useEffect(() => {
     const fetchConfig = async () => {
-      const { data } = await supabase
-        .from("invoice_config")
-        .select("*")
-        .single();
-      if (data) setConfig(data);
+      const { data } = await supabase.from("info_branch").select("*").single();
+      if (data)
+        setConfig({
+          company_name: data.company_name || "Your Company",
+          company_address: data.address || "",
+          company_phone: data.phone?.toString() || "",
+          company_email: data.company_email || "",
+          company_logo: data.company_logo || "",
+          footer_note: DEFAULT_CONFIG.footer_note,
+        });
     };
     fetchConfig();
   }, []);
@@ -271,7 +276,9 @@ const InvoiceDownload: React.FC<Props> = ({ order, onClose }) => {
           <!-- Header -->
           <div class="header">
             <div>
-              ${currentConfig.company_logo ? `<img src="${currentConfig.company_logo}" style="height:36px;margin-bottom:10px;object-fit:contain;" />` : ""}
+              <div>
+                <img src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png" style="height:36px;object-fit:contain;margin-bottom:10px;" />
+              </div>
               <div class="company-name">${currentConfig.company_name}</div>
               <div class="company-details">
                 ${currentConfig.company_address}<br/>
@@ -371,17 +378,26 @@ const InvoiceDownload: React.FC<Props> = ({ order, onClose }) => {
   useEffect(() => {
     const fetchAndPrint = async () => {
       const { data, error } = await supabase
-        .from("invoice_config")
+        .from("info_branch")
         .select("*")
         .single();
 
       if (error) console.error("Invoicing Error:", error.message);
 
-      const activeConfig = data || DEFAULT_CONFIG;
+      const activeConfig = data
+        ? {
+            company_name: data.company_name || "Your Company",
+            company_address: data.address || "",
+            company_phone: data.phone?.toString() || "",
+            company_email: data.company_email || "",
+            company_logo: data.company_logo || "",
+            footer_note: DEFAULT_CONFIG.footer_note,
+          }
+        : DEFAULT_CONFIG;
+
       handlePrint(activeConfig);
       onClose();
     };
-
     fetchAndPrint();
   }, []);
 

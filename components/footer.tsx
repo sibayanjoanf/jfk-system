@@ -109,14 +109,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/collection/stones"
-                  className="text-gray-600 hover:text-red-600"
-                >
-                  Stones
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/collection/fixtures"
                   className="text-gray-600 hover:text-red-600"
                 >

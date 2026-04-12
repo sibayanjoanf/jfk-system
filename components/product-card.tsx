@@ -206,7 +206,7 @@ export function ProductCard({
 
       {/* Quick View Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-sm md:max-w-2xl lg:max-w-4xl h-[90vh] md:h-fit p-0 overflow-hidden border-none shadow-none [&>button]:hidden">
+        <DialogContent className="w-[95vw] md:max-w-4xl lg:max-w-4xl h-[90vh] md:h-fit p-0 overflow-hidden border-none shadow-none [&>button]:hidden">
           <DialogHeader className="sr-only">
             <DialogTitle>{name}</DialogTitle>
             <DialogDescription>
@@ -220,7 +220,7 @@ export function ProductCard({
                 src={activeImage}
                 alt={name}
                 fill
-                className="object-fill"
+                className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>

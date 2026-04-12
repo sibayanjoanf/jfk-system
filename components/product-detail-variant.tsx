@@ -61,14 +61,14 @@ export function ProductDetailVariant({ product, variants }: Props) {
           <div className="flex flex-col space-y-2 md:space-y-5">
             <nav className="text-sm font-medium text-gray-400 flex">
               <Link
-                className="hover:text-gray-500"
+                className="hover:text-gray-500 hover:no-underline underline"
                 href={`/collection/${category.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 {category}
               </Link>
               <span className="px-3">/</span>
               <Link
-                className="hover:text-gray-500"
+                className="hover:text-gray-500 hover:no-underline underline"
                 href={{
                   pathname: `/collection/${category.toLowerCase().replace(/\s+/g, "-")}`,
                   query: { sub: sub_category },

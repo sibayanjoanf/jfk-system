@@ -49,29 +49,53 @@ export default function SearchPage() {
       product_variants(*)
     `;
 
+        // Fetch available_qty from view
+        const { data: available } = await supabase
+          .from("product_variants_available")
+          .select("id, available_qty");
+
+        const availableMap = Object.fromEntries(
+          (available || []).map((v) => [v.id, v.available_qty]),
+        );
+
+        const applyMap = (data: Product[]): Product[] =>
+          data
+            .map((p) => ({
+              ...p,
+              product_variants: (p.product_variants ?? [])
+                .filter((v) => !v.is_archived)
+                .map((v) => ({
+                  ...v,
+                  stock_qty: availableMap[v.id] ?? 0,
+                })) as ProductVariant[],
+            }))
+            .filter((p) => p.product_variants.length > 0);
+
         const { data: exactData, error: exactError } = await supabase
           .from("products")
           .select(selectQuery)
           .ilike("name", `%${searchTerm}%`)
+          .eq("is_archived", false)
           .limit(200);
 
         if (exactError) throw exactError;
 
         if (exactData && exactData.length > 0) {
-          setProducts(exactData);
+          setProducts(applyMap(exactData));
           return;
         }
 
         const { data: allData, error: allError } = await supabase
           .from("products")
           .select(selectQuery)
+          .eq("is_archived", false)
           .limit(200);
 
         if (allError) throw allError;
 
         const term = searchTerm.toLowerCase();
 
-        const fuzzyResults = (allData || []).filter((product) => {
+        const fuzzyResults = applyMap(allData || []).filter((product) => {
           const variantKeywords =
             product.product_variants
               ?.map((v: ProductVariant) => v.keywords?.toLowerCase() || "")

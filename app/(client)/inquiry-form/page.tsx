@@ -349,7 +349,7 @@ export default function InquiryFormPage() {
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="delivery">Delivery</SelectItem>
-                      <SelectItem value="walk-in">Walk In</SelectItem>
+                      <SelectItem value="pickup">Pickup</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -518,8 +518,9 @@ export default function InquiryFormPage() {
                   })}
                 </p>
               </div>
-              <p className="text-xs text-gray-400">
-                Final pricing will be confirmed upon processing your inquiry.
+              <p className="text-xs text-gray-400 italic mt-3">
+                * Final pricing may vary depending on delivery, installation,
+                and other charges.
               </p>
             </div>
           </div>

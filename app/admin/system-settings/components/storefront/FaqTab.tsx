@@ -411,7 +411,7 @@ const FaqTab: React.FC = () => {
         </div>
       )}
 
-      {/* ── Delete Confirm Modal ───────────────────────── */}
+      {/* ── Delete Confirm Modal ── */}
       {confirmOpen && (
         <div
           className="fixed inset-0 bg-black/30 z-50 backdrop-blur-sm flex items-center justify-center"

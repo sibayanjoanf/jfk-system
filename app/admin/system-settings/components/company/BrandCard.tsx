@@ -4,14 +4,12 @@ import { CompanyForm } from "../../types";
 
 interface BrandCardProps {
   companyForm: CompanyForm;
-  onNameChange: (name: string) => void;
   onLogoUpload: (file: File) => Promise<boolean>;
   uploading: boolean;
 }
 
 const BrandCard: React.FC<BrandCardProps> = ({
   companyForm,
-  onNameChange,
   onLogoUpload,
   uploading,
 }) => {
@@ -26,12 +24,10 @@ const BrandCard: React.FC<BrandCardProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <h2 className="text-base font-semibold text-gray-900 mb-1">Brand</h2>
-      <p className="text-xs text-gray-400 mb-6">
-        Update your company logo and display name.
-      </p>
+      <p className="text-xs text-gray-400 mb-6">Update your company logo.</p>
       <div className="flex items-center gap-5">
         <div className="relative shrink-0">
-          <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-100 bg-gray-50">
+          <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
             {uploading ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Loader2 size={20} className="animate-spin text-gray-400" />
@@ -59,16 +55,11 @@ const BrandCard: React.FC<BrandCardProps> = ({
             onChange={handleFileChange}
           />
         </div>
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">
-            Company Name
-          </label>
-          <input
-            type="text"
-            value={companyForm.companyName}
-            onChange={(e) => onNameChange(e.target.value)}
-            className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
-          />
+        <div>
+          <p className="text-xs text-gray-400 mb-0.5">Company Name</p>
+          <p className="text-sm font-medium text-gray-900">
+            {companyForm.companyName}
+          </p>
         </div>
       </div>
     </div>

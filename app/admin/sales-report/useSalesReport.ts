@@ -53,6 +53,7 @@ interface Order {
   total_amount: number | string;
   created_at: string;
   items?: OrderItem[];
+  refunded_items?: OrderItem[];
   order_type?: string;
   order_number?: string;
 }
@@ -98,8 +99,10 @@ function groupByPeriod(orders: Order[], filter: TimeFilter): StatPoint[] {
     }
 
     const existing = map.get(key) || { revenue: 0, orders: 0 };
+    const refundedAmount = (order.refunded_items ?? [])
+      .reduce((r, item) => r + (item.price || 0) * (item.quantity || 0), 0);
     map.set(key, {
-      revenue: existing.revenue + (order.status === "Completed" ? Number(order.total_amount) : 0),
+      revenue: existing.revenue + (order.status === "Completed" ? Number(order.total_amount) - refundedAmount : 0),
       orders: existing.orders + 1,
     });
   });
@@ -148,7 +151,11 @@ function deriveReportData(allOrders: Order[], timeFilter: TimeFilter): SalesRepo
   const filtered = allOrders.filter((o) => new Date(o.created_at) >= start);
 
   const completed = allOrders.filter((o) => o.status === "Completed");
-  const totalRevenue = completed.reduce((sum, o) => sum + Number(o.total_amount), 0);
+  const totalRevenue = completed.reduce((sum, o) => {
+    const refundedAmount = (o.refunded_items ?? [])
+      .reduce((r, item) => r + (item.price || 0) * (item.quantity || 0), 0);
+    return sum + Number(o.total_amount) - refundedAmount;
+  }, 0);
   const totalOrders = allOrders.length;
   const cancelledCount = allOrders.filter((o) => o.status === "Cancelled").length;
   const refundedCount = allOrders.filter((o) => o.status === "Refunded").length;
@@ -181,7 +188,7 @@ export function useSalesReport(timeFilter: TimeFilter) {
       setLoading(true);
       const { data: orders } = await supabase
         .from("inquiries")
-        .select("id, status, total_amount, created_at, items, order_type, order_number")
+        .select("id, status, total_amount, created_at, items, order_type, order_number, refunded_items")
         .order("created_at", { ascending: true });
 
       if (orders) setAllOrders(orders as Order[]);

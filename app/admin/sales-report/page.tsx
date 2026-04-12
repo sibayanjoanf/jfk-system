@@ -50,7 +50,7 @@ function exportToCSV(
   timeFilter: string,
 ) {
   const rows = [
-    ["Period", "Revenue (₱)", "Orders"],
+    ["Period", "Revenue (PHP)", "Orders"],
     ...statPoints.map((p) => [p.name, p.revenue.toFixed(2), p.orders]),
   ];
   const csv = rows.map((r) => r.join(",")).join("\n");
@@ -235,26 +235,6 @@ const SalesReport: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-1">
-                  <TooltipProvider delayDuration={200}>
-                    <TooltipComponent>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={handlePrint}
-                          className="p-2 mr-1 rounded-lg text-red-600 border border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Printer size={16} className="text-red-600" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="bottom"
-                        sideOffset={5}
-                        className="text-[10px] py-1 px-2 bg-red-600"
-                      >
-                        <p>Print</p>
-                      </TooltipContent>
-                    </TooltipComponent>
-                  </TooltipProvider>
-
                   <TooltipProvider delayDuration={200}>
                     <TooltipComponent>
                       <TooltipTrigger asChild>
@@ -460,8 +440,10 @@ const SalesReport: React.FC = () => {
                     data={pieData}
                     innerRadius={60}
                     outerRadius={80}
+                    cornerRadius={10}
                     paddingAngle={4}
                     dataKey="value"
+                    stroke="none"
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
