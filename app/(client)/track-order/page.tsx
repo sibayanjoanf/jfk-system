@@ -33,7 +33,10 @@ export default function TrackOrderPage() {
 
   const handleScanResult = (scannedId: string) => {
     setOrderId(scannedId);
-    handleTrackById(scannedId);
+    setShowScanner(false); 
+    setTimeout(() => {
+      handleTrackById(scannedId);
+    }, 300);
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();

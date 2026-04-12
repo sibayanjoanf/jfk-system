@@ -27,10 +27,15 @@ export function QRScannerModal({ onScan, onClose }: QRScannerModalProps) {
           if (hasScanned.current) return;
           hasScanned.current = true;
 
-          scanner.stop().then(() => {
-            onScan(decodedText.trim().toUpperCase());
-            onClose();
-          });
+          scanner.stop()
+            .then(() => {
+              onScan(decodedText.trim().toUpperCase());
+              onClose();
+            })
+            .catch(() => {
+              onScan(decodedText.trim().toUpperCase());
+              onClose();
+            });
         },
         () => {}
       );
