@@ -1,7 +1,7 @@
 "use client";
 
 import jsQR from "jsqr";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Field, FieldGroup } from "@/components/ui/field";
@@ -12,6 +12,7 @@ import { Reveal } from "@/components/reveal";
 import { supabase } from "@/lib/supabase";
 import { Order } from "@/app/admin/order-management/types";
 import TrackOrderView from "./components/TrackOrderView";
+import { QRScannerModal } from "./components/QRScanner";
 
 export default function TrackOrderPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,6 +23,18 @@ export default function TrackOrderPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
+
+  const [showScanner, setShowScanner] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/Mobi|Android|iPhone/i.test(navigator.userAgent));
+  }, []);
+
+  const handleScanResult = (scannedId: string) => {
+    setOrderId(scannedId);
+    handleTrackById(scannedId);
+  };
 
   const handleUploadClick = () => fileInputRef.current?.click();
   const handleScanClick = () => cameraInputRef.current?.click();
@@ -127,27 +140,38 @@ export default function TrackOrderPage() {
               <div className="flex flex-col justify-between gap-7">
                 <div className="flex-col sm:flex sm:flex-row justify-center lg:justify-between gap-5 space-y-5 sm:space-y-0">
                   {/* Scan QR */}
-                  <div
-                    onClick={handleScanClick}
-                    className="group p-12 rounded-lg border border-dashed border-red-600 
-                              cursor-pointer transition-all duration-300
-                              hover:bg-red-600 hover:text-white hover:scale-105"
-                  >
-                    <QrCode
-                      className="mx-auto mb-4 text-red-600 transition-colors duration-300 group-hover:text-white"
-                      size={48}
+                  {/* Only show on mobile */}
+                  {isMobile && (
+                    <div
+                      onClick={() => setShowScanner(true)}
+                      className="group p-12 rounded-lg border border-dashed border-red-600 
+                                cursor-pointer transition-all duration-300
+                                hover:bg-red-600 hover:text-white hover:scale-105"
+                    >
+                      <QrCode
+                        className="mx-auto mb-4 text-red-600 transition-colors duration-300 group-hover:text-white"
+                        size={48}
+                      />
+                      <p className="text-sm font-semibold text-center">
+                        <span className="text-red-600 transition-colors duration-300 group-hover:text-white">
+                          Scan{" "}
+                        </span>
+                        your QR code here
+                        <br />
+                        <span className="group-hover:text-white text-xs text-gray-400 font-normal">
+                          Live camera scanner
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Modal */}
+                  {showScanner && (
+                    <QRScannerModal
+                      onScan={handleScanResult}
+                      onClose={() => setShowScanner(false)}
                     />
-                    <p className="text-sm font-semibold text-center">
-                      <span className="text-red-600 transition-colors duration-300 group-hover:text-white">
-                        Scan{" "}
-                      </span>
-                      your QR code here
-                      <br />
-                      <span className="group-hover:text-white text-xs text-gray-400 font-normal">
-                        Supports JPG, JPEG, PNG
-                      </span>
-                    </p>
-                  </div>
+                  )}
 
                   {/* Upload QR */}
                   <div

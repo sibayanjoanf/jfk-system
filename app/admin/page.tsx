@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
               </label>
               <button
                 type="button"
-                className="text-[11px] font-medium text-red-600 hover:text-red-700 transition-colors"
+                className="text-[11px] font-medium text-red-600 hover:text-red-700 transition-colors cursor-pointer relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full"
                 onClick={() => router.push("/admin/forgot-password")}
               >
                 Forgot Password?
@@ -166,8 +166,8 @@ export default function AdminLoginPage() {
           <button
             type="button"
             onClick={() => router.push("/admin/register")}
-            className="font-semibold text-red-600 hover:text-red-700 transition-colors"
-          >
+            className="font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full"
+            >
             Register here
           </button>
         </p>

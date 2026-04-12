@@ -40,10 +40,7 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleOtpKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -51,38 +48,59 @@ export default function ForgotPasswordPage() {
 
   const handleOtpPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 6);
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     const newOtp = [...otp];
-    pasted.split("").forEach((char, i) => {
-      newOtp[i] = char;
-    });
+    pasted.split("").forEach((char, i) => { newOtp[i] = char; });
     setOtp(newOtp);
     inputRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
+  // ✅ Step 1 — send OTP to email via Supabase Auth
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setTimeout(() => {
-      setSent(true);
-      setLoading(false);
-    }, 500);
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false, // ✅ only works for existing admin accounts
+      },
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setSent(true);
   };
 
+  // ✅ Step 2 — verify the 6-digit code
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setTimeout(() => {
-      setVerified(true);
-      setLoading(false);
-    }, 500);
+
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp.join(""),
+      type: "email",
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setError("Invalid or expired code. Please try again.");
+      return;
+    }
+
+    setVerified(true);
   };
 
+  // ✅ Step 3 — update the password (session exists after verifyOtp)
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -93,9 +111,19 @@ export default function ForgotPasswordPage() {
       setLoading(false);
       return;
     }
+
     if (newPassword.length < 8) {
       setError("Password must be at least 8 characters.");
       setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
       return;
     }
 
@@ -115,7 +143,8 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="w-[250px] md:w-[400px] overflow-x-hidden">
-        {/* Email */}
+
+        {/* Step 1 — Email */}
         {!sent && (
           <>
             <div className="text-center">
@@ -151,19 +180,16 @@ export default function ForgotPasswordPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+                className="cursor-pointer mt-2 w-full h-12 text-white font-bold rounded-lg shadow-lg transition-all"
+                style={{ backgroundColor: "#e7000b" }}
               >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Send Code"
-                )}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Send Code"}
               </Button>
             </form>
           </>
         )}
 
-        {/* OTP (digits) */}
+        {/* Step 2 — OTP */}
         {sent && !verified && (
           <>
             <div className="text-center">
@@ -173,18 +199,14 @@ export default function ForgotPasswordPage() {
               <p className="text-sm text-gray-500 mt-2 mb-2">
                 We sent a 6-digit code to
               </p>
-              <p className="text-sm font-semibold text-gray-800 mb-10">
-                {email}
-              </p>
+              <p className="text-sm font-semibold text-gray-800 mb-10">{email}</p>
             </div>
             <form onSubmit={handleVerifyOtp}>
               <div className="flex justify-center gap-2 mb-6 w-full">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
-                    ref={(el) => {
-                      inputRefs.current[index] = el;
-                    }}
+                    ref={(el) => { inputRefs.current[index] = el; }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
@@ -192,7 +214,11 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={handleOtpPaste}
-                    className="w-8 md:w-10 h-12 text-center text-xl font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                    className="w-8 md:w-10 h-12 text-center text-xl font-bold text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 transition-all"
+                    style={{ 
+                      borderColor: digit ? "#e7000b" : undefined,
+                      // ✅ filled digits get a red border so user can see progress
+                    }}
                   />
                 ))}
               </div>
@@ -204,21 +230,24 @@ export default function ForgotPasswordPage() {
               <Button
                 type="submit"
                 disabled={loading || otp.some((d) => d === "")}
-                className="cursor-pointer w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+                className="cursor-pointer w-full h-12 text-white font-bold rounded-lg shadow-lg transition-all"
+                style={{ backgroundColor: "#e7000b" }}
               >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Verify Code"
-                )}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify Code"}
               </Button>
+
+              {/* ✅ Resend option */}
               <button
                 type="button"
-                onClick={() => {
-                  setSent(false);
-                  setOtp(["", "", "", "", "", ""]);
-                }}
-                className="mt-4 w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={handleSendOtp as any}
+                className="mt-3 w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer hover:underline"
+              >
+                Didn&apos;t receive a code? Resend
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSent(false); setOtp(["", "", "", "", "", ""]); setError(""); }}
+                className="mt-2 w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer hover:underline"
               >
                 Wrong email? Go back
               </button>
@@ -226,7 +255,7 @@ export default function ForgotPasswordPage() {
           </>
         )}
 
-        {/* New Password */}
+        {/* Step 3 — New Password */}
         {verified && (
           <>
             <div className="text-center">
@@ -257,11 +286,7 @@ export default function ForgotPasswordPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -284,11 +309,7 @@ export default function ForgotPasswordPage() {
                     onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
                   >
-                    {showConfirm ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -300,13 +321,10 @@ export default function ForgotPasswordPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+                className="cursor-pointer mt-2 w-full h-12 text-white font-bold rounded-lg shadow-lg transition-all"
+                style={{ backgroundColor: "#e7000b" }}
               >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Update Password"
-                )}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Update Password"}
               </Button>
             </form>
           </>
@@ -319,7 +337,8 @@ export default function ForgotPasswordPage() {
           <button
             type="button"
             onClick={() => router.push("/admin")}
-            className="font-semibold text-red-600 hover:text-red-700 transition-colors"
+            className="font-semibold hover:opacity-80 transition-colors cursor-pointer relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full"
+            style={{ color: "#e7000b" }}
           >
             Back to login
           </button>

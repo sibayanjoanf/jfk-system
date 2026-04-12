@@ -66,35 +66,61 @@ export default function RegisterPage() {
   };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+  if (password !== confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
+  if (password.length < 8) {
+    setError("Password must be at least 8 characters.");
+    return;
+  }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
+  setLoading(true);
 
-    setLoading(true);
-    setTimeout(() => {
-      setOtpSent(true);
-      setLoading(false);
-    }, 500);
-  };
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+      },
+    },
+  });
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setTimeout(() => {
-      setConfirmed(true);
-      setLoading(false);
-    }, 500);
-  };
+  setLoading(false);
+
+  if (error) {
+    setError(error.message);
+    return;
+  }
+
+  setOtpSent(true);
+};
+
+const handleVerifyOtp = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token: otp.join(""),
+    type: "signup", // 👈 different from forgot password which uses "email"
+  });
+
+  setLoading(false);
+
+  if (error) {
+    setError("Invalid or expired code. Please try again.");
+    return;
+  }
+
+  setConfirmed(true);
+};
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-between bg-transparent p-4">
@@ -339,7 +365,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => router.push("/admin")}
-              className="font-semibold text-red-600 hover:text-red-700 transition-colors"
+              className="font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full"
             >
               Sign in here
             </button>
