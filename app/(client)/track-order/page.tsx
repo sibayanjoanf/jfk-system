@@ -25,15 +25,14 @@ export default function TrackOrderPage() {
   const [order, setOrder] = useState<Order | null>(null);
 
   const [showScanner, setShowScanner] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    setIsMobile(/Mobi|Android|iPhone/i.test(navigator.userAgent));
-  }, []);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof navigator === "undefined") return false;
+    return /Mobi|Android|iPhone/i.test(navigator.userAgent);
+  });
 
   const handleScanResult = (scannedId: string) => {
     setOrderId(scannedId);
-    setShowScanner(false); 
+    setShowScanner(false);
     setTimeout(() => {
       handleTrackById(scannedId);
     }, 300);
@@ -107,6 +106,7 @@ export default function TrackOrderPage() {
       items: data.items ?? [],
       total_amount: data.total_amount,
       created_at: data.created_at,
+      refunded_items: data.refunded_items ?? [],
     });
   };
 
