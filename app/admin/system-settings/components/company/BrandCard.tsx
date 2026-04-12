@@ -6,12 +6,14 @@ interface BrandCardProps {
   companyForm: CompanyForm;
   onLogoUpload: (file: File) => Promise<boolean>;
   uploading: boolean;
+  onNameChange: (name: string) => void;
 }
 
 const BrandCard: React.FC<BrandCardProps> = ({
   companyForm,
   onLogoUpload,
   uploading,
+  onNameChange,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
