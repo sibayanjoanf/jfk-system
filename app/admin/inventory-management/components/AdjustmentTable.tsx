@@ -305,8 +305,8 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
             or counting discrepancies.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <div className="relative group">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end w-full sm:auto">
+          <div className="relative group flex-1 sm:flex-none">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
             </span>
@@ -318,7 +318,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                 setSearch(e.target.value);
                 onPageChange(1);
               }}
-              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-48"
+              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-full sm:w-48"
             />
           </div>
           <div className="relative" ref={typeRef}>

@@ -101,7 +101,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         />
         <div
           onClick={() => catThumbInputRef.current?.click()}
-          className="w-10 h-10 rounded-lg border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-red-300 transition-colors shrink-0 overflow-hidden relative group"
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-red-300 transition-colors shrink-0 overflow-hidden relative group"
         >
           {cat.image_url ? (
             <img
@@ -168,7 +168,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col">
                 <p className="text-sm font-semibold text-gray-900">
                   {cat.name}
                 </p>
@@ -180,7 +180,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-o.5 shrink-0">
           <button
             onClick={() => onCategoryDelete(cat.id)}
             className={`p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all ${

@@ -3,15 +3,15 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Search,
-  Plus,
-  Layers,
-  Loader2,
   ChevronDown,
+  Plus,
+  RotateCcw,
+  Loader2,
   ChevronUp,
 } from "lucide-react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { InboundRow } from "../types";
+import { AdjustmentRow } from "../types";
 import Pagination from "./Pagination";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 
@@ -24,8 +24,8 @@ interface VariantOption {
   category: string;
 }
 
-interface InboundTableProps {
-  rows: InboundRow[];
+interface AdjustmentTableProps {
+  rows: AdjustmentRow[];
   loading: boolean;
   onSaved: () => void;
   currentPage: number;
@@ -34,20 +34,6 @@ interface InboundTableProps {
   onPageSizeChange: (size: number) => void;
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
-}
-
-interface RawVariantRow {
-  id: string;
-  sku: string;
-  stock_qty: number;
-  image_url: string | null;
-  products: {
-    name: string;
-    sub_categories: {
-      name: string;
-      categories: { name: string } | null;
-    } | null;
-  } | null;
 }
 
 const SortArrows = ({
@@ -78,7 +64,7 @@ const SortArrows = ({
   );
 };
 
-const InboundTable: React.FC<InboundTableProps> = ({
+const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   rows,
   loading,
   onSaved,
@@ -90,7 +76,8 @@ const InboundTable: React.FC<InboundTableProps> = ({
   onSort,
 }) => {
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [typeOpen, setTypeOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -98,6 +85,11 @@ const InboundTable: React.FC<InboundTableProps> = ({
   const [variantSearch, setVariantSearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [quantityError, setQuantityError] = useState("");
+  const [productError, setProductError] = useState("");
+  const [reasonError, setReasonError] = useState("");
+  
+  const typeRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState({
     variant_id: "",
@@ -105,36 +97,25 @@ const InboundTable: React.FC<InboundTableProps> = ({
     product: "",
     image_url: null as string | null,
     stock_qty: 0,
+    type: "Add" as "Add" | "Deduct" | "Set",
     quantity: "",
-    supplier: "",
-    notes: "",
+    reason: "",
   });
-
-  const [formErrors, setFormErrors] = useState({
-    product: false,
-    quantity: false,
-    notes: false,
-    supplier: false,
-  });
-
-  // (YYYY-MM-DD)
-  const dateFilterStr = selectedDate
-    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
-    : "";
 
   const filtered = useMemo(
     () =>
-      rows.filter((b) => {
+      rows.filter((a) => {
         const q = search.toLowerCase();
         const matchesSearch =
-          b.product_name.toLowerCase().includes(q) ||
-          b.sku.toLowerCase().includes(q) ||
-          (b.supplier ?? "").toLowerCase().includes(q);
-
+          a.product_name.toLowerCase().includes(q) ||
+          a.sku.toLowerCase().includes(q);
+        const matchesType =
+          typeFilter === "All" ||
+          a.adjustment_type.toLowerCase() === typeFilter.toLowerCase();
         const matchesDate =
           !dateFilter ||
           (() => {
-            const d = new Date(b.created_at);
+            const d = new Date(a.created_at ?? "");
             if (dateFilter.type === "year")
               return d.getFullYear() === dateFilter.year;
             if (dateFilter.type === "month")
@@ -152,10 +133,9 @@ const InboundTable: React.FC<InboundTableProps> = ({
             }
             return true;
           })();
-
-        return matchesSearch && matchesDate;
+        return matchesSearch && matchesType && matchesDate;
       }),
-    [rows, search, dateFilter],
+    [rows, search, typeFilter, dateFilter, sortConfig],
   );
 
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
@@ -166,11 +146,9 @@ const InboundTable: React.FC<InboundTableProps> = ({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      )
-        setDropdownOpen(false);
+      if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
+        setTypeOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -181,12 +159,12 @@ const InboundTable: React.FC<InboundTableProps> = ({
       .from("product_variants")
       .select(
         `
-      id, sku, stock_qty, image_url,
-      products (
-        name,
-        sub_categories ( name, categories ( name ) )
-      )
-    `,
+        id, sku, stock_qty, image_url,
+        products (
+          name,
+          sub_categories ( name, categories ( name ) )
+        )
+      `,
       )
       .order("sku");
     if (data) {
@@ -222,7 +200,9 @@ const InboundTable: React.FC<InboundTableProps> = ({
     setShowForm(true);
     setDropdownOpen(false);
     setVariantSearch("");
-    setFormErrors({ product: false, quantity: false, notes: false, supplier: false });
+    setProductError("");
+    setQuantityError("");
+    setReasonError("");
   };
 
   const handleSelectVariant = (v: VariantOption) => {
@@ -234,7 +214,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
       image_url: v.image_url,
       stock_qty: v.stock_qty,
     }));
-    setFormErrors((prev) => ({ ...prev, product: false }));
+    setProductError("");
     setDropdownOpen(false);
     setVariantSearch("");
   };
@@ -246,64 +226,87 @@ const InboundTable: React.FC<InboundTableProps> = ({
   );
 
   const handleSave = async () => {
-    const isProductValid = !!form.variant_id;
-    const isQtyValid = Number(form.quantity) > 0;
-    const isNotesValid = !!form.notes.trim();
-    const isSupplierValid = !!form.supplier.trim(); 
+    let hasError = false;
 
-    if (!isProductValid || !isQtyValid || !isNotesValid || !isSupplierValid) {
-      setFormErrors({
-        product: !isProductValid,
-        quantity: !isQtyValid,
-        notes: !isNotesValid,
-        supplier: !isSupplierValid,
-      });
+    if (!form.variant_id) {
+      setProductError("Please select a product");
+      hasError = true;
+    } else {
+      setProductError("");
+    }
+
+    if (!form.quantity || Number(form.quantity) <= 0) {
+      setQuantityError("Quantity must be greater than 0");
+      hasError = true;
+    }
+
+    if (!form.reason) {
+      setReasonError("Please select a reason");
+      hasError = true;
+    } else {
+      setReasonError("");
+    }
+
+    if (hasError) return;
+
+    if (form.type === "Deduct" && Number(form.quantity) > form.stock_qty) {
+      setQuantityError(
+        `Cannot deduct ${form.quantity} units. Only ${form.stock_qty} in stock.`,
+      );
+      return;
+    }
+
+    if (form.type === "Set" && Number(form.quantity) < 0) {
+      setQuantityError("Stock cannot be set to a negative value.");
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.rpc("record_inbound", {
+    const { error } = await supabase.rpc("record_adjustment", {
       p_variant_id: form.variant_id,
       p_quantity: Number(form.quantity),
-      p_supplier: form.supplier || null,
-      p_received_by: null,
+      p_adjustment_type: form.type.toLowerCase(),
+      p_notes: form.reason || null,
+      p_adjusted_by: null,
     });
     if (error) {
       alert(`Error: ${error.message}`);
       setSaving(false);
       return;
     }
+    setQuantityError("");
     setForm({
       variant_id: "",
       sku: "",
       product: "",
       image_url: null,
       stock_qty: 0,
+      type: "Add",
       quantity: "",
-      supplier: "",
-      notes: "",
+      reason: "",
     });
-    setFormErrors({ product: false, quantity: false, notes: false, supplier: false }); /* ADDED: Reset supplier error */
     setShowForm(false);
     setSaving(false);
     onSaved();
   };
+
+  const filterBtnClass = (active: boolean) =>
+    `flex items-center gap-2 px-3 py-2 text-xs border rounded-lg font-medium transition-colors ${active ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div>
           <h2 className="text-base font-semibold text-gray-900">
-            Inbound Batches
+            Stock Adjustments
           </h2>
           <p className="text-xs text-gray-400 mt-1">
-            Record stock received from suppliers. Each entry creates a new batch
-            and updates stock levels.
+            Manually correct stock levels due to damage, returns, showroom use,
+            or counting discrepancies.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          {/* Search */}
-          <div className="relative group">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end w-full sm:w-auto">
+          <div className="relative group flex-1 sm:flex-none">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
             </span>
@@ -315,11 +318,35 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 setSearch(e.target.value);
                 onPageChange(1);
               }}
-              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-52"
+              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-full sm:w-48"
             />
           </div>
+          <div className="relative" ref={typeRef}>
+            <button
+              onClick={() => setTypeOpen(!typeOpen)}
+              className={filterBtnClass(typeOpen)}
+            >
+              {typeFilter} <ChevronDown size={13} />
+            </button>
+            {typeOpen && (
+              <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                {["All", "Add", "Deduct", "Set"].map((f) => (
+                  <button
+                    key={f}
+                    className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${f === typeFilter ? "text-red-600 font-medium" : "text-gray-600"}`}
+                    onClick={() => {
+                      setTypeFilter(f);
+                      setTypeOpen(false);
+                      onPageChange(1);
+                    }}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* Calendar date filter */}
           <CalendarPicker
             value={dateFilter}
             onChange={(f) => {
@@ -333,7 +360,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
             <Plus size={14} />
-            Receive Stock
+            New Adjustment
           </button>
         </div>
       </div>
@@ -341,11 +368,11 @@ const InboundTable: React.FC<InboundTableProps> = ({
       {showForm && (
         <div className="mb-6 p-5 bg-gray-50 rounded-xl border border-gray-100">
           <p className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Layers size={15} className="text-red-600" />
-            New Inbound Entry
+            <RotateCcw size={15} className="text-red-600" />
+            Adjustment Form
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            {/* Product picker */}
+            {/* ── Product picker ── */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Product / SKU <span className="text-red-600">*</span>
@@ -354,7 +381,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 <button
                   type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white border ${formErrors.product ? "border-red-400" : "border-gray-200"} rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left`}
+                  className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white border rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left ${productError ? "border-red-400" : "border-gray-200"}`}
                 >
                   {form.variant_id ? (
                     <div className="flex items-center gap-3 min-w-0">
@@ -463,16 +490,39 @@ const InboundTable: React.FC<InboundTableProps> = ({
                   </div>
                 )}
               </div>
-              {formErrors.product && (
-                <p className="text-xs text-red-500 mt-1">
-                  Please select a product
-                </p>
+              {productError && (
+                <p className="text-xs text-red-500 mt-1">{productError}</p>
               )}
             </div>
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Quantity Received <span className="text-red-600">*</span>
+                Adjustment Type <span className="text-red-600">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={form.type}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      type: e.target.value as "Add" | "Deduct" | "Set",
+                    })
+                  }
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all appearance-none"
+                >
+                  <option value="Add">Add (increase stock)</option>
+                  <option value="Deduct">Deduct (decrease stock)</option>
+                  <option value="Set">Set (override to exact value)</option>
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Quantity <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
@@ -483,61 +533,45 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 value={form.quantity}
                 onChange={(e) => {
                   const val = e.target.value;
-                  if (/^\d*$/.test(val)) {
-                    setForm({ ...form, quantity: val });
-                    if (Number(val) > 0) {
-                      setFormErrors((prev) => ({ ...prev, quantity: false }));
-                    }
-                  }
+                  if (/^\d*$/.test(val)) setForm({ ...form, quantity: val });
+                  setQuantityError("");
                 }}
-                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.quantity ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
+                className={`w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${quantityError ? "border-red-400" : "border-gray-200"}`}
               />
-              {formErrors.quantity && (
-                <p className="text-xs text-red-500 mt-1">
-                  Quantity must be greater than 0
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Supplier <span className="text-red-600">*</span> 
-              </label>
-              <input
-                type="text"
-                placeholder="Supplier name"
-                maxLength={50}
-                value={form.supplier}
-                onChange={(e) => {
-                  setForm({ ...form, supplier: e.target.value });
-                  if (e.target.value.trim()) setFormErrors((prev) => ({ ...prev, supplier: false })); /* ADDED: Clear error on type */
-                }}
-                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.supplier ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
-              />
-              {formErrors.supplier && (
-                <p className="text-xs text-red-500 mt-1">
-                  Supplier name is required
-                </p>
+              {quantityError && (
+                <p className="text-xs text-red-500 mt-1">{quantityError}</p>
               )}
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Notes <span className="text-red-600">*</span>
+                Reason <span className="text-red-600">*</span>
               </label>
-              <input
-                type="text"
-                placeholder="Any notes about this batch"
-                maxLength={150}
-                value={form.notes}
-                onChange={(e) => {
-                  setForm({ ...form, notes: e.target.value });
-                  if (e.target.value.trim()) setFormErrors((prev) => ({ ...prev, notes: false }));
-                }}
-                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.notes ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
-              />
-              {formErrors.notes && (
-                <p className="text-xs text-red-500 mt-1">
-                  Notes are required for adjustments
-                </p>
+              <div className="relative">
+                <select
+                  value={form.reason}
+                  onChange={(e) => {
+                    setForm({ ...form, reason: e.target.value });
+                    setReasonError("");
+                  }}
+                  className={`appearance-none w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${reasonError ? "border-red-400" : "border-gray-200"}`}
+                >
+                  <option value="" disabled hidden>
+                    Select a reason
+                  </option>
+                  <option value="Damaged goods">Damaged goods</option>
+                  <option value="Consumed in showroom">Consumed in showroom</option>
+                  <option value="Returned by customer">Returned by customer</option>
+                  <option value="Counting discrepancy">Counting discrepancy</option>
+                  <option value="Theft / Loss">Theft / Loss</option>
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+              {reasonError && (
+                <p className="text-xs text-red-500 mt-1">{reasonError}</p>
               )}
             </div>
           </div>
@@ -559,7 +593,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                   Saving...
                 </>
               ) : (
-                "Confirm Receipt"
+                "Apply Adjustment"
               )}
             </button>
           </div>
@@ -570,7 +604,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
         {loading ? (
           <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-400">
             <Loader2 className="animate-spin" size={20} />
-            <p className="text-sm">Loading batches...</p>
+            <p className="text-sm">Loading adjustments...</p>
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
@@ -578,15 +612,15 @@ const InboundTable: React.FC<InboundTableProps> = ({
               <tr className="bg-gray-50 text-xs uppercase tracking-wider text-gray-400 border-b border-gray-100">
                 <th
                   className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
-                  onClick={() => onSort("batch_code")}
+                  onClick={() => onSort("adjustment_code")}
                 >
                   <span className="inline-flex items-center gap-1">
-                    Batch ID
-                    <SortArrows field="batch_code" current={sortConfig} />
+                    Ref ID
+                    <SortArrows field="adjustment_code" current={sortConfig} />
                   </span>
                 </th>
                 <th
-                  className="py-3 px-4 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
                   onClick={() => onSort("product_name")}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -594,17 +628,18 @@ const InboundTable: React.FC<InboundTableProps> = ({
                     <SortArrows field="product_name" current={sortConfig} />
                   </span>
                 </th>
+                <th className="py-3 px-4 font-semibold text-center">Type</th>
                 <th
-                  className="py-3 px-4 font-semibold text-center cursor-pointer select-none hover:text-gray-600 transition-colors"
+                  className="py-3 pl-5 font-semibold cursor-pointer select-none hover:text-gray-600 transition-colors"
                   onClick={() => onSort("quantity")}
                 >
-                  <span className="inline-flex items-center gap-1 justify-center">
-                    Qty
+                  <span className="inline-flex items-center gap-1">
+                    Quantity
                     <SortArrows field="quantity" current={sortConfig} />
                   </span>
                 </th>
-                <th className="py-3 px-4 font-semibold">Supplier</th>
-                <th className="py-3 px-4 font-semibold">Received By</th>
+                <th className="py-3 px-4 font-semibold">Reason</th>
+                <th className="py-3 px-4 font-semibold">Adjusted By</th>
                 <th className="py-3 pr-5 font-semibold text-center">Date</th>
               </tr>
             </thead>
@@ -612,56 +647,71 @@ const InboundTable: React.FC<InboundTableProps> = ({
               {paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="py-10 text-center text-xs text-gray-400"
                   >
-                    No batches found.
+                    No adjustments found.
                   </td>
                 </tr>
               ) : (
-                paginated.map((batch) => (
+                paginated.map((adj) => (
                   <tr
-                    key={batch.id}
+                    key={adj.id}
                     className="hover:bg-gray-100 transition-colors"
                   >
-                    <td className="py-3.5 pl-5 text-xs font-mono text-red-600 font-medium">
-                      {batch.batch_code}
+                    <td className="py-3.5 pl-5 text-xs font-mono text-blue-600 font-medium">
+                      {adj.adjustment_code}
                     </td>
                     <td className="py-3.5 px-4">
                       <p className="text-sm font-medium text-gray-900">
-                        {batch.product_name}
+                        {adj.product_name}
                       </p>
-                      <p className="text-xs text-gray-400">{batch.sku}</p>
+                      <p className="text-xs text-gray-400">{adj.sku}</p>
                     </td>
-                    <td className="py-3.5 px-4 text-sm font-semibold text-green-600 text-center">
-                      +{batch.quantity}
+                    <td className="py-3.5 px-4 text-center">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${adj.adjustment_type === "add" ? "text-green-600 bg-green-50" : adj.adjustment_type === "deduct" ? "text-red-600 bg-red-50" : "text-blue-600 bg-blue-50"}`}
+                      >
+                        {adj.adjustment_type.charAt(0).toUpperCase() +
+                          adj.adjustment_type.slice(1)}
+                      </span>
                     </td>
-                    <td className="py-3.5 px-4 text-sm text-gray-500">
-                      {batch.supplier ?? "—"}
+                    <td
+                      className={`py-3.5 px-4 text-sm font-semibold text-center ${
+                        adj.adjustment_type === "add"
+                          ? "text-green-600"
+                          : adj.adjustment_type === "deduct"
+                            ? "text-red-600"
+                            : "text-blue-600"
+                      }`}
+                    >
+                      {adj.adjustment_type === "add"
+                        ? "+"
+                        : adj.adjustment_type === "deduct"
+                          ? "-"
+                          : "="}
+                      {adj.quantity}
                     </td>
-                    <td className="py-3.5 px-4 text-sm text-gray-500">
-                      {batch.received_by ?? "—"}
+                    <td className="py-3.5 px-4 text-xs text-gray-500">
+                      {adj.notes ?? "—"}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-gray-500">
+                      {adj.adjusted_by ?? "—"}
                     </td>
                     <td className="py-3.5 pr-5 text-xs text-gray-500 text-center whitespace-nowrap">
                       <p>
-                        {new Date(batch.created_at).toLocaleDateString(
-                          "en-PH",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          },
-                        )}
+                        {new Date(adj.created_at).toLocaleDateString("en-PH", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </p>
                       <p className="text-[10px] text-gray-400">
-                        {new Date(batch.created_at).toLocaleTimeString(
-                          "en-PH",
-                          {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          },
-                        )}
+                        {new Date(adj.created_at).toLocaleTimeString("en-PH", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                       </p>
                     </td>
                   </tr>
@@ -686,4 +736,4 @@ const InboundTable: React.FC<InboundTableProps> = ({
   );
 };
 
-export default InboundTable;
+export default AdjustmentTable;

@@ -1,10 +1,12 @@
 "use client";
 
+
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, ChevronDown, Loader2, ChevronUp } from "lucide-react";
 import { StockRow } from "../types";
 import Pagination from "./Pagination";
 import Image from "next/image";
+
 
 interface StockTableProps {
   rows: StockRow[];
@@ -16,6 +18,7 @@ interface StockTableProps {
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
 }
+
 
 const SortArrows = ({
   field,
@@ -45,6 +48,7 @@ const SortArrows = ({
   );
 };
 
+
 const StockTable: React.FC<StockTableProps> = ({
   rows,
   loading,
@@ -60,6 +64,7 @@ const StockTable: React.FC<StockTableProps> = ({
   const [statusOpen, setStatusOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -72,6 +77,7 @@ const StockTable: React.FC<StockTableProps> = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
 
   const filtered = useMemo(
     () =>
@@ -86,11 +92,13 @@ const StockTable: React.FC<StockTableProps> = ({
     [rows, search, statusFilter, sortConfig],
   );
 
+
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginated = filtered.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+
 
   const getStatusStyles = (status: string) => {
     switch (status) {
@@ -105,6 +113,7 @@ const StockTable: React.FC<StockTableProps> = ({
     }
   };
 
+
   const getStatusBg = (status: string) => {
     switch (status) {
       case "In Stock":
@@ -118,8 +127,10 @@ const StockTable: React.FC<StockTableProps> = ({
     }
   };
 
+
   const filterBtnClass = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 text-xs border rounded-lg font-medium transition-colors ${active ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`;
+
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -133,8 +144,8 @@ const StockTable: React.FC<StockTableProps> = ({
             thresholds.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <div className="relative group">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end w-full sm:w-auto">
+          <div className="relative group flex-1 sm:flex-none">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
             </span>
@@ -146,7 +157,7 @@ const StockTable: React.FC<StockTableProps> = ({
                 setSearch(e.target.value);
                 onPageChange(1);
               }}
-              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-48"
+              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-full sm:w-48"
             />
           </div>
           <div className="relative" ref={dropdownRef}>
@@ -176,6 +187,7 @@ const StockTable: React.FC<StockTableProps> = ({
           </div>
         </div>
       </div>
+
 
       <div className="overflow-x-auto">
         {loading ? (
@@ -322,6 +334,7 @@ const StockTable: React.FC<StockTableProps> = ({
         )}
       </div>
 
+
       <div className="p-5">
         {!loading && filtered.length > 0 && (
           <Pagination
@@ -337,5 +350,6 @@ const StockTable: React.FC<StockTableProps> = ({
     </div>
   );
 };
+
 
 export default StockTable;

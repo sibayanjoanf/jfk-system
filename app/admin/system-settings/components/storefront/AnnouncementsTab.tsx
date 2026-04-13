@@ -64,7 +64,7 @@ const AnnouncementsTab: React.FC = () => {
         </div>
 
         {/* Add input */}
-        <div className="flex items-start gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex-1">
             <input
               type="text"
@@ -88,7 +88,7 @@ const AnnouncementsTab: React.FC = () => {
           <button
             onClick={handleAdd}
             disabled={adding}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-60"
+            className="flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-60"
           >
             {adding ? (
               <Loader2 size={14} className="animate-spin" />

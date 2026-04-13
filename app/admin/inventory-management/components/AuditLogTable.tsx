@@ -1,5 +1,6 @@
 "use client";
 
+
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Search,
@@ -21,6 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+
 interface AuditLogTableProps {
   rows: MovementRow[];
   loading: boolean;
@@ -31,6 +33,7 @@ interface AuditLogTableProps {
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
 }
+
 
 const SortArrows = ({
   field,
@@ -60,10 +63,12 @@ const SortArrows = ({
   );
 };
 
+
 const exportToCSV = (data: MovementRow[]) => {
   const headers = [
     "Movement,Product,SKU,Qty Change,Before,After,Reference,Date",
   ];
+
 
   const rows = data.map((entry) => {
     return [
@@ -78,11 +83,13 @@ const exportToCSV = (data: MovementRow[]) => {
     ].join(",");
   });
 
+
   const csvContent = headers.concat(rows).join("\n");
   const blob = new Blob(["\ufeff" + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
   const url = URL.createObjectURL(blob);
+
 
   const link = document.createElement("a");
   link.setAttribute("href", url);
@@ -94,6 +101,7 @@ const exportToCSV = (data: MovementRow[]) => {
   link.click();
   document.body.removeChild(link);
 };
+
 
 const AuditLogTable: React.FC<AuditLogTableProps> = ({
   rows,
@@ -111,6 +119,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
   const movFilterRef = useRef<HTMLDivElement>(null);
 
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -123,6 +132,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
 
   const filtered = useMemo(
     () =>
@@ -160,6 +170,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
     [rows, search, movFilter, dateFilter, sortConfig],
   );
 
+
   const formatReference = (ref: string | null) => {
     if (!ref) return "—";
     switch (ref) {
@@ -172,11 +183,13 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
     }
   };
 
+
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginated = filtered.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+
 
   const getMovementStyles = (movement: string) => {
     switch (movement.toLowerCase()) {
@@ -193,6 +206,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
     }
   };
 
+
   const getMovementIcon = (movement: string) => {
     switch (movement.toLowerCase()) {
       case "inbound":
@@ -208,8 +222,10 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
     }
   };
 
+
   const filterBtnClass = (active: boolean) =>
     `flex items-center gap-2 px-3 py-2 text-xs border rounded-lg font-medium transition-colors ${active ? "bg-red-600 text-white border-red-600" : "border-red-200 text-red-600 hover:bg-red-50"}`;
+
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -221,8 +237,8 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
             consumption, and returns.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <div className="relative group">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end w-full sm:w-auto">
+          <div className="relative group flex-1 sm:flex-none">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
             </span>
@@ -234,7 +250,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
                 setSearch(e.target.value);
                 onPageChange(1);
               }}
-              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-48"
+              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-full sm:w-48"
             />
           </div>
           <div className="relative" ref={movFilterRef}>
@@ -265,6 +281,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
             )}
           </div>
 
+
           <CalendarPicker
             value={dateFilter}
             onChange={(f) => {
@@ -272,6 +289,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
               onPageChange(1);
             }}
           />
+
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <TooltipProvider delayDuration={200}>
@@ -296,6 +314,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
           </div>
         </div>
       </div>
+
 
       <div className="overflow-x-auto rounded-xl border border-gray-100">
         {loading ? (
@@ -420,6 +439,7 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
         )}
       </div>
 
+
       {!loading && filtered.length > 0 && (
         <Pagination
           currentPage={currentPage}
@@ -433,5 +453,6 @@ const AuditLogTable: React.FC<AuditLogTableProps> = ({
     </div>
   );
 };
+
 
 export default AuditLogTable;
