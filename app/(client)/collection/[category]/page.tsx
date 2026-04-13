@@ -243,6 +243,7 @@ export default function CategoryPage({ params }: PageProps) {
                       type="text"
                       placeholder="Search products..."
                       value={searchQuery}
+                      maxLength={50}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-9 pr-4 h-10 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-red-600 focus:border-2 transition-colors"
                     />
@@ -402,6 +403,7 @@ export default function CategoryPage({ params }: PageProps) {
               <input
                 type="text"
                 placeholder="Search products..."
+                maxLength={50}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-red-600 focus:border-2 transition-colors"

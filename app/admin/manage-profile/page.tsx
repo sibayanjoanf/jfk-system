@@ -22,6 +22,32 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
+const formatName = (value: string) => {
+  return value
+    .replace(/[^a-zA-Z\s-']/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase());
+};
+
+const isValidEmailFormat = (val: string) => {
+  if (!val) return false;
+  if (val.length > 100) return false;
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+  const parts = val.split("@");
+  if (parts.length !== 2) return false;
+  const [beforeAt, afterAt] = parts;
+  if (!beforeAt || !afterAt) return false;
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+  return true;
+};
+
+const isNameEdgeValid = (val: string) =>
+  /^[a-zA-Z](.*[a-zA-Z])?$/.test(val.trim());
+
 const ProfilePage: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "danger">(
@@ -58,19 +84,61 @@ const ProfilePage: React.FC = () => {
     password: "",
   });
 
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
+    {},
+  );
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>(
+    {},
+  );
+  const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});
+
+  const tabs = [
+    { key: "profile", label: "Profile", icon: CircleUserRound },
+    { key: "security", label: "Security", icon: Shield },
+    { key: "danger", label: "Danger Zone", icon: Trash2 },
+  ] as const;
+
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { label: "", color: "", width: "0%" };
+    if (password.length < 6)
+      return { label: "Weak", color: "bg-red-500", width: "25%" };
+    if (password.length < 8)
+      return { label: "Fair", color: "bg-orange-400", width: "50%" };
+    if (!/[A-Z]/.test(password) || !/[0-9]/.test(password))
+      return { label: "Good", color: "bg-yellow-400", width: "75%" };
+    return { label: "Strong", color: "bg-green-500", width: "100%" };
+  };
+
+  const strength = getPasswordStrength(passwordForm.newPassword);
+
+  const displayName =
+    `${profileForm.firstName} ${profileForm.lastName}`.trim() || "—";
+  const displayRole = profileForm.role
+    ? ROLE_LABELS[profileForm.role as UserRole]
+    : "—";
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setErrorMessage("");
+    setTimeout(() => setSuccessMessage(""), 3000);
+  };
+
+  const showError = (msg: string) => {
+    setErrorMessage(msg);
+    setSuccessMessage("");
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("full_name, contact, role, email")
         .eq("id", user.id)
         .single();
-
       if (profile) {
         const nameParts = (profile.full_name ?? "").split(" ");
         setProfileForm({
@@ -86,25 +154,29 @@ const ProfilePage: React.FC = () => {
     fetchProfile();
   }, []);
 
-  const showSuccess = (msg: string) => {
-    setSuccessMessage(msg);
-    setErrorMessage("");
-    setTimeout(() => setSuccessMessage(""), 3000);
-  };
-
-  const showError = (msg: string) => {
-    setErrorMessage(msg);
-    setSuccessMessage("");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/admin");
+    router.refresh();
   };
 
   const handleSaveProfile = async () => {
+    const errs: Record<string, string> = {};
+    if (!profileForm.firstName.trim())
+      errs.firstName = "Please enter first name";
+    else if (!isNameEdgeValid(profileForm.firstName))
+      errs.firstName = "First name must start and end with a letter";
+    if (!profileForm.lastName.trim()) errs.lastName = "Please enter last name";
+    else if (!isNameEdgeValid(profileForm.lastName))
+      errs.lastName = "Last name must start and end with a letter";
+    setProfileErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setSaving(true);
-    setErrorMessage("");
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
-
     const full_name = `${profileForm.firstName} ${profileForm.lastName}`.trim();
     const { error } = await supabase
       .from("user_profiles")
@@ -114,32 +186,47 @@ const ProfilePage: React.FC = () => {
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);
-
     setSaving(false);
     if (error) showError(error.message);
     else showSuccess("Profile updated successfully.");
   };
 
-  const handleUpdatePassword = async () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showError("Passwords do not match.");
-      return;
+  const handleSavePassword = async () => {
+    const errs: Record<string, string> = {};
+    if (!passwordForm.currentPassword)
+      errs.currentPassword = "Please enter your current password";
+    if (!passwordForm.newPassword) {
+      errs.newPassword = "Please enter a new password";
+    } else {
+      if (passwordForm.newPassword.length < 8)
+        errs.newPassword = "Password must be at least 8 characters long";
+      else if (!/[A-Z]/.test(passwordForm.newPassword))
+        errs.newPassword = "Include at least one uppercase letter";
+      else if (!/[a-z]/.test(passwordForm.newPassword))
+        errs.newPassword = "Include at least one lowercase letter";
+      else if (!/[0-9]/.test(passwordForm.newPassword))
+        errs.newPassword = "Include at least one number";
+      else if (passwordForm.newPassword === passwordForm.currentPassword)
+        errs.newPassword =
+          "New password cannot be the same as current password";
     }
-    setSavingPassword(true);
-    setErrorMessage("");
+    if (!passwordForm.confirmPassword)
+      errs.confirmPassword = "Please confirm your password";
+    else if (passwordForm.newPassword !== passwordForm.confirmPassword)
+      errs.confirmPassword = "Passwords do not match";
+    setPasswordErrors(errs);
+    if (Object.keys(errs).length > 0) return;
 
-    // Re-authenticate first
+    setSavingPassword(true);
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: profileForm.email,
       password: passwordForm.currentPassword,
     });
-
     if (signInError) {
-      showError("Current password is incorrect.");
+      setPasswordErrors({ currentPassword: "Current password is incorrect" });
       setSavingPassword(false);
       return;
     }
-
     const { error } = await supabase.auth.updateUser({
       password: passwordForm.newPassword,
     });
@@ -155,26 +242,33 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleUpdateEmail = async () => {
-    if (emailForm.newEmail !== emailForm.confirmEmail) {
-      showError("Emails do not match.");
-      return;
-    }
-    setSavingEmail(true);
-    setErrorMessage("");
+  const handleSaveEmail = async () => {
+    const errs: Record<string, string> = {};
+    if (!emailForm.newEmail.trim() || !isValidEmailFormat(emailForm.newEmail))
+      errs.newEmail = "Please enter a valid email address";
+    else if (emailForm.newEmail === profileForm.email)
+      errs.newEmail = "New email cannot be the same as current email";
+    if (
+      !emailForm.confirmEmail.trim() ||
+      !isValidEmailFormat(emailForm.confirmEmail)
+    )
+      errs.confirmEmail = "Please enter a valid email address";
+    else if (emailForm.newEmail !== emailForm.confirmEmail)
+      errs.confirmEmail = "Emails do not match";
+    if (!emailForm.password) errs.password = "Please enter your password";
+    setEmailErrors(errs);
+    if (Object.keys(errs).length > 0) return;
 
-    // Re-authenticate first
+    setSavingEmail(true);
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: profileForm.email,
       password: emailForm.password,
     });
-
     if (signInError) {
-      showError("Password is incorrect.");
+      setEmailErrors({ password: "Password is incorrect" });
       setSavingEmail(false);
       return;
     }
-
     const { error } = await supabase.auth.updateUser({
       email: emailForm.newEmail,
     });
@@ -185,37 +279,6 @@ const ProfilePage: React.FC = () => {
       setEmailForm({ newEmail: "", confirmEmail: "", password: "" });
     }
   };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/admin");
-    router.refresh();
-  };
-
-  const getPasswordStrength = (password: string) => {
-    if (!password) return { label: "", color: "", width: "0%" };
-    if (password.length < 6)
-      return { label: "Weak", color: "bg-red-500", width: "25%" };
-    if (password.length < 8)
-      return { label: "Fair", color: "bg-orange-400", width: "50%" };
-    if (!/[A-Z]/.test(password) || !/[0-9]/.test(password))
-      return { label: "Good", color: "bg-yellow-400", width: "75%" };
-    return { label: "Strong", color: "bg-green-500", width: "100%" };
-  };
-
-  const strength = getPasswordStrength(passwordForm.newPassword);
-
-  const tabs = [
-    { key: "profile", label: "Profile", icon: CircleUserRound },
-    { key: "security", label: "Security", icon: Shield },
-    { key: "danger", label: "Danger Zone", icon: Trash2 },
-  ] as const;
-
-  const displayName =
-    `${profileForm.firstName} ${profileForm.lastName}`.trim() || "—";
-  const displayRole = profileForm.role
-    ? ROLE_LABELS[profileForm.role as UserRole]
-    : "—";
 
   if (loading) {
     return (
@@ -300,7 +363,6 @@ const ProfilePage: React.FC = () => {
 
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Feedback messages */}
           {successMessage && (
             <div className="px-4 py-3 bg-green-50 text-green-600 text-xs font-medium rounded-xl border border-green-100">
               {successMessage}
@@ -330,15 +392,26 @@ const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={50}
                     value={profileForm.firstName}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setProfileForm({
                         ...profileForm,
-                        firstName: e.target.value,
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        firstName: formatName(e.target.value),
+                      });
+                      if (e.target.value.trim() && profileErrors.firstName)
+                        setProfileErrors((prev) => ({
+                          ...prev,
+                          firstName: "",
+                        }));
+                    }}
+                    className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${profileErrors.firstName ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                   />
+                  {profileErrors.firstName && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {profileErrors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -346,15 +419,23 @@ const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={50}
                     value={profileForm.lastName}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setProfileForm({
                         ...profileForm,
-                        lastName: e.target.value,
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        lastName: formatName(e.target.value),
+                      });
+                      if (e.target.value.trim() && profileErrors.lastName)
+                        setProfileErrors((prev) => ({ ...prev, lastName: "" }));
+                    }}
+                    className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${profileErrors.lastName ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                   />
+                  {profileErrors.lastName && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {profileErrors.lastName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -429,17 +510,25 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showCurrentPassword ? "text" : "password"}
+                        maxLength={32}
                         value={passwordForm.currentPassword}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\s/g, "");
                           setPasswordForm({
                             ...passwordForm,
-                            currentPassword: e.target.value,
-                          })
-                        }
+                            currentPassword: val,
+                          });
+                          if (val && passwordErrors.currentPassword)
+                            setPasswordErrors((prev) => ({
+                              ...prev,
+                              currentPassword: "",
+                            }));
+                        }}
                         placeholder="Enter current password"
-                        className="w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordErrors.currentPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
+                        type="button"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
@@ -452,6 +541,11 @@ const ProfilePage: React.FC = () => {
                         )}
                       </button>
                     </div>
+                    {passwordErrors.currentPassword && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {passwordErrors.currentPassword}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -460,17 +554,25 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showNewPassword ? "text" : "password"}
+                        maxLength={32}
                         value={passwordForm.newPassword}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\s/g, "");
                           setPasswordForm({
                             ...passwordForm,
-                            newPassword: e.target.value,
-                          })
-                        }
+                            newPassword: val,
+                          });
+                          if (val && passwordErrors.newPassword)
+                            setPasswordErrors((prev) => ({
+                              ...prev,
+                              newPassword: "",
+                            }));
+                        }}
                         placeholder="Enter new password"
-                        className="w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordErrors.newPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
+                        type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
                       >
@@ -481,6 +583,15 @@ const ProfilePage: React.FC = () => {
                         )}
                       </button>
                     </div>
+                    {passwordErrors.newPassword && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {passwordErrors.newPassword}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-gray-400 italic mt-1">
+                      Format: Minimum of 8 characters, including at least one
+                      uppercase letter, one lowercase letter, and one number.
+                    </p>
                     {passwordForm.newPassword && (
                       <div className="mt-2">
                         <div className="flex justify-between items-center mb-1">
@@ -509,17 +620,25 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? "text" : "password"}
+                        maxLength={32}
                         value={passwordForm.confirmPassword}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\s/g, "");
                           setPasswordForm({
                             ...passwordForm,
-                            confirmPassword: e.target.value,
-                          })
-                        }
+                            confirmPassword: val,
+                          });
+                          if (val && passwordErrors.confirmPassword)
+                            setPasswordErrors((prev) => ({
+                              ...prev,
+                              confirmPassword: "",
+                            }));
+                        }}
                         placeholder="Confirm new password"
-                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword ? "border-red-300 focus:ring-red-400 focus:border-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordErrors.confirmPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
+                        type="button"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
@@ -532,18 +651,16 @@ const ProfilePage: React.FC = () => {
                         )}
                       </button>
                     </div>
-                    {passwordForm.confirmPassword &&
-                      passwordForm.newPassword !==
-                        passwordForm.confirmPassword && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Passwords do not match.
-                        </p>
-                      )}
+                    {passwordErrors.confirmPassword && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {passwordErrors.confirmPassword}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
                   <button
-                    onClick={handleUpdatePassword}
+                    onClick={handleSavePassword}
                     disabled={savingPassword}
                     className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
                   >
@@ -583,13 +700,22 @@ const ProfilePage: React.FC = () => {
                     </label>
                     <input
                       type="email"
+                      maxLength={100}
                       value={emailForm.newEmail}
-                      onChange={(e) =>
-                        setEmailForm({ ...emailForm, newEmail: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\s/g, "");
+                        setEmailForm({ ...emailForm, newEmail: val });
+                        if (val && emailErrors.newEmail)
+                          setEmailErrors((prev) => ({ ...prev, newEmail: "" }));
+                      }}
                       placeholder="Enter new email address"
-                      className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailErrors.newEmail ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
+                    {emailErrors.newEmail && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {emailErrors.newEmail}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -597,22 +723,25 @@ const ProfilePage: React.FC = () => {
                     </label>
                     <input
                       type="email"
+                      maxLength={100}
                       value={emailForm.confirmEmail}
-                      onChange={(e) =>
-                        setEmailForm({
-                          ...emailForm,
-                          confirmEmail: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\s/g, "");
+                        setEmailForm({ ...emailForm, confirmEmail: val });
+                        if (val && emailErrors.confirmEmail)
+                          setEmailErrors((prev) => ({
+                            ...prev,
+                            confirmEmail: "",
+                          }));
+                      }}
                       placeholder="Confirm new email address"
-                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailForm.confirmEmail && emailForm.newEmail !== emailForm.confirmEmail ? "border-red-300 focus:ring-red-400 focus:border-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailErrors.confirmEmail ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
-                    {emailForm.confirmEmail &&
-                      emailForm.newEmail !== emailForm.confirmEmail && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Emails do not match.
-                        </p>
-                      )}
+                    {emailErrors.confirmEmail && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {emailErrors.confirmEmail}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -620,18 +749,27 @@ const ProfilePage: React.FC = () => {
                     </label>
                     <input
                       type="password"
+                      maxLength={32}
                       value={emailForm.password}
-                      onChange={(e) =>
-                        setEmailForm({ ...emailForm, password: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\s/g, "");
+                        setEmailForm({ ...emailForm, password: val });
+                        if (val && emailErrors.password)
+                          setEmailErrors((prev) => ({ ...prev, password: "" }));
+                      }}
                       placeholder="Enter your password to confirm"
-                      className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailErrors.password ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
+                    {emailErrors.password && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {emailErrors.password}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
                   <button
-                    onClick={handleUpdateEmail}
+                    onClick={handleSaveEmail}
                     disabled={savingEmail}
                     className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
                   >

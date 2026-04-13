@@ -189,6 +189,7 @@ const InquiryManagement: React.FC = () => {
             <input
               type="text"
               placeholder="Search by name, email, phone..."
+              maxLength={50}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-9 pl-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"

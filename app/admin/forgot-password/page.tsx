@@ -8,6 +8,28 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
 import Image from "next/image";
 
+const isValidEmailFormat = (val: string) => {
+  if (!val) return false;
+  if (val.length > 100) return false;
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false;
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
 export default function ForgotPasswordPage() {
   const [supabase] = useState(() =>
     createBrowserClient(
@@ -19,6 +41,9 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
   const [sent, setSent] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [verified, setVerified] = useState(false);
@@ -66,6 +91,14 @@ export default function ForgotPasswordPage() {
   // Step 1 — send OTP to email via Supabase Auth
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email.trim() || !isValidEmailFormat(email)) {
+      setErrors({ email: "Please enter valid email address" });
+      return;
+    }
+    
+    setErrors({});
+    
     setLoading(true);
     setError("");
 
@@ -162,22 +195,31 @@ export default function ForgotPasswordPage() {
                 Enter your email and we&apos;ll send you a 6-digit code
               </p>
             </div>
-            <form onSubmit={handleSendOtp}>
+            <form onSubmit={handleSendOtp} noValidate>
               <div className="space-y-1.5 mb-5">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                   Email
                 </label>
-                <div className="mt-1 mb-2 relative">
+                <div className="mt-1 relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
                     type="email"
                     placeholder="admin@jfkbuilders.com"
+                    maxLength={100}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (e.target.value.trim() && errors.email) {
+                        setErrors((prev) => ({ ...prev, email: "" }));
+                      }
+                    }}
+                    className={`pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.email ? 'border-red-400' : ''}`}
                     required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>
+                )}
               </div>
               {error && (
                 <div className="bg-red-50 text-red-600 px-4 py-3 mb-3 rounded-xl text-xs font-medium text-center">
@@ -214,7 +256,7 @@ export default function ForgotPasswordPage() {
                 {email}
               </p>
             </div>
-            <form onSubmit={handleVerifyOtp}>
+            <form onSubmit={handleVerifyOtp} noValidate>
               <div className="flex justify-center gap-2 mb-6 w-full">
                 {otp.map((digit, index) => (
                   <input
@@ -290,7 +332,7 @@ export default function ForgotPasswordPage() {
                 Set a new password for your account
               </p>
             </div>
-            <form onSubmit={handleUpdatePassword}>
+            <form onSubmit={handleUpdatePassword} noValidate>
               <div className="space-y-1.5 mb-3">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                   New Password

@@ -5,6 +5,7 @@ import AnnouncementsTab from "./AnnouncementsTab";
 import ShowcaseTab from "./ShowcaseTab";
 import FaqTab from "./FaqTab";
 
+
 const storefrontTabs = [
   {
     key: "announcements" as StorefrontTab,
@@ -15,14 +16,16 @@ const storefrontTabs = [
   { key: "faq" as StorefrontTab, label: "FAQ", icon: HelpCircle },
 ];
 
+
 const StorefrontPanel: React.FC = () => {
   const [activeStorefrontTab, setActiveStorefrontTab] =
     useState<StorefrontTab>("announcements");
 
+
   return (
     <div className="space-y-6">
       {/* Sub-tab switcher */}
-      <div className="flex gap-2 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5">
+      <div className="flex gap-2 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5 overflow-x-auto scrollbar-none">
         {storefrontTabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -42,11 +45,13 @@ const StorefrontPanel: React.FC = () => {
         })}
       </div>
 
+
       {activeStorefrontTab === "announcements" && <AnnouncementsTab />}
       {activeStorefrontTab === "showcase" && <ShowcaseTab />}
       {activeStorefrontTab === "faq" && <FaqTab />}
     </div>
   );
 };
+
 
 export default StorefrontPanel;

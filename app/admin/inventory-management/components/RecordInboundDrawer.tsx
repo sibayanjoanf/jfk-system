@@ -76,9 +76,9 @@ const RecordInboundDrawer: React.FC<RecordInboundDrawerProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.variant_id) e.variant_id = "Please select a product.";
+    if (!form.variant_id) e.variant_id = "Please select a product";
     if (!form.quantity || Number(form.quantity) <= 0)
-      e.quantity = "Quantity must be greater than 0.";
+      e.quantity = "Please input a valid quantity greater than 0";
     setErrors(e);
     return Object.keys(e).length === 0;
   };

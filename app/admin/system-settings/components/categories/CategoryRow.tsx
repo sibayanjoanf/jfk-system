@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react"; /* ADDED: Imported useState for validation tracking */
 import {
   Images,
   Pencil,
@@ -75,6 +75,10 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
 }) => {
   const catThumbInputRef = React.createRef<HTMLInputElement>();
 
+  /* ADDED: States to track validation errors */
+  const [editCatError, setEditCatError] = useState(false);
+  const [newSubError, setNewSubError] = useState(false);
+
   const isCategorySelected = selectedCatIds.includes(cat.id);
   const allSubsSelected =
     cat.subCategories.length > 0 &&
@@ -97,7 +101,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         />
         <div
           onClick={() => catThumbInputRef.current?.click()}
-          className="w-10 h-10 rounded-lg border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-red-300 transition-colors shrink-0 overflow-hidden relative group"
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-red-300 transition-colors shrink-0 overflow-hidden relative group"
         >
           {cat.image_url ? (
             <img
@@ -126,18 +130,45 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         {/* Name / edit */}
         <div className="flex-1 min-w-0">
           {editingCategory === cat.id ? (
-            <input
-              type="text"
-              value={editingCategoryName}
-              autoFocus
-              onChange={(e) => onCategoryEditChange(e.target.value)}
-              onBlur={() => onCategoryEditSave(cat.id)}
-              onKeyDown={(e) => e.key === "Enter" && onCategoryEditSave(cat.id)}
-              className="w-full px-2 py-1 text-sm bg-white border border-red-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500"
-            />
+            <div>
+              <input
+                type="text"
+                value={editingCategoryName}
+                maxLength={50}
+                autoFocus
+                onChange={(e) => {
+                  onCategoryEditChange(e.target.value);
+                  if (e.target.value.trim()) setEditCatError(false);
+                }}
+                onBlur={() => {
+                  if (!editingCategoryName.trim()) {
+                    setEditCatError(true);
+                  } else {
+                    onCategoryEditSave(cat.id);
+                    setEditCatError(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (!editingCategoryName.trim()) {
+                      setEditCatError(true);
+                    } else {
+                      onCategoryEditSave(cat.id);
+                      setEditCatError(false);
+                    }
+                  }
+                }}
+                className={`w-full px-2 py-1 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 ${editCatError ? "border-red-400" : "border-red-300"}`}
+              />
+              {editCatError && (
+                <p className="text-xs text-red-500 mt-1">
+                  Category name is required
+                </p>
+              )}
+            </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col">
                 <p className="text-sm font-semibold text-gray-900">
                   {cat.name}
                 </p>
@@ -149,7 +180,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-o.5 shrink-0">
           <button
             onClick={() => onCategoryDelete(cat.id)}
             className={`p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all ${
@@ -249,26 +280,55 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                     onNewSubThumbnail(cat.id, e.target.files[0])
                   }
                 />
-                <input
-                  type="text"
-                  placeholder="Sub-category name"
-                  value={newSubMap[cat.id]?.name || ""}
-                  onChange={(e) => onNewSubChange(cat.id, e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && onAddSubCategory(cat.id)
-                  }
-                  className="flex-1 px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
-                />
+                
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Sub-category name"
+                    value={newSubMap[cat.id]?.name || ""}
+                    maxLength={50}
+                    onChange={(e) => {
+                      onNewSubChange(cat.id, e.target.value);
+                      if (e.target.value.trim()) setNewSubError(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        if (!newSubMap[cat.id]?.name.trim()) {
+                          setNewSubError(true);
+                        } else {
+                          onAddSubCategory(cat.id);
+                          setNewSubError(false);
+                        }
+                      }
+                    }}
+                    className={`w-full px-3 py-1.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${newSubError ? "border-red-400" : "border-gray-200"}`}
+                  />
+                  {newSubError && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Sub-category name is required
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => onHideAddSub(cat.id)}
+                  onClick={() => {
+                    setNewSubError(false);
+                    onHideAddSub(cat.id);
+                  }}
                   className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => onAddSubCategory(cat.id)}
+                  onClick={() => {
+                    if (!newSubMap[cat.id]?.name.trim()) {
+                      setNewSubError(true);
+                    } else {
+                      onAddSubCategory(cat.id);
+                      setNewSubError(false);
+                    }
+                  }}
                   className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                 >
                   Add

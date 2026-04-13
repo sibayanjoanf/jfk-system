@@ -20,17 +20,14 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({
   onAdd,
   onCancel,
 }) => {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   const handleAdd = () => {
-    const isDuplicate = existingNames.some(
-      (name) => name.toLowerCase() === newCategory.name.trim().toLowerCase(),
-    );
-    if (isDuplicate) {
-      setError(`"${newCategory.name.trim()}" already exists.`);
+    if (!newCategory.name.trim()) {
+      setError(true);
       return;
     }
-    setError(null);
+    setError(false);
     onAdd();
   };
 
@@ -57,37 +54,36 @@ const AddCategoryForm: React.FC<AddCategoryFormProps> = ({
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) =>
-            e.target.files?.[0] && onThumbnail(e.target.files[0])
-          }
+          onChange={(e) => e.target.files?.[0] && onThumbnail(e.target.files[0])}
         />
         <div className="flex-1">
           <input
             type="text"
             placeholder="Category name"
             value={newCategory.name}
+            maxLength={50}
             onChange={(e) => {
               onChange(e.target.value);
-              setError(null); // clear error on change
+              if (e.target.value.trim()) setError(false);
             }}
-            className={`w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${
-              error
-                ? "border-red-400 focus:ring-red-400 focus:border-red-400"
-                : "border-gray-200 focus:ring-red-500 focus:border-red-500"
-            }`}
+            className={`w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${error ? "border-red-400" : "border-gray-200"}`}
           />
-          {error ? (
-            <p className="text-xs text-red-500 mt-1.5">{error}</p>
-          ) : (
-            <p className="text-xs text-gray-400 mt-1.5">
-              Click the box to upload image.
+          {error && (
+            <p className="text-xs text-red-500 mt-1">
+              Category name is required
             </p>
           )}
+          <p className="text-xs text-gray-400 mt-1.5">
+            Click the box to upload image.
+          </p>
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-1">
         <button
-          onClick={onCancel}
+          onClick={() => {
+            setError(false);
+            onCancel();
+          }}
           className="px-4 py-2 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
         >
           Cancel

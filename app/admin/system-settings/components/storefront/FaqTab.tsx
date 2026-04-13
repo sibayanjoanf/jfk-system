@@ -10,6 +10,11 @@ import {
 } from "lucide-react";
 import { useFaqs } from "../../hooks/useFaqs";
 
+const capitalizeFirst = (val: string) => {
+  if (!val) return val;
+  return val.charAt(0).toUpperCase() + val.slice(1);
+};
+
 const FaqTab: React.FC = () => {
   const {
     faqCategories,
@@ -30,6 +35,9 @@ const FaqTab: React.FC = () => {
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState("");
 
+  const [newCatError, setNewCatError] = useState(false);
+  const [editCatError, setEditCatError] = useState(false);
+
   // ── Add FAQ state ──────────────────────────────────
   const [showAddFaqMap, setShowAddFaqMap] = useState<Record<string, boolean>>(
     {},
@@ -42,6 +50,14 @@ const FaqTab: React.FC = () => {
     question: string;
     answer: string;
   } | null>(null);
+
+  const [newFaqErrors, setNewFaqErrors] = useState<
+    Record<string, { question: boolean; answer: boolean }>
+  >({});
+  const [editFaqErrors, setEditFaqErrors] = useState({
+    question: false,
+    answer: false,
+  });
 
   // ── Delete confirm state ───────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -83,7 +99,10 @@ const FaqTab: React.FC = () => {
             </p>
           </div>
           <button
-            onClick={() => setShowAddCat(!showAddCat)}
+            onClick={() => {
+              setShowAddCat(!showAddCat);
+              setNewCatError(false);
+            }}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
             <Plus size={13} />
@@ -97,28 +116,50 @@ const FaqTab: React.FC = () => {
             <p className="text-xs font-semibold text-gray-700">
               New FAQ Category
             </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Category name (e.g. Delivery, Payment)"
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    addFaqCategory(newCatName);
-                    setNewCatName("");
-                    setShowAddCat(false);
-                  }
-                }}
-                className="flex-1 px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
-              />
+            <div className="flex gap-2 items-start">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Category name (e.g. Delivery, Payment)"
+                  value={newCatName}
+                  maxLength={50}
+                  onChange={(e) => {
+                    const val = capitalizeFirst(e.target.value);
+                    setNewCatName(val);
+                    if (val.trim()) setNewCatError(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      if (!newCatName.trim()) {
+                        setNewCatError(true);
+                        return;
+                      }
+                      addFaqCategory(newCatName);
+                      setNewCatName("");
+                      setShowAddCat(false);
+                    }
+                  }}
+                  className={`w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${
+                    newCatError ? "border-red-400" : "border-gray-200"
+                  }`}
+                />
+                {newCatError && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Category name is required
+                  </p>
+                )}
+              </div>
               <button
                 onClick={() => {
+                  if (!newCatName.trim()) {
+                    setNewCatError(true);
+                    return;
+                  }
                   addFaqCategory(newCatName);
                   setNewCatName("");
                   setShowAddCat(false);
                 }}
-                className="px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                className="px-4 py-2.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors h-10"
               >
                 Add
               </button>
@@ -126,8 +167,9 @@ const FaqTab: React.FC = () => {
                 onClick={() => {
                   setShowAddCat(false);
                   setNewCatName("");
+                  setNewCatError(false);
                 }}
-                className="px-4 py-2 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                className="px-4 py-2.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors h-10"
               >
                 Cancel
               </button>
@@ -147,23 +189,45 @@ const FaqTab: React.FC = () => {
                 {/* Category Header */}
                 <div className="flex items-center justify-between px-4 py-3">
                   {editingCatId === cat.id ? (
-                    <input
-                      type="text"
-                      value={editingCatName}
-                      autoFocus
-                      onChange={(e) => setEditingCatName(e.target.value)}
-                      onBlur={() => {
-                        updateFaqCategory(cat.id, editingCatName);
-                        setEditingCatId(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
+                    <div className="flex-1 mr-2">
+                      <input
+                        type="text"
+                        value={editingCatName}
+                        maxLength={50}
+                        autoFocus
+                        onChange={(e) => {
+                          const val = capitalizeFirst(e.target.value);
+                          setEditingCatName(val);
+                          if (val.trim()) setEditCatError(false);
+                        }}
+                        onBlur={() => {
+                          if (!editingCatName.trim()) {
+                            setEditCatError(true);
+                            return;
+                          }
                           updateFaqCategory(cat.id, editingCatName);
                           setEditingCatId(null);
-                        }
-                      }}
-                      className="flex-1 px-2 py-1 text-sm bg-white border border-red-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 mr-2"
-                    />
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            if (!editingCatName.trim()) {
+                              setEditCatError(true);
+                              return;
+                            }
+                            updateFaqCategory(cat.id, editingCatName);
+                            setEditingCatId(null);
+                          }
+                        }}
+                        className={`w-full px-2 py-1 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 ${
+                          editCatError ? "border-red-400" : "border-red-300"
+                        }`}
+                      />
+                      {editCatError && (
+                        <p className="text-xs text-red-500 mt-1">
+                          Category name is required
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-semibold text-red-600 bg-red-50 py-1 px-3 rounded-xl">
@@ -179,6 +243,7 @@ const FaqTab: React.FC = () => {
                       onClick={() => {
                         setEditingCatId(cat.id);
                         setEditingCatName(cat.name);
+                        setEditCatError(false);
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
                     >
@@ -218,6 +283,7 @@ const FaqTab: React.FC = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              setEditFaqErrors({ question: false, answer: false });
                               setEditingFaq({
                                 id: faq.id,
                                 question: faq.question,
@@ -251,7 +317,7 @@ const FaqTab: React.FC = () => {
                       </div>
                       {faq.open && (
                         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                          <p className="text-xs text-gray-600 leading-relaxed">
+                          <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
                             {faq.answer}
                           </p>
                         </div>
@@ -262,46 +328,86 @@ const FaqTab: React.FC = () => {
                   {/* Add FAQ inline */}
                   {showAddFaqMap[cat.id] ? (
                     <div className="p-3 rounded-lg border border-dashed border-red-200 bg-red-50/30 space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Question"
-                        value={newFaqMap[cat.id]?.question || ""}
-                        onChange={(e) =>
-                          setNewFaqMap((prev) => ({
-                            ...prev,
-                            [cat.id]: {
-                              ...prev[cat.id],
-                              question: e.target.value,
-                              answer: prev[cat.id]?.answer || "",
-                            },
-                          }))
-                        }
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 transition-all"
-                      />
-                      <textarea
-                        placeholder="Answer"
-                        value={newFaqMap[cat.id]?.answer || ""}
-                        onChange={(e) =>
-                          setNewFaqMap((prev) => ({
-                            ...prev,
-                            [cat.id]: {
-                              ...prev[cat.id],
-                              answer: e.target.value,
-                              question: prev[cat.id]?.question || "",
-                            },
-                          }))
-                        }
-                        rows={3}
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 transition-all resize-none"
-                      />
-                      <div className="flex justify-end gap-2">
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Question"
+                          value={newFaqMap[cat.id]?.question || ""}
+                          maxLength={100}
+                          onChange={(e) => {
+                            const val = capitalizeFirst(e.target.value);
+                            setNewFaqMap((prev) => ({
+                              ...prev,
+                              [cat.id]: {
+                                ...prev[cat.id],
+                                question: val,
+                                answer: prev[cat.id]?.answer || "",
+                              },
+                            }));
+                            if (val.trim()) {
+                              setNewFaqErrors((prev) => ({
+                                ...prev,
+                                [cat.id]: { ...prev[cat.id], question: false },
+                              }));
+                            }
+                          }}
+                          className={`w-full px-3 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 transition-all ${
+                            newFaqErrors[cat.id]?.question ? "border-red-400" : "border-gray-200"
+                          }`}
+                        />
+                        {newFaqErrors[cat.id]?.question && (
+                          <p className="text-xs text-red-500 mt-1">
+                            Please input question
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <textarea
+                          placeholder="Answer"
+                          value={newFaqMap[cat.id]?.answer || ""}
+                          maxLength={250}
+                          onChange={(e) => {
+                            const val = capitalizeFirst(e.target.value);
+                            setNewFaqMap((prev) => ({
+                              ...prev,
+                              [cat.id]: {
+                                ...prev[cat.id],
+                                answer: val,
+                                question: prev[cat.id]?.question || "",
+                              },
+                            }));
+                            if (val.trim()) {
+                              setNewFaqErrors((prev) => ({
+                                ...prev,
+                                [cat.id]: { ...prev[cat.id], answer: false },
+                              }));
+                            }
+                          }}
+                          rows={3}
+                          className={`w-full px-3 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 transition-all resize-none ${
+                            newFaqErrors[cat.id]?.answer ? "border-red-400" : "border-gray-200"
+                          }`}
+                        />
+                        {newFaqErrors[cat.id]?.answer && (
+                          <p className="text-xs text-red-500 mt-1">
+                            Please input answer
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex justify-end gap-2 mt-1">
                         <button
-                          onClick={() =>
+                          onClick={() => {
                             setShowAddFaqMap((prev) => ({
                               ...prev,
                               [cat.id]: false,
-                            }))
-                          }
+                            }));
+                            setNewFaqErrors((prev) => ({
+                              ...prev,
+                              [cat.id]: { question: false, answer: false },
+                            }));
+                          }}
                           className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                           Cancel
@@ -309,7 +415,17 @@ const FaqTab: React.FC = () => {
                         <button
                           onClick={async () => {
                             const f = newFaqMap[cat.id];
-                            if (!f?.question.trim()) return;
+                            const qEmpty = !f?.question?.trim();
+                            const aEmpty = !f?.answer?.trim();
+
+                            if (qEmpty || aEmpty) {
+                              setNewFaqErrors((prev) => ({
+                                ...prev,
+                                [cat.id]: { question: qEmpty, answer: aEmpty },
+                              }));
+                              return;
+                            }
+
                             await addFaq(cat.id, f.question, f.answer);
                             setNewFaqMap((prev) => ({
                               ...prev,
@@ -367,24 +483,53 @@ const FaqTab: React.FC = () => {
               </button>
             </div>
             <div className="space-y-3">
-              <input
-                type="text"
-                value={editingFaq.question}
-                onChange={(e) =>
-                  setEditingFaq({ ...editingFaq, question: e.target.value })
-                }
-                placeholder="Question"
-                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
-              />
-              <textarea
-                value={editingFaq.answer}
-                onChange={(e) =>
-                  setEditingFaq({ ...editingFaq, answer: e.target.value })
-                }
-                placeholder="Answer"
-                rows={4}
-                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all resize-none"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={editingFaq.question}
+                  maxLength={100}
+                  onChange={(e) => {
+                    const val = capitalizeFirst(e.target.value);
+                    setEditingFaq({ ...editingFaq, question: val });
+                    if (val.trim()) {
+                      setEditFaqErrors((prev) => ({ ...prev, question: false }));
+                    }
+                  }}
+                  placeholder="Question"
+                  className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white transition-all ${
+                    editFaqErrors.question ? "border-red-400" : "border-gray-200"
+                  }`}
+                />
+                {editFaqErrors.question && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Please input question
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <textarea
+                  value={editingFaq.answer}
+                  maxLength={250}
+                  onChange={(e) => {
+                    const val = capitalizeFirst(e.target.value);
+                    setEditingFaq({ ...editingFaq, answer: val });
+                    if (val.trim()) {
+                      setEditFaqErrors((prev) => ({ ...prev, answer: false }));
+                    }
+                  }}
+                  placeholder="Answer"
+                  rows={4}
+                  className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white transition-all resize-none ${
+                    editFaqErrors.answer ? "border-red-400" : "border-gray-200"
+                  }`}
+                />
+                {editFaqErrors.answer && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Please input answer
+                  </p>
+                )}
+              </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button
@@ -395,6 +540,14 @@ const FaqTab: React.FC = () => {
               </button>
               <button
                 onClick={async () => {
+                  const qEmpty = !editingFaq.question.trim();
+                  const aEmpty = !editingFaq.answer.trim();
+
+                  if (qEmpty || aEmpty) {
+                    setEditFaqErrors({ question: qEmpty, answer: aEmpty });
+                    return;
+                  }
+
                   await updateFaq(
                     editingFaq.id,
                     editingFaq.question,

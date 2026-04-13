@@ -116,12 +116,15 @@ const UserManagement: React.FC = () => {
 
   const handleBulkArchive = async () => {
     setArchiving(true);
-    for (const id of selectedIds) {
-      await archiveUser(id);
+    try {
+      await Promise.all(selectedIds.map((id) => archiveUser(id)));
+      setSelectedIds([]);
+    } catch (error) {
+      console.error("Bulk archive failed", error);
+    } finally {
+      setArchiving(false);
+      setArchiveModalOpen(false);
     }
-    setSelectedIds([]);
-    setArchiving(false);
-    setArchiveModalOpen(false);
   };
 
   return (
@@ -147,6 +150,7 @@ const UserManagement: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
+              maxLength={50}
               className="w-full pr-9 pl-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
             />
           </div>
@@ -322,7 +326,10 @@ const UserManagement: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(u.id)}
-                          onChange={() => toggleOne(u.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleOne(u.id);
+                          }}
                           className="w-3.5 h-3.5 rounded border-gray-300 accent-red-600 cursor-pointer"
                         />
                       </td>

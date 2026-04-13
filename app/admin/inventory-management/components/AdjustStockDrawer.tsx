@@ -96,12 +96,12 @@ const AdjustStockDrawer: React.FC<AdjustStockDrawerProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.variant_id) e.variant_id = "Please select a product.";
+    if (!form.variant_id) e.variant_id = "Please select a product";
     if (!form.adjustment_type)
-      e.adjustment_type = "Please select an adjustment type.";
+      e.adjustment_type = "Please select an adjustment type";
     if (!form.quantity || Number(form.quantity) < 0)
-      e.quantity = "Please enter a valid quantity.";
-    if (!form.notes.trim()) e.notes = "Notes are required for adjustments.";
+      e.quantity = "Please enter a valid quantity greater than 0";
+    if (!form.notes.trim()) e.notes = "Notes are required for adjustments";
     setErrors(e);
     return Object.keys(e).length === 0;
   };

@@ -136,6 +136,7 @@ export default function SearchPage() {
               <Input
                 id="search"
                 placeholder="Search our collection..."
+                maxLength={100}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="border-0 shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-md md:text-xl placeholder:text-gray-400 h-12 w-full px-0"

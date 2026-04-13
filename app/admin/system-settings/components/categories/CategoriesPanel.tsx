@@ -4,6 +4,7 @@ import { useCategories } from "../../hooks/useCategories";
 import CategoryRow from "./CategoryRow";
 import AddCategoryForm from "./AddCategoryForm";
 
+
 const CategoriesPanel: React.FC = () => {
   const {
     categories,
@@ -19,6 +20,7 @@ const CategoriesPanel: React.FC = () => {
     updateSubCategoryImage,
   } = useCategories();
 
+
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: "", image_url: "" });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -32,17 +34,21 @@ const CategoriesPanel: React.FC = () => {
     isBlocked?: boolean;
   } | null>(null);
 
+
   const [selectedCatIds, setSelectedCatIds] = useState<string[]>([]);
   const [selectedSubIds, setSelectedSubIds] = useState<string[]>([]);
+
 
   const allCatIds = categories.map((c) => c.id);
   const hasSelection = selectedCatIds.length > 0 || selectedSubIds.length > 0;
   const selectionCount = selectedCatIds.length + selectedSubIds.length;
 
+
   const toggleCatSelection = (id: string) =>
     setSelectedCatIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
+
 
   const toggleAllCatSelection = () => {
     if (selectedCatIds.length === allCatIds.length && allCatIds.length > 0) {
@@ -52,10 +58,12 @@ const CategoriesPanel: React.FC = () => {
     }
   };
 
+
   const toggleSubSelection = (id: string) =>
     setSelectedSubIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
+
 
   const toggleCategorySubSelection = (catId: string) => {
     const cat = categories.find((c) => c.id === catId);
@@ -69,21 +77,25 @@ const CategoriesPanel: React.FC = () => {
     }
   };
 
+
   const clearSelection = () => {
     setSelectedCatIds([]);
     setSelectedSubIds([]);
   };
+
 
   const openDeleteConfirm = (payload: typeof pendingDelete) => {
     setPendingDelete(payload);
     setConfirmOpen(true);
   };
 
+
   const confirmDelete = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
     const blockedNames: string[] = [];
     let blockedType: "category" | "subcategory" = "subcategory";
+
 
     try {
       if (pendingDelete.type === "category") {
@@ -142,6 +154,7 @@ const CategoriesPanel: React.FC = () => {
       setConfirmOpen(false);
       setPendingDelete(null);
 
+
       if (blockedNames.length > 0) {
         setTimeout(() => {
           setPendingDelete({
@@ -160,12 +173,14 @@ const CategoriesPanel: React.FC = () => {
     }
   };
 
+
   const [showAddSubMap, setShowAddSubMap] = useState<Record<string, boolean>>(
     {},
   );
   const [newSubMap, setNewSubMap] = useState<
     Record<string, { name: string; image_url: string }>
   >({});
+
 
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
@@ -174,7 +189,9 @@ const CategoriesPanel: React.FC = () => {
   );
   const [editingSubCategoryName, setEditingSubCategoryName] = useState("");
 
+
   const newCatThumbRef = useRef<HTMLInputElement>(null);
+
 
   const uploadImage = async (file: File, folder: string): Promise<string> => {
     const ext = file.name.split(".").pop();
@@ -187,21 +204,25 @@ const CategoriesPanel: React.FC = () => {
     return result.url;
   };
 
+
   const handleAddCategory = async () => {
     await addCategory(newCategory.name, newCategory.image_url);
     setNewCategory({ name: "", image_url: "" });
     setShowAddCategory(false);
   };
 
+
   const handleNewCategoryThumbnail = async (file: File) => {
     const url = await uploadImage(file, "categories");
     setNewCategory((prev) => ({ ...prev, image_url: url }));
   };
 
+
   const handleCategoryThumbnail = async (id: string, file: File) => {
     const url = await uploadImage(file, "categories");
     await updateCategoryImage(id, url);
   };
+
 
   const handleAddSubCategory = async (catId: string) => {
     const sub = newSubMap[catId];
@@ -211,10 +232,12 @@ const CategoriesPanel: React.FC = () => {
     setShowAddSubMap((prev) => ({ ...prev, [catId]: false }));
   };
 
+
   const handleSubThumbnail = async (subId: string, file: File) => {
     const url = await uploadImage(file, "sub_categories");
     await updateSubCategoryImage(subId, url);
   };
+
 
   const handleNewSubThumbnail = async (catId: string, file: File) => {
     const url = await uploadImage(file, "sub_categories");
@@ -224,15 +247,18 @@ const CategoriesPanel: React.FC = () => {
     }));
   };
 
+
   const handleSaveCategoryName = async (id: string) => {
     await saveCategoryName(id, editingCategoryName);
     setEditingCategory(null);
   };
 
+
   const handleSaveSubCategoryName = async (subId: string) => {
     await saveSubCategoryName(subId, editingSubCategoryName);
     setEditingSubCategory(null);
   };
+
 
   if (loading) {
     return (
@@ -242,10 +268,11 @@ const CategoriesPanel: React.FC = () => {
     );
   }
 
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 gap-3">
         <div>
           <h2 className="text-base font-semibold text-gray-900">
             Categories & Sub-categories
@@ -254,7 +281,7 @@ const CategoriesPanel: React.FC = () => {
             Manage how products are organized.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           {hasSelection && (
             <>
               <button
@@ -314,6 +341,7 @@ const CategoriesPanel: React.FC = () => {
         </div>
       </div>
 
+
       {showAddCategory && (
         <AddCategoryForm
           newCategory={newCategory}
@@ -328,6 +356,7 @@ const CategoriesPanel: React.FC = () => {
           }}
         />
       )}
+
 
       {/* Category list */}
       <div className="space-y-3">
@@ -404,6 +433,7 @@ const CategoriesPanel: React.FC = () => {
           />
         ))}
       </div>
+
 
       {/* Confirm / Error modal */}
       {confirmOpen && (
@@ -502,5 +532,6 @@ const CategoriesPanel: React.FC = () => {
     </div>
   );
 };
+
 
 export default CategoriesPanel;

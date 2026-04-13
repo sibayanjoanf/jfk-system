@@ -89,7 +89,7 @@ const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
         )}
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-0 sm:gap-1 shrink-0">
         <button
           onClick={() => onDelete(sub.id)}
           className={`p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all ${

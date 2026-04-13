@@ -159,7 +159,14 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
                 </h3>
                 <textarea
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    const nonWhitespaceCount = text.replace(/\s/g, "").length;
+                    
+                    if (nonWhitespaceCount <= 500) {
+                      setReplyText(text);
+                    }
+                  }}
                   placeholder="Write your reply to the customer here..."
                   rows={5}
                   disabled={inquiry.status === "Resolved" || sending}

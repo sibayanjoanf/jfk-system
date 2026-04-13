@@ -14,6 +14,11 @@ import {
 import VariantFields from "./VariantFields";
 import { Upload } from "lucide-react";
 
+const capitalizeFirstChar = (str: string) => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 const inputClass =
   "w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all";
 const labelClass = "block text-xs font-medium text-gray-700 mb-1.5";
@@ -167,21 +172,21 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = "Product name is required.";
-    if (!selectedSubCategoryId) e.subCategory = "Sub-category is required.";
+    if (!name.trim()) e.name = "Product name is required";
+    if (!selectedSubCategoryId) e.subCategory = "Sub-category is required";
     existingVariants.forEach((v, i) => {
-      if (!v.sku.trim()) e[`ex_sku_${i}`] = "SKU is required.";
+      if (!v.sku.trim()) e[`ex_sku_${i}`] = "SKU is required";
       if (!v.price || isNaN(Number(v.price)))
-        e[`ex_price_${i}`] = "Valid price required.";
+        e[`ex_price_${i}`] = "Valid price required";
       if (!v.stock_qty || isNaN(Number(v.stock_qty)))
-        e[`ex_stock_${i}`] = "Valid stock qty required.";
+        e[`ex_stock_${i}`] = "Valid stock qty required";
     });
     newVariants.forEach((v, i) => {
-      if (!v.sku.trim()) e[`new_sku_${i}`] = "SKU is required.";
+      if (!v.sku.trim()) e[`new_sku_${i}`] = "SKU is required";
       if (!v.price || isNaN(Number(v.price)))
-        e[`new_price_${i}`] = "Valid price required.";
+        e[`new_price_${i}`] = "Valid price required";
       if (!v.stock_qty || isNaN(Number(v.stock_qty)))
-        e[`new_stock_${i}`] = "Valid stock qty required.";
+        e[`new_stock_${i}`] = "Valid stock quantity required";
     });
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -323,9 +328,14 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                   <input
                     type="text"
                     value={name}
-                    maxLength={80}
-                    onChange={(e) => setName(e.target.value)}
-                    className={`${inputClass} bg-gray-50`}
+                    maxLength={100}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (e.target.value.trim()) {
+                         setErrors((prev) => ({ ...prev, name: "" }));
+                      }
+                    }}
+                    className={`${inputClass} bg-gray-50 ${errors.name ? 'border-red-400' : ''}`}
                   />
                   {errors.name && <p className={errorClass}>{errors.name}</p>}
                 </div>
@@ -333,7 +343,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                   <label className={labelClass}>Description</label>
                   <textarea
                     value={description}
-                    maxLength={200}
+                    maxLength={500}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
                     className={`${inputClass} bg-gray-50 resize-none`}
@@ -370,11 +380,14 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                     <div className="relative">
                       <select
                         value={selectedSubCategoryId}
-                        onChange={(e) =>
-                          setSelectedSubCategoryId(e.target.value)
-                        }
+                        onChange={(e) => {
+                          setSelectedSubCategoryId(e.target.value);
+                          if (e.target.value.trim()) {
+                            setErrors((prev) => ({ ...prev, subCategory: "" }));
+                          }
+                        }}
                         disabled={!selectedCategoryId}
-                        className={`${inputClass} bg-gray-50 text-gray-700 appearance-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`${inputClass} bg-gray-50 text-gray-700 appearance-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed ${errors.subCategory ? 'border-red-400' : ''}`}
                       >
                         <option value="">Select sub-category</option>
                         {subCategories.map((s) => (
@@ -461,13 +474,16 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                               value={v.sku}
                               maxLength={20}
                               onChange={(e) => {
-                                const sanitizedValue = e.target.value.replace(
-                                  /[^a-zA-Z0-9\-]/g,
-                                  "",
-                                );
+                                const sanitizedValue = e.target.value
+                                  .replace(/[^a-zA-Z0-9 ]/g, "")
+                                  .replace(/ {2,}/g, " ")
+                                  .toUpperCase();
                                 updateExisting(v.id, "sku", sanitizedValue);
+                                if (sanitizedValue.trim()) {
+                                  setErrors((prev) => ({ ...prev, [`ex_sku_${i}`]: "" }));
+                                }
                               }}
-                              className={inputClass}
+                              className={`${inputClass} ${errors[`ex_sku_${i}`] ? 'border-red-400' : ''}`}
                             />
                             {errors[`ex_sku_${i}`] && (
                               <p className={errorClass}>
@@ -500,14 +516,15 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                           <input
                             type="text"
                             value={v.attribute_name}
-                            maxLength={20}
-                            onChange={(e) =>
+                            maxLength={30}
+                           onChange={(e) => {
+                              const value = e.target.value;
                               updateExisting(
                                 v.id,
                                 "attribute_name",
-                                e.target.value,
-                              )
-                            }
+                                capitalizeFirstChar(value)
+                              );
+                            }}
                             placeholder="e.g. Design, Color"
                             className={inputClass}
                           />
@@ -517,14 +534,15 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                           <input
                             type="text"
                             value={v.attribute_value}
-                            maxLength={20}
-                            onChange={(e) =>
+                            maxLength={30}
+                            onChange={(e) => {
+                              const value = e.target.value;
                               updateExisting(
                                 v.id,
                                 "attribute_value",
-                                e.target.value,
-                              )
-                            }
+                                capitalizeFirstChar(value)
+                              );
+                            }}
                             placeholder="e.g. Black, White"
                             className={inputClass}
                           />
@@ -545,10 +563,13 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                               const val = e.target.value;
                               if (/^\d*(\.?\d{0,2})$/.test(val)) {
                                 updateExisting(v.id, "price", e.target.value);
+                                if (e.target.value.trim()) {
+                                  setErrors((prev) => ({ ...prev, [`ex_price_${i}`]: "" }));
+                                }
                               }
                             }}
                             min="0"
-                            className={inputClass}
+                            className={`${inputClass} ${errors[`ex_price_${i}`] ? 'border-red-400' : ''}`}
                           />
                           {errors[`ex_price_${i}`] && (
                             <p className={errorClass}>
@@ -616,6 +637,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                     onRemove={(key) =>
                       setNewVariants((p) => p.filter((v) => v._key !== key))
                     }
+                    clearError={(key) => setErrors((prev) => ({ ...prev, [key]: "" }))}
                   />
                 ))}
               </div>

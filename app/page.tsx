@@ -168,7 +168,7 @@ async function getCategories(): Promise<Categories[]> {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.log("Using Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...");
     return [];
   }
 }
@@ -190,7 +190,7 @@ async function getShowcase(): Promise<ShowcaseProducts[]> {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error fetching showcase:", error);
+    console.log("Using Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...");
     return [];
   }
 }

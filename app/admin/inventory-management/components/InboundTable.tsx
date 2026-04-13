@@ -110,7 +110,13 @@ const InboundTable: React.FC<InboundTableProps> = ({
     notes: "",
   });
 
-  // (YYYY-MM-DD)
+  const [formErrors, setFormErrors] = useState({
+    product: false,
+    quantity: false,
+    notes: false,
+    supplier: false,
+  });
+
   const dateFilterStr = selectedDate
     ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
     : "";
@@ -215,6 +221,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
     setShowForm(true);
     setDropdownOpen(false);
     setVariantSearch("");
+    setFormErrors({ product: false, quantity: false, notes: false, supplier: false });
   };
 
   const handleSelectVariant = (v: VariantOption) => {
@@ -226,6 +233,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
       image_url: v.image_url,
       stock_qty: v.stock_qty,
     }));
+    setFormErrors((prev) => ({ ...prev, product: false }));
     setDropdownOpen(false);
     setVariantSearch("");
   };
@@ -237,7 +245,21 @@ const InboundTable: React.FC<InboundTableProps> = ({
   );
 
   const handleSave = async () => {
-    if (!form.variant_id || !form.quantity) return;
+    const isProductValid = !!form.variant_id;
+    const isQtyValid = Number(form.quantity) > 0;
+    const isNotesValid = !!form.notes.trim();
+    const isSupplierValid = !!form.supplier.trim();
+
+    if (!isProductValid || !isQtyValid || !isNotesValid || !isSupplierValid) {
+      setFormErrors({
+        product: !isProductValid,
+        quantity: !isQtyValid,
+        notes: !isNotesValid,
+        supplier: !isSupplierValid,
+      });
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase.rpc("record_inbound", {
       p_variant_id: form.variant_id,
@@ -260,6 +282,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
       supplier: "",
       notes: "",
     });
+    setFormErrors({ product: false, quantity: false, notes: false, supplier: false });
     setShowForm(false);
     setSaving(false);
     onSaved();
@@ -277,9 +300,9 @@ const InboundTable: React.FC<InboundTableProps> = ({
             and updates stock levels.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end w-full sm:w-auto">
           {/* Search */}
-          <div className="relative group">
+          <div className="relative group flex-1 sm:flex-none">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
             </span>
@@ -291,7 +314,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 setSearch(e.target.value);
                 onPageChange(1);
               }}
-              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-52"
+              className="pr-8 pl-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all w-full sm:w-52"
             />
           </div>
 
@@ -330,7 +353,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 <button
                   type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left"
+                  className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white border ${formErrors.product ? "border-red-400" : "border-gray-200"} rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left`}
                 >
                   {form.variant_id ? (
                     <div className="flex items-center gap-3 min-w-0">
@@ -439,6 +462,11 @@ const InboundTable: React.FC<InboundTableProps> = ({
                   </div>
                 )}
               </div>
+              {formErrors.product && (
+                <p className="text-xs text-red-500 mt-1">
+                  Please select a product
+                </p>
+              )}
             </div>
 
             <div>
@@ -454,36 +482,62 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 value={form.quantity}
                 onChange={(e) => {
                   const val = e.target.value;
-                  if (/^\d*$/.test(val)) setForm({ ...form, quantity: val });
+                  if (/^\d*$/.test(val)) {
+                    setForm({ ...form, quantity: val });
+                    if (Number(val) > 0) {
+                      setFormErrors((prev) => ({ ...prev, quantity: false }));
+                    }
+                  }
                 }}
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
+                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.quantity ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
               />
+              {formErrors.quantity && (
+                <p className="text-xs text-red-500 mt-1">
+                  Quantity must be greater than 0
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Supplier
+                Supplier <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
                 placeholder="Supplier name"
-                maxLength={30}
+                maxLength={50}
                 value={form.supplier}
-                onChange={(e) => setForm({ ...form, supplier: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
+                onChange={(e) => {
+                  setForm({ ...form, supplier: e.target.value });
+                  if (e.target.value.trim()) setFormErrors((prev) => ({ ...prev, supplier: false }));
+                }}
+                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.supplier ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
               />
+              {formErrors.supplier && (
+                <p className="text-xs text-red-500 mt-1">
+                  Supplier name is required
+                </p>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Notes
+                Notes <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
                 placeholder="Any notes about this batch"
-                maxLength={200}
+                maxLength={150}
                 value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
+                onChange={(e) => {
+                  setForm({ ...form, notes: e.target.value });
+                  if (e.target.value.trim()) setFormErrors((prev) => ({ ...prev, notes: false }));
+                }}
+                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.notes ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
               />
+              {formErrors.notes && (
+                <p className="text-xs text-red-500 mt-1">
+                  Notes are required for adjustments
+                </p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">

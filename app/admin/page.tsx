@@ -8,6 +8,28 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
+const isValidEmailFormat = (val: string) => {
+  if (!val) return false;
+  if (val.length > 100) return false;
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false;
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
 export default function AdminLoginPage() {
   const [supabase] = useState(() =>
     createBrowserClient(
@@ -18,10 +40,13 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // New state for eye toggle
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+
   const [error, setError] = useState("");
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const router = useRouter();
 
@@ -31,7 +56,18 @@ export default function AdminLoginPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        router.push("/admin/dashboard");
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("status")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.status === "active") {
+          router.push("/admin/dashboard");
+        } else {
+          await supabase.auth.signOut();
+          setCheckingAuth(false);
+        }
       } else {
         setCheckingAuth(false);
       }
@@ -41,6 +77,21 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+
+    if (!email.trim() || !isValidEmailFormat(email)) {
+      newErrors.email = "Please enter valid email address";
+    }
+
+    if (!password) {
+      newErrors.password = "Please enter valid password";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
     setLoading(true);
     setError("");
 
@@ -133,22 +184,31 @@ export default function AdminLoginPage() {
             Sign in to manage JFK Tile and Stone Builders
           </p>
         </div>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} noValidate>
           <div className="space-y-1.5 mb-5">
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
               Email
             </label>
-            <div className="mt-1 mb-2 relative">
+            <div className="mt-1 relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 type="email"
                 placeholder="admin@jfkbuilders.com"
+                maxLength={100}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (e.target.value.trim() && errors.email) {
+                    setErrors((prev) => ({ ...prev, email: "" }));
+                  }
+                }}
+                className={`pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.email ? "border-red-400" : ""}`}
                 required
               />
             </div>
+            {errors.email && (
+              <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between px-1">
@@ -163,14 +223,20 @@ export default function AdminLoginPage() {
                 Forgot Password?
               </button>
             </div>
-            <div className="mt-1 mb-5 relative">
+            <div className="mt-1 relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
+                maxLength={32}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (e.target.value && errors.password) {
+                    setErrors((prev) => ({ ...prev, password: "" }));
+                  }
+                }}
+                className={`pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.password ? "border-red-400" : ""}`}
                 required
               />
               {/* Eye Toggle Button */}
@@ -186,16 +252,24 @@ export default function AdminLoginPage() {
                 )}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-xs text-red-500 mt-1 ml-1">
+                {errors.password}
+              </p>
+            )}
           </div>
+
+          {/* Main Auth Error (Untouched) */}
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 mb-1 rounded-xl text-xs font-medium text-center">
+            <div className="bg-red-50 text-red-600 px-4 py-3 mt-5 mb-1 rounded-xl text-xs font-medium text-center">
               {error}
             </div>
           )}
+
           <Button
             type="submit"
             disabled={loading}
-            className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+            className="cursor-pointer mt-5 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

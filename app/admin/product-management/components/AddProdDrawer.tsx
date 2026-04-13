@@ -92,15 +92,15 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
 
   const validate = () => {
     const errors: Record<string, string> = {};
-    if (!productName.trim()) errors.name = "Product name is required.";
+    if (!productName.trim()) errors.name = "Product name is required";
     if (!selectedSubCategoryId)
       errors.subCategory = "Please select a sub-category.";
     variants.forEach((v, i) => {
-      if (!v.sku.trim()) errors[`v_sku_${i}`] = "SKU is required.";
+      if (!v.sku.trim()) errors[`v_sku_${i}`] = "SKU is required";
       if (!v.price || isNaN(Number(v.price)))
-        errors[`v_price_${i}`] = "Valid price is required.";
+        errors[`v_price_${i}`] = "Valid price is required";
       if (!v.stock_qty || isNaN(Number(v.stock_qty)))
-        errors[`v_stock_${i}`] = "Valid stock qty is required.";
+        errors[`v_stock_${i}`] = "Valid stock qty is required";
     });
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -206,10 +206,15 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
               <input
                 type="text"
                 value={productName}
-                maxLength={80}
-                onChange={(e) => setProductName(e.target.value)}
+                maxLength={100}
+                onChange={(e) => {
+                  setProductName(e.target.value);
+                  if (e.target.value.trim()) {
+                    setFormErrors((prev) => ({ ...prev, name: "" }));
+                  }
+                }}
                 placeholder="e.g. Marble Flooring Tile"
-                className={inputClass}
+                className={`${inputClass} ${formErrors.name ? "!border-red-400" : ""}`}
               />
               {formErrors.name && (
                 <p className={errorClass}>{formErrors.name}</p>
@@ -219,7 +224,7 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
               <label className={labelClass}>Description</label>
               <textarea
                 value={productDescription}
-                maxLength={200}
+                maxLength={500}
                 onChange={(e) => setProductDescription(e.target.value)}
                 placeholder="Optional product description..."
                 rows={3}
@@ -257,9 +262,15 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
                 <div className="relative">
                   <select
                     value={selectedSubCategoryId}
-                    onChange={(e) => setSelectedSubCategoryId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedSubCategoryId(e.target.value);
+                      /* ADDED: Clear the error when the user starts selecting/typing */
+                      if (e.target.value.trim()) {
+                        setFormErrors((prev) => ({ ...prev, subCategory: "" }));
+                      }
+                    }}
                     disabled={!selectedCategoryId}
-                    className={`${inputClass} text-gray-700 disabled:opacity-50 appearance-none pr-8 disabled:cursor-not-allowed`}
+                    className={`${inputClass} text-gray-700 disabled:opacity-50 appearance-none pr-8 disabled:cursor-not-allowed ${formErrors.subCategory ? "!border-red-400" : ""}`}
                   >
                     <option value="">Select sub-category</option>
                     {subCategories.map((s) => (
@@ -304,6 +315,7 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
                 onUpdate={updateVariant}
                 onImageChange={handleVariantImage}
                 onRemove={variants.length > 1 ? removeVariant : undefined}
+                clearError={(key) => setFormErrors((prev) => ({ ...prev, [key]: "" }))}
               />
             ))}
           </div>

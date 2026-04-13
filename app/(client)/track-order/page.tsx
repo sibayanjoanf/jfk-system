@@ -14,6 +14,22 @@ import { Order } from "@/app/admin/order-management/types";
 import TrackOrderView from "./components/TrackOrderView";
 import { QRScannerModal } from "./components/QRScanner";
 
+const formatOrderId = (value: string, prevValue: string) => {
+  if (!value) return ""; 
+
+  const numbers = value.replace(/\D/g, "");
+  
+  if (numbers.length === 0) return "ORD-";
+  
+  if (numbers.length < 8) return `ORD-${numbers}`;
+
+  if (numbers.length === 8 && prevValue.endsWith("-") && value.length < prevValue.length) {
+    return `ORD-${numbers.slice(0, 7)}`;
+  }
+  
+  return `ORD-${numbers.slice(0, 8)}-${numbers.slice(8, 11)}`;
+};
+
 export default function TrackOrderPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -111,8 +127,8 @@ export default function TrackOrderPage() {
   };
 
   const handleTrack = () => {
-    if (!orderId.trim()) {
-      setError("Please enter your Order ID.");
+    if (!orderId.trim() || orderId.trim() === "ORD-") {
+      setError("Please enter your Order ID");
       return;
     }
     handleTrackById(orderId.trim().toUpperCase());
@@ -244,12 +260,24 @@ export default function TrackOrderPage() {
                     <Field className="mb-4">
                       <Input
                         id="order-id"
-                        className="text-sm"
+                        className={`text-sm ${error ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
                         placeholder="Enter your Order ID (e.g. ORD-20260331-001)"
+                        maxLength={16}
                         value={orderId}
                         onChange={(e) => {
-                          setOrderId(e.target.value);
+                          setOrderId(formatOrderId(e.target.value, orderId));
                           setError("");
+                        }}
+                        onFocus={() => {
+                          if (!orderId) {
+                            setOrderId("ORD-");
+                            setError("");
+                          }
+                        }}
+                        onBlur={() => {
+                          if (orderId === "ORD-") {
+                            setOrderId("");
+                          }
                         }}
                         onKeyDown={(e) => e.key === "Enter" && handleTrack()}
                       />
