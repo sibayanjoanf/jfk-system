@@ -25,6 +25,41 @@ const inputClass =
   "w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all";
 const labelClass = "block text-xs font-medium text-gray-600 mb-1.5";
 
+const formatName = (name: string) => {
+  return name
+    .replace(/\s{2,}/g, ' ') 
+    .split(' ')
+    .map(word => {
+      if (word.length === 0) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+};
+
+const validateEmailFormat = (val: string) => {
+  if (!val) return true; 
+  if (val.length > 100) return false;
+  
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false; 
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   onClose,
   onSaved,
@@ -126,6 +161,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       };
       setForm((prev) => ({ ...prev, items: [...prev.items, newItem] }));
     }
+    
+    if (errors.items) {
+      setErrors((prev) => ({ ...prev, items: "" }));
+    }
+
     setDropdownOpen(false);
     setVariantSearch("");
   };
@@ -152,9 +192,29 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.first_name.trim()) e.first_name = "Required";
-    if (!form.last_name.trim()) e.last_name = "Required";
-    if (!form.phone.trim()) e.phone = "Required";
+    
+    const allowedChars = /^[a-zA-Z\-' ]*$/;
+
+    if (!form.first_name.trim()) {
+      e.first_name = "First name is required";
+    } else if (!allowedChars.test(form.first_name)) {
+      e.first_name = "Only letters, hyphens, and single quotes allowed";
+    }
+
+    if (!form.last_name.trim()) {
+      e.last_name = "Last name is required";
+    } else if (!allowedChars.test(form.last_name)) {
+      e.last_name = "Only letters, hyphens, and single quotes allowed";
+    }
+
+    if (!form.phone.trim()) e.phone = "Phone number is required";
+
+    if (form.email) {
+      if (!validateEmailFormat(form.email)) {
+        e.email = "Enter a valid email address";
+      }
+    }
+
     if (form.items.length === 0) e.items = "Add at least one item";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -214,10 +274,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 </label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={form.first_name}
-                  onChange={(e) =>
-                    setForm({ ...form, first_name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, first_name: formatName(e.target.value) });
+                    if (e.target.value.trim() && errors.first_name) {
+                       setErrors(prev => ({ ...prev, first_name: "" }));
+                    }
+                  }}
                   className={`${inputClass} ${errors.first_name ? "border-red-400" : ""}`}
                   placeholder="Juan"
                 />
@@ -233,10 +297,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 </label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={form.last_name}
-                  onChange={(e) =>
-                    setForm({ ...form, last_name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, last_name: formatName(e.target.value) });
+                    if (e.target.value.trim() && errors.last_name) {
+                       setErrors(prev => ({ ...prev, last_name: "" }));
+                    }
+                  }}
                   className={`${inputClass} ${errors.last_name ? "border-red-400" : ""}`}
                   placeholder="Dela Cruz"
                 />
@@ -253,7 +321,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 <input
                   type="text"
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, phone: e.target.value });
+                    if (e.target.value.trim() && errors.phone) {
+                       setErrors(prev => ({ ...prev, phone: "" }));
+                    }
+                  }}
                   className={`${inputClass} ${errors.phone ? "border-red-400" : ""}`}
                   placeholder="09XX XXX XXXX"
                 />
@@ -265,11 +338,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 <label className={labelClass}>Email</label>
                 <input
                   type="email"
+                  maxLength={100}
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className={inputClass}
+                  onChange={(e) => {
+                    setForm({ ...form, email: e.target.value });
+                    if (e.target.value.trim() && errors.email) {
+                       setErrors(prev => ({ ...prev, email: "" }));
+                    }
+                  }}
+                  className={`${inputClass} ${errors.email ? "border-red-400" : ""}`}
                   placeholder="optional"
                 />
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                )}
               </div>
             </div>
           </div>
@@ -324,13 +406,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 <label className={labelClass}>Notes</label>
                 <input
                   type="text"
+                  maxLength={250}
                   value={form.message}
-                  onChange={(e) =>
-                    setForm({ ...form, message: e.target.value })
-                  }
-                  className={inputClass}
+                  onChange={(e) => {
+                    setForm({ ...form, message: e.target.value });
+                    if (e.target.value.trim() && errors.message) {
+                       setErrors(prev => ({ ...prev, message: "" }));
+                    }
+                  }}
+                  className={`${inputClass} ${errors.message ? "border-red-400" : ""}`}
                   placeholder="Any special instructions..."
                 />
+                {errors.message && (
+                  <p className="text-xs text-red-500 mt-1">{errors.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -349,7 +438,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               <button
                 type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left"
+               className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-gray-50 border rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left ${
+                errors.items ? "border-red-400" : "border-gray-200"
+              }`}
               >
                 <span className="text-sm text-gray-400 flex items-center gap-2">
                   <Plus size={14} /> Add a product...

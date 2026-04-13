@@ -8,6 +8,35 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Lock, Mail, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 
+const formatName = (value: string) => {
+  return value
+    .replace(/[^a-zA-Z\s-']/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase());
+};
+
+const isValidEmailFormat = (val: string) => {
+  if (!val) return true;
+  if (val.length > 100) return false;
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false;
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
 export default function RegisterPage() {
   const [supabase] = useState(() =>
     createBrowserClient(
@@ -24,7 +53,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [confirmed, setConfirmed] = useState(false);
@@ -67,17 +98,44 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    const newErrors: Record<string, string> = {};
+    
+    const nameEdgeRegex = /^[a-zA-Z](.*[a-zA-Z])?$/;
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+    if (!firstName.trim()) {
+      newErrors.firstName = "Please enter first name";
+    } else if (!nameEdgeRegex.test(firstName.trim())) {
+      newErrors.firstName = "First name must start and end with a letter";
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
+    if (!lastName.trim()) {
+      newErrors.lastName = "Please enter last name";
+    } else if (!nameEdgeRegex.test(lastName.trim())) {
+      newErrors.lastName = "Last name must start and end with a letter";
     }
+
+    if (!email.trim() || !isValidEmailFormat(email)) {
+      newErrors.email = "Please enter valid email address";
+    }
+
+    if (!password) {
+      newErrors.password = "Please enter valid password";
+    } else {
+      if (password.length < 8) newErrors.password = "Password must be at least 8 characters long";
+      else if (!/[A-Z]/.test(password)) newErrors.password = "Include at least one uppercase letter";
+      else if (!/[a-z]/.test(password)) newErrors.password = "Include at least one lowercase letter";
+      else if (!/[0-9]/.test(password)) newErrors.password = "Include at least one number";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    
+    if (Object.keys(newErrors).length > 0) return;
 
     setLoading(true);
     setTimeout(() => {
@@ -89,7 +147,7 @@ export default function RegisterPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setErrors({});
     setTimeout(() => {
       setConfirmed(true);
       setLoading(false);
@@ -120,67 +178,105 @@ export default function RegisterPage() {
                 Register to access the JFK admin portal
               </p>
             </div>
-            <form onSubmit={handleRegister}>
-              <div className="flex gap-4 mb-1">
-                <div className="space-y-1.5">
+            
+            <form onSubmit={handleRegister} noValidate>
+              <div className="flex gap-4 mb-4">
+                <div className="space-y-1.5 flex-1">
                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                     First Name
                   </label>
-                  <div className="mt-1 mb-2 relative">
+                  <div className="relative">
                     <Input
                       type="text"
                       placeholder="Maria"
+                      maxLength={50}
                       value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                      onChange={(e) => {
+                        setFirstName(formatName(e.target.value));
+                        if (e.target.value.trim() && errors.firstName) {
+                          setErrors((prev) => ({ ...prev, firstName: "" }));
+                        }
+                      }}
+                      className={`h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.firstName ? 'border-red-400' : ''}`}
                       required
                     />
                   </div>
+                  {errors.firstName && (
+                    <p className="text-xs text-red-500 ml-1">{errors.firstName}</p>
+                  )}
                 </div>
-                <div className="space-y-1.5">
+
+                <div className="space-y-1.5 flex-1">
                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                     Last Name
                   </label>
-                  <div className="mt-1 mb-2 relative">
+                  <div className="relative">
                     <Input
                       type="text"
                       placeholder="Dela Cruz"
+                      maxLength={50}
                       value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                      onChange={(e) => {
+                        setLastName(formatName(e.target.value));
+                        if (e.target.value.trim() && errors.lastName) {
+                          setErrors((prev) => ({ ...prev, lastName: "" }));
+                        }
+                      }}
+                      className={`h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.lastName ? 'border-red-400' : ''}`}
                       required
                     />
                   </div>
+                  {errors.lastName && (
+                    <p className="text-xs text-red-500 ml-1">{errors.lastName}</p>
+                  )}
                 </div>
               </div>
-              <div className="space-y-1.5 mb-3">
+
+              <div className="space-y-1.5 mb-4">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                   Email
                 </label>
-                <div className="mt-1 mb-2 relative">
+                <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
                     type="email"
                     placeholder="admin@jfkbuilders.com"
+                    maxLength={100}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (e.target.value.trim() && errors.email) {
+                        setErrors((prev) => ({ ...prev, email: "" }));
+                      }
+                    }}
+                    className={`pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.email ? 'border-red-400' : ''}`}
                     required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-xs text-red-500 ml-1">{errors.email}</p>
+                )}
               </div>
-              <div className="space-y-1.5 mb-3">
+
+              <div className="space-y-1.5 mb-4">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                   Password
                 </label>
-                <div className="mt-1 mb-2 relative">
+                <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    maxLength={32}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                    onChange={(e) => {
+                      const noSpaceVal = e.target.value.replace(/\s/g, "");
+                      setPassword(noSpaceVal);
+                      if (noSpaceVal.trim() && errors.password) {
+                        setErrors((prev) => ({ ...prev, password: "" }));
+                      }
+                    }}
+                    className={`pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.password ? 'border-red-400' : ''}`}
                     required
                   />
                   <button
@@ -195,19 +291,32 @@ export default function RegisterPage() {
                     )}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-red-500 ml-1">{errors.password}</p>
+                )}
+                <p className="text-[11px] text-gray-400 italic ml-1">
+                  Format: Minimum of 8 characters, including at least one uppercase letter, one lowercase letter, and one number.
+                </p>
               </div>
-              <div className="space-y-1.5">
+
+              <div className="space-y-1.5 mb-4">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">
                   Confirm Password
                 </label>
-                <div className="mt-1 mb-5 relative">
+                <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
                     type={showConfirm ? "text" : "password"}
                     placeholder="••••••••"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm"
+                    onChange={(e) => {
+                      const noSpaceVal = e.target.value.replace(/\s/g, "");
+                      setConfirmPassword(noSpaceVal);
+                      if (noSpaceVal.trim() && errors.confirmPassword) {
+                        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                      }
+                    }}
+                    className={`pl-12 pr-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.confirmPassword ? 'border-red-400' : ''}`}
                     required
                   />
                   <button
@@ -222,16 +331,21 @@ export default function RegisterPage() {
                     )}
                   </button>
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-500 ml-1">{errors.confirmPassword}</p>
+                )}
               </div>
-              {error && (
-                <div className="bg-red-50 text-red-600 px-4 py-3 mb-1 rounded-xl text-xs font-medium text-center">
-                  {error}
+
+              {errors.global && (
+                <div className="bg-red-50 text-red-600 px-4 py-3 mb-4 rounded-lg text-xs font-medium text-center">
+                  {errors.global}
                 </div>
               )}
+
               <Button
                 type="submit"
                 disabled={loading}
-                className="cursor-pointer mt-2 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
+                className="cursor-pointer mt-4 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
               >
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -257,7 +371,7 @@ export default function RegisterPage() {
                 {email}
               </p>
             </div>
-            <form onSubmit={handleVerifyOtp}>
+            <form onSubmit={handleVerifyOtp} noValidate>
               <div className="flex justify-center gap-2 mb-6">
                 {otp.map((digit, index) => (
                   <input
@@ -276,9 +390,9 @@ export default function RegisterPage() {
                   />
                 ))}
               </div>
-              {error && (
+              {errors.otp && (
                 <div className="bg-red-50 text-red-600 px-4 py-3 mb-3 rounded-xl text-xs font-medium text-center">
-                  {error}
+                  {errors.otp}
                 </div>
               )}
               <Button
@@ -297,7 +411,7 @@ export default function RegisterPage() {
                 onClick={() => {
                   setOtpSent(false);
                   setOtp(["", "", "", "", "", ""]);
-                  setError("");
+                  setErrors({});
                 }}
                 className="mt-4 w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
               >

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Images, Pencil, Trash2 } from "lucide-react";
 import { SubCategory } from "../../types";
 
@@ -30,6 +30,8 @@ const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
   onThumbnail,
 }) => {
   const subThumbRef = React.createRef<HTMLInputElement>();
+  
+  const [error, setError] = useState(false);
 
   return (
     <div
@@ -75,15 +77,42 @@ const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
 
       <div className="flex-1 min-w-0">
         {editingSubCategory === sub.id ? (
-          <input
-            type="text"
-            value={editingSubCategoryName}
-            autoFocus
-            onChange={(e) => onEditChange(e.target.value)}
-            onBlur={() => onEditSave(sub.id)}
-            onKeyDown={(e) => e.key === "Enter" && onEditSave(sub.id)}
-            className="w-full px-2 py-1 text-xs bg-white border border-red-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500"
-          />
+          <div>
+            <input
+              type="text"
+              value={editingSubCategoryName}
+              maxLength={50}
+              autoFocus
+              onChange={(e) => {
+                onEditChange(e.target.value);
+                if (e.target.value.trim()) setError(false);
+              }}
+              onBlur={() => {
+                if (!editingSubCategoryName.trim()) {
+                  setError(true);
+                } else {
+                  onEditSave(sub.id);
+                  setError(false);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (!editingSubCategoryName.trim()) {
+                    setError(true);
+                  } else {
+                    onEditSave(sub.id);
+                    setError(false);
+                  }
+                }
+              }}
+              className={`w-full px-2 py-1 text-xs bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 ${error ? "border-red-400" : "border-red-300"}`}
+            />
+            {error && (
+              <p className="text-[10px] text-red-500 mt-1">
+                Sub-category name is required
+              </p>
+            )}
+          </div>
         ) : (
           <p className="text-sm text-gray-700">{sub.name}</p>
         )}
@@ -99,7 +128,10 @@ const SubCategoryRow: React.FC<SubCategoryRowProps> = ({
           <Trash2 size={12} />
         </button>
         <button
-          onClick={() => onEditStart(sub.id, sub.name)}
+          onClick={() => {
+            setError(false);
+            onEditStart(sub.id, sub.name);
+          }}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
           <Pencil size={12} />

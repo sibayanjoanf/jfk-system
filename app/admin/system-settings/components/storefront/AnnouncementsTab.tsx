@@ -17,9 +17,18 @@ const AnnouncementsTab: React.FC = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  
+  const [error, setError] = useState(false);
 
   const handleAdd = async () => {
-    if (!newText.trim()) return;
+
+    if (!newText.trim()) {
+      setError(true);
+      return;
+    }
+    
+    setError(false);
+    
     setAdding(true);
     await addAnnouncement(newText);
     setNewText("");
@@ -55,15 +64,27 @@ const AnnouncementsTab: React.FC = () => {
         </div>
 
         {/* Add input */}
-        <div className="flex gap-2 mb-6">
-          <input
-            type="text"
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            placeholder="Enter announcement text..."
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            className="flex-1 px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
-          />
+        <div className="flex items-start gap-2 mb-6">
+          <div className="flex-1">
+            <input
+              type="text"
+              value={newText}
+              maxLength={100}
+              onChange={(e) => {
+                setNewText(e.target.value);
+                if (e.target.value.trim()) setError(false);
+              }}
+              placeholder="Enter announcement text..."
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all ${
+                error ? "border-red-400" : "border-gray-200"
+              }`}
+            />
+        
+            {error && (
+              <p className="text-xs text-red-500 mt-1">The field is empty</p>
+            )}
+          </div>
           <button
             onClick={handleAdd}
             disabled={adding}

@@ -14,6 +14,40 @@ import {
 import HeaderNotifications from "@/components/admin/HeaderNotif";
 import HeaderUser from "@/components/admin/HeaderUser";
 
+const formatName = (value: string) => {
+  return value
+    .replace(/[^a-zA-Z\s-']/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase());
+};
+
+const isValidEmailFormat = (val: string) => {
+  if (!val) return false;
+  if (val.length > 100) return false;
+  
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false;
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+  
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
+const isNameEdgeValid = (val: string) => /^[a-zA-Z](.*[a-zA-Z])?$/.test(val.trim());
+
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "danger">(
     "profile",
@@ -43,6 +77,10 @@ const ProfilePage: React.FC = () => {
     password: "",
   });
 
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});
+
   const tabs = [
     { key: "profile", label: "Profile", icon: CircleUserRound },
     { key: "security", label: "Security", icon: Shield },
@@ -61,6 +99,72 @@ const ProfilePage: React.FC = () => {
   };
 
   const strength = getPasswordStrength(passwordForm.newPassword);
+
+  const handleSaveProfile = () => {
+    const errs: Record<string, string> = {};
+    if (!profileForm.firstName.trim()) errs.firstName = "Please enter first name";
+    else if (!isNameEdgeValid(profileForm.firstName)) errs.firstName = "First name must start and end with a letter";
+
+    if (!profileForm.lastName.trim()) errs.lastName = "Please enter last name";
+    else if (!isNameEdgeValid(profileForm.lastName)) errs.lastName = "Last name must start and end with a letter";
+
+    setProfileErrors(errs);
+    if (Object.keys(errs).length === 0) {
+      console.log("Profile Saved!", profileForm);
+    }
+  };
+
+  const handleSavePassword = () => {
+    const errs: Record<string, string> = {};
+    
+    if (!passwordForm.currentPassword) errs.currentPassword = "Please enter valid password";
+    
+    if (!passwordForm.newPassword) {
+      errs.newPassword = "Please enter valid password";
+    } else {
+      if (passwordForm.newPassword.length < 8) errs.newPassword = "Password must be at least 8 characters long";
+      else if (!/[A-Z]/.test(passwordForm.newPassword)) errs.newPassword = "Include at least one uppercase letter";
+      else if (!/[a-z]/.test(passwordForm.newPassword)) errs.newPassword = "Include at least one lowercase letter";
+      else if (!/[0-9]/.test(passwordForm.newPassword)) errs.newPassword = "Include at least one number";
+      else if (passwordForm.newPassword === passwordForm.currentPassword) errs.newPassword = "New password cannot be the same as current password";
+    }
+
+    if (!passwordForm.confirmPassword) {
+      errs.confirmPassword = "Please confirm your password";
+    } else if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      errs.confirmPassword = "New passwords do not match";
+    }
+
+    setPasswordErrors(errs);
+    if (Object.keys(errs).length === 0) {
+      console.log("Password Updated!", passwordForm);
+    }
+  };
+
+  const handleSaveEmail = () => {
+    const errs: Record<string, string> = {};
+
+    if (!emailForm.newEmail.trim() || !isValidEmailFormat(emailForm.newEmail)) {
+      errs.newEmail = "Please enter valid email address";
+    } else if (emailForm.newEmail === profileForm.email) {
+      errs.newEmail = "New email cannot be the same as current email";
+    }
+
+    if (!emailForm.confirmEmail.trim() || !isValidEmailFormat(emailForm.confirmEmail)) {
+      errs.confirmEmail = "Please enter valid email address";
+    } else if (emailForm.newEmail !== emailForm.confirmEmail) {
+      errs.confirmEmail = "New emails do not match";
+    }
+
+    if (!emailForm.password) {
+      errs.password = "Please enter valid password";
+    }
+
+    setEmailErrors(errs);
+    if (Object.keys(errs).length === 0) {
+      console.log("Email Updated!", emailForm);
+    }
+  };
 
   return (
     <div className="p-0">
@@ -161,15 +265,20 @@ const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={50}
                     value={profileForm.firstName}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setProfileForm({
                         ...profileForm,
-                        firstName: e.target.value,
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        firstName: formatName(e.target.value),
+                      });
+                      if (e.target.value.trim() && profileErrors.firstName) {
+                        setProfileErrors(prev => ({ ...prev, firstName: "" }));
+                      }
+                    }}
+                    className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${profileErrors.firstName ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                   />
+                  {profileErrors.firstName && <p className="text-xs text-red-500 mt-1">{profileErrors.firstName}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -177,15 +286,20 @@ const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={50}
                     value={profileForm.lastName}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setProfileForm({
                         ...profileForm,
-                        lastName: e.target.value,
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        lastName: formatName(e.target.value),
+                      });
+                      if (e.target.value.trim() && profileErrors.lastName) {
+                        setProfileErrors(prev => ({ ...prev, lastName: "" }));
+                      }
+                    }}
+                    className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${profileErrors.lastName ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                   />
+                  {profileErrors.lastName && <p className="text-xs text-red-500 mt-1">{profileErrors.lastName}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -228,7 +342,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                <button className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                <button onClick={handleSaveProfile} className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
                   Save Changes
                 </button>
               </div>
@@ -259,15 +373,15 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showCurrentPassword ? "text" : "password"}
+                        maxLength={32}
                         value={passwordForm.currentPassword}
-                        onChange={(e) =>
-                          setPasswordForm({
-                            ...passwordForm,
-                            currentPassword: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const noSpace = e.target.value.replace(/\s/g, "");
+                          setPasswordForm({ ...passwordForm, currentPassword: noSpace });
+                          if (noSpace && passwordErrors.currentPassword) setPasswordErrors(prev => ({ ...prev, currentPassword: "" }));
+                        }}
                         placeholder="Enter current password"
-                        className="w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordErrors.currentPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
                         onClick={() =>
@@ -282,6 +396,7 @@ const ProfilePage: React.FC = () => {
                         )}
                       </button>
                     </div>
+                    {passwordErrors.currentPassword && <p className="text-xs text-red-500 mt-1">{passwordErrors.currentPassword}</p>}
                   </div>
 
                   <div>
@@ -291,15 +406,15 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showNewPassword ? "text" : "password"}
+                        maxLength={32}
                         value={passwordForm.newPassword}
-                        onChange={(e) =>
-                          setPasswordForm({
-                            ...passwordForm,
-                            newPassword: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const noSpace = e.target.value.replace(/\s/g, "");
+                          setPasswordForm({ ...passwordForm, newPassword: noSpace });
+                          if (noSpace && passwordErrors.newPassword) setPasswordErrors(prev => ({ ...prev, newPassword: "" }));
+                        }}
                         placeholder="Enter new password"
-                        className="w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordErrors.newPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
                         onClick={() => setShowNewPassword(!showNewPassword)}
@@ -312,6 +427,11 @@ const ProfilePage: React.FC = () => {
                         )}
                       </button>
                     </div>
+                    {passwordErrors.newPassword && <p className="text-xs text-red-500 mt-1">{passwordErrors.newPassword}</p>}
+                    <p className="text-[11px] text-gray-400 italic mt-1">
+                      Format: Minimum of 8 characters, including at least one uppercase letter, one lowercase letter, and one number.
+                    </p>
+                    
                     {passwordForm.newPassword && (
                       <div className="mt-2">
                         <div className="flex justify-between items-center mb-1">
@@ -349,21 +469,15 @@ const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <input
                         type={showConfirmPassword ? "text" : "password"}
+                        maxLength={32}
                         value={passwordForm.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordForm({
-                            ...passwordForm,
-                            confirmPassword: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const noSpace = e.target.value.replace(/\s/g, "");
+                          setPasswordForm({ ...passwordForm, confirmPassword: noSpace });
+                          if (noSpace && passwordErrors.confirmPassword) setPasswordErrors(prev => ({ ...prev, confirmPassword: "" }));
+                        }}
                         placeholder="Confirm new password"
-                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${
-                          passwordForm.confirmPassword &&
-                          passwordForm.newPassword !==
-                            passwordForm.confirmPassword
-                            ? "border-red-300 focus:ring-red-400 focus:border-red-400"
-                            : "border-gray-200 focus:ring-red-500 focus:border-red-500"
-                        }`}
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordErrors.confirmPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
                         onClick={() =>
@@ -378,18 +492,12 @@ const ProfilePage: React.FC = () => {
                         )}
                       </button>
                     </div>
-                    {passwordForm.confirmPassword &&
-                      passwordForm.newPassword !==
-                        passwordForm.confirmPassword && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Passwords do not match.
-                        </p>
-                      )}
+                    {passwordErrors.confirmPassword && <p className="text-xs text-red-500 mt-1">{passwordErrors.confirmPassword}</p>}
                   </div>
                 </div>
 
                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                  <button className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                  <button onClick={handleSavePassword} className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
                     Update Password
                   </button>
                 </div>
@@ -426,13 +534,17 @@ const ProfilePage: React.FC = () => {
                     </label>
                     <input
                       type="email"
+                      maxLength={100}
                       value={emailForm.newEmail}
-                      onChange={(e) =>
-                        setEmailForm({ ...emailForm, newEmail: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const noSpace = e.target.value.replace(/\s/g, "");
+                        setEmailForm({ ...emailForm, newEmail: noSpace });
+                        if (noSpace && emailErrors.newEmail) setEmailErrors(prev => ({ ...prev, newEmail: "" }));
+                      }}
                       placeholder="Enter new email address"
-                      className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailErrors.newEmail ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
+                    {emailErrors.newEmail && <p className="text-xs text-red-500 mt-1">{emailErrors.newEmail}</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -440,27 +552,17 @@ const ProfilePage: React.FC = () => {
                     </label>
                     <input
                       type="email"
+                      maxLength={100}
                       value={emailForm.confirmEmail}
-                      onChange={(e) =>
-                        setEmailForm({
-                          ...emailForm,
-                          confirmEmail: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        const noSpace = e.target.value.replace(/\s/g, "");
+                        setEmailForm({ ...emailForm, confirmEmail: noSpace });
+                        if (noSpace && emailErrors.confirmEmail) setEmailErrors(prev => ({ ...prev, confirmEmail: "" }));
+                      }}
                       placeholder="Confirm new email address"
-                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${
-                        emailForm.confirmEmail &&
-                        emailForm.newEmail !== emailForm.confirmEmail
-                          ? "border-red-300 focus:ring-red-400 focus:border-red-400"
-                          : "border-gray-200 focus:ring-red-500 focus:border-red-500"
-                      }`}
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailErrors.confirmEmail ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
-                    {emailForm.confirmEmail &&
-                      emailForm.newEmail !== emailForm.confirmEmail && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Emails do not match.
-                        </p>
-                      )}
+                    {emailErrors.confirmEmail && <p className="text-xs text-red-500 mt-1">{emailErrors.confirmEmail}</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -468,18 +570,22 @@ const ProfilePage: React.FC = () => {
                     </label>
                     <input
                       type="password"
+                      maxLength={32}
                       value={emailForm.password}
-                      onChange={(e) =>
-                        setEmailForm({ ...emailForm, password: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const noSpace = e.target.value.replace(/\s/g, "");
+                        setEmailForm({ ...emailForm, password: noSpace });
+                        if (noSpace && emailErrors.password) setEmailErrors(prev => ({ ...prev, password: "" }));
+                      }}
                       placeholder="Enter your password to confirm"
-                      className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailErrors.password ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
+                    {emailErrors.password && <p className="text-xs text-red-500 mt-1">{emailErrors.password}</p>}
                   </div>
                 </div>
 
                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                  <button className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                  <button onClick={handleSaveEmail} className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
                     Update Email
                   </button>
                 </div>

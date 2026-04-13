@@ -27,11 +27,35 @@ const inputClass =
   "w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all";
 const labelClass = "block text-xs font-medium text-gray-600 mb-1.5";
 
+const validateEmailFormat = (val: string) => {
+  if (!val) return true; 
+  if (val.length > 100) return false;
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false;
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
 const InvoiceTemplate: React.FC = () => {
   const [config, setConfig] = useState<InvoiceConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -45,7 +69,30 @@ const InvoiceTemplate: React.FC = () => {
     fetchConfig();
   }, []);
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!config.company_name.trim()) {
+      newErrors.company_name = "Company name is required";
+    }
+
+    if (!config.company_address.trim()) {
+      newErrors.company_address = "Address is required";
+    }
+
+    if (!config.company_email.trim()) {
+      newErrors.company_email = "Email is required";
+    } else if (!validateEmailFormat(config.company_email)) {
+      newErrors.company_email = "Invalid email format";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateForm()) return;
+
     setSaving(true);
     if (config.id) {
       await supabase.from("invoice_config").update(config).eq("id", config.id);
@@ -99,29 +146,39 @@ const InvoiceTemplate: React.FC = () => {
 
         <div className="space-y-4">
           <div>
-            <label className={labelClass}>Company Name</label>
+            <label className={labelClass}>Company Name <span className="text-red-500">*</span></label>
             <input
               type="text"
+              maxLength={50}
               value={config.company_name}
-              onChange={(e) =>
-                setConfig({ ...config, company_name: e.target.value })
-              }
-              className={inputClass}
+              onChange={(e) => {
+                setConfig({ ...config, company_name: e.target.value });
+                if (errors.company_name) setErrors({ ...errors, company_name: "" });
+              }}
+              className={`${inputClass} ${errors.company_name ? "border-red-400" : ""}`}
             />
+            {errors.company_name && (
+              <p className="text-xs text-red-500 mt-1">{errors.company_name}</p>
+            )}
           </div>
           <div>
-            <label className={labelClass}>Address</label>
+            <label className={labelClass}>Address <span className="text-red-500">*</span></label>
             <input
               type="text"
+              maxLength={100}
               value={config.company_address}
-              onChange={(e) =>
-                setConfig({ ...config, company_address: e.target.value })
-              }
-              className={inputClass}
+              onChange={(e) => {
+                setConfig({ ...config, company_address: e.target.value });
+                if (errors.company_address) setErrors({ ...errors, company_address: "" });
+              }}
+              className={`${inputClass} ${errors.company_address ? "border-red-400" : ""}`}
             />
+            {errors.company_address && (
+              <p className="text-xs text-red-500 mt-1">{errors.company_address}</p>
+            )}
           </div>
           <div>
-            <label className={labelClass}>Phone</label>
+            <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={config.company_phone}
@@ -132,20 +189,26 @@ const InvoiceTemplate: React.FC = () => {
             />
           </div>
           <div>
-            <label className={labelClass}>Email</label>
+            <label className={labelClass}>Email <span className="text-red-500">*</span></label>
             <input
               type="email"
+              maxLength={100}
               value={config.company_email}
-              onChange={(e) =>
-                setConfig({ ...config, company_email: e.target.value })
-              }
-              className={inputClass}
+              onChange={(e) => {
+                setConfig({ ...config, company_email: e.target.value });
+                if (errors.company_email) setErrors({ ...errors, company_email: "" });
+              }}
+              className={`${inputClass} ${errors.company_email ? "border-red-400" : ""}`}
             />
+            {errors.company_email && (
+              <p className="text-xs text-red-500 mt-1">{errors.company_email}</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>Footer Note</label>
             <input
               type="text"
+              maxLength={50}
               value={config.footer_note}
               onChange={(e) =>
                 setConfig({ ...config, footer_note: e.target.value })

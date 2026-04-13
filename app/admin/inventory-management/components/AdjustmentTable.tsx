@@ -86,6 +86,9 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [quantityError, setQuantityError] = useState("");
+  const [productError, setProductError] = useState("");
+  const [reasonError, setReasonError] = useState("");
+  
   const typeRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState({
@@ -197,6 +200,9 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
     setShowForm(true);
     setDropdownOpen(false);
     setVariantSearch("");
+    setProductError("");
+    setQuantityError("");
+    setReasonError("");
   };
 
   const handleSelectVariant = (v: VariantOption) => {
@@ -208,6 +214,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
       image_url: v.image_url,
       stock_qty: v.stock_qty,
     }));
+    setProductError("");
     setDropdownOpen(false);
     setVariantSearch("");
   };
@@ -219,7 +226,28 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   );
 
   const handleSave = async () => {
-    if (!form.variant_id || !form.quantity) return;
+    let hasError = false;
+
+    if (!form.variant_id) {
+      setProductError("Please select a product");
+      hasError = true;
+    } else {
+      setProductError("");
+    }
+
+    if (!form.quantity || Number(form.quantity) <= 0) {
+      setQuantityError("Quantity must be greater than 0");
+      hasError = true;
+    }
+
+    if (!form.reason) {
+      setReasonError("Please select a reason");
+      hasError = true;
+    } else {
+      setReasonError("");
+    }
+
+    if (hasError) return;
 
     if (form.type === "Deduct" && Number(form.quantity) > form.stock_qty) {
       setQuantityError(
@@ -347,13 +375,13 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
             {/* ── Product picker ── */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Product / SKU
+                Product / SKU <span className="text-red-600">*</span>
               </label>
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left"
+                  className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white border rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left ${productError ? "border-red-400" : "border-gray-200"}`}
                 >
                   {form.variant_id ? (
                     <div className="flex items-center gap-3 min-w-0">
@@ -462,11 +490,14 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                   </div>
                 )}
               </div>
+              {productError && (
+                <p className="text-xs text-red-500 mt-1">{productError}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Adjustment Type
+                Adjustment Type <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <select
@@ -491,7 +522,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Quantity
+                Quantity <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
@@ -513,27 +544,35 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Reason
+                Reason <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <select
                   value={form.reason}
-                  onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                  className="appearance-none w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
+                  onChange={(e) => {
+                    setForm({ ...form, reason: e.target.value });
+                    setReasonError("");
+                  }}
+                  className={`appearance-none w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${reasonError ? "border-red-400" : "border-gray-200"}`}
                 >
-                  <option value="">Select a reason</option>
-                  <option>Damaged goods</option>
-                  <option>Consumed in showroom</option>
-                  <option>Returned by customer</option>
-                  <option>Counting discrepancy</option>
-                  <option>Theft / Loss</option>
-                  <option>Other</option>
+                  <option value="" disabled hidden>
+                    Select a reason
+                  </option>
+                  <option value="Damaged goods">Damaged goods</option>
+                  <option value="Consumed in showroom">Consumed in showroom</option>
+                  <option value="Returned by customer">Returned by customer</option>
+                  <option value="Counting discrepancy">Counting discrepancy</option>
+                  <option value="Theft / Loss">Theft / Loss</option>
+                  <option value="Other">Other</option>
                 </select>
                 <ChevronDown
                   size={14}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
               </div>
+              {reasonError && (
+                <p className="text-xs text-red-500 mt-1">{reasonError}</p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">

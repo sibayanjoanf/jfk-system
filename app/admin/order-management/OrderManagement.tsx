@@ -77,6 +77,7 @@ const OrderManagement: React.FC = () => {
                 type="text"
                 placeholder="Search by order ID, name, email, phone..."
                 value={search}
+                maxLength={50}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setCurrentPage(1);

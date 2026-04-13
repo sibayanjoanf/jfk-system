@@ -41,16 +41,34 @@ export default function ContactPage() {
 
   const formatName = (value: string) => {
     return value
-      .replace(/[^a-zA-Z\s-]/g, "")
-      .toLowerCase()
+      .replace(/[^a-zA-Z\s-']/g, "")
       .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase());
   };
 
   const formatEmail = (value: string) => value.replace(/\s/g, "");
 
-  const isValidEmail = (value: string) => {
-    if (value.includes(" ")) return false;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidEmailFormat = (val: string) => {
+    if (!val) return true;
+    if (val.length > 100) return false;
+    
+    if (!/^[a-zA-Z0-9]/.test(val)) return false;
+    if (/\.\./.test(val)) return false;
+
+    const parts = val.split("@");
+    if (parts.length !== 2) return false;
+
+    const beforeAt = parts[0];
+    const afterAt = parts[1];
+
+    if (!beforeAt || !afterAt) return false;
+
+    if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+    if (beforeAt.endsWith(".")) return false;
+
+    if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+    if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+    return true;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +77,10 @@ export default function ContactPage() {
       .replace(/\D/g, "")
       .slice(0, 10);
     setPhone("+63" + digits);
+    
+    if (digits.length > 0 && errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: "" }));
+    }
   };
 
   const handlePhoneFocus = () => {
@@ -80,14 +102,29 @@ export default function ContactPage() {
 
   const sendMessage = async () => {
     const newErrors: Record<string, string> = {};
+    
+    const nameEdgeRegex = /^[a-zA-Z](.*[a-zA-Z])?$/;
 
-    if (!firstName.trim()) newErrors.firstName = "First name is required.";
-    if (!lastName.trim()) newErrors.lastName = "Last name is required.";
-    if (!email.trim()) newErrors.email = "Email is required.";
-    else if (!isValidEmail(email))
-      newErrors.email = "Enter a valid email address.";
-    if (phone.length < 13) newErrors.phone = "Enter a valid phone number.";
-    if (!messageBox.trim()) newErrors.messageBox = "Message required.";
+    if (!firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (!nameEdgeRegex.test(firstName.trim())) {
+      newErrors.firstName = "First name must start and end with a letter";
+    }
+  
+    if (!lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (!nameEdgeRegex.test(lastName.trim())) {
+      newErrors.lastName = "Last name must start and end with a letter";
+    }
+    
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!isValidEmailFormat(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (phone.length < 13) newErrors.phone = "Enter a valid phone number";
+    if (!messageBox.trim()) newErrors.messageBox = "Message required";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
@@ -198,14 +235,18 @@ export default function ContactPage() {
                         id="first-name"
                         autoComplete="given-name"
                         placeholder="First Name"
+                        maxLength={50}
                         className={cn(
                           inputStyles,
                           errors.firstName && "border-red-500",
                         )}
                         value={firstName}
-                        onChange={(e) =>
-                          setFirstName(formatName(e.target.value))
-                        }
+                        onChange={(e) => {
+                          setFirstName(formatName(e.target.value));
+                          if (e.target.value.trim() && errors.firstName) {
+                            setErrors((prev) => ({ ...prev, firstName: "" }));
+                          }
+                        }}
                         required
                       />
                       {errors.firstName && (
@@ -219,14 +260,18 @@ export default function ContactPage() {
                         id="last-name"
                         autoComplete="family-name"
                         placeholder="Last Name"
+                        maxLength={50}
                         className={cn(
                           inputStyles,
                           errors.lastName && "border-red-500",
                         )}
                         value={lastName}
-                        onChange={(e) =>
-                          setLastName(formatName(e.target.value))
-                        }
+                        onChange={(e) => {
+                          setLastName(formatName(e.target.value));
+                          if (e.target.value.trim() && errors.lastName) {
+                            setErrors((prev) => ({ ...prev, lastName: "" }));
+                          }
+                        }}
                         required
                       />
                       {errors.lastName && (
@@ -243,12 +288,18 @@ export default function ContactPage() {
                       type="email"
                       autoComplete="email"
                       placeholder="Email Address"
+                      maxLength={100}
                       className={cn(
                         inputStyles,
                         errors.email && "border-red-500",
                       )}
                       value={email}
-                      onChange={(e) => setEmail(formatEmail(e.target.value))}
+                      onChange={(e) => {
+                        setEmail(formatEmail(e.target.value));
+                        if (e.target.value.trim() && errors.email) {
+                          setErrors((prev) => ({ ...prev, email: "" }));
+                        }
+                      }}
                       onKeyDown={(e) => e.key === " " && e.preventDefault()}
                       required
                     />
@@ -286,8 +337,14 @@ export default function ContactPage() {
                     <Textarea
                       id="message"
                       placeholder="Message"
+                      maxLength={500}
                       value={messageBox}
-                      onChange={(e) => setMessage(e.target.value)}
+                      onChange={(e) => {
+                        setMessage(e.target.value);
+                        if (e.target.value.trim() && errors.messageBox) {
+                          setErrors((prev) => ({ ...prev, messageBox: "" }));
+                        }
+                      }}
                       className={cn(
                         "h-[180px] border-2 shadow-xs selection:bg-gray-200 focus-visible:ring-transparent focus-visible:border-red-600 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
                         "resize-none overflow-y-auto transition-colors",

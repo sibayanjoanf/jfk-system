@@ -159,6 +159,7 @@ const UserManagement: React.FC = () => {
             <input
               type="text"
               placeholder="Search..."
+              maxLength={50}
               className="w-full pr-9 pl-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
             />
           </div>

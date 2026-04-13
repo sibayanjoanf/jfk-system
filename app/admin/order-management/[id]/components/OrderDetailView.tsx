@@ -37,6 +37,41 @@ interface Props {
 const inputClass =
   "w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all";
 
+const formatName = (name: string) => {
+  return name
+    .replace(/\s{2,}/g, ' ') 
+    .split(' ')
+    .map(word => {
+      if (word.length === 0) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+};
+
+const validateEmailFormat = (val: string) => {
+  if (!val) return true; 
+  if (val.length > 100) return false;
+  
+  if (!/^[a-zA-Z0-9]/.test(val)) return false;
+  if (/\.\./.test(val)) return false;
+
+  const parts = val.split("@");
+  if (parts.length !== 2) return false; 
+
+  const beforeAt = parts[0];
+  const afterAt = parts[1];
+
+  if (!beforeAt || !afterAt) return false;
+
+  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+  if (beforeAt.endsWith(".")) return false;
+
+  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+
+  return true;
+};
+
 const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const router = useRouter();
   const { updateStatus, updateOrder } = useOrderMutations();
@@ -68,9 +103,27 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
 
   const handleSaveEdit = async () => {
     const errors: Record<string, string> = {};
-    if (!editForm.first_name.trim()) errors.first_name = "Required";
-    if (!editForm.last_name.trim()) errors.last_name = "Required";
+    
+    const allowedNameChars = /^[a-zA-Z\-' ]*$/;
+
+    if (!editForm.first_name.trim()) {
+      errors.first_name = "First name is required";
+    } else if (!allowedNameChars.test(editForm.first_name)) {
+      errors.first_name = "Only letters, hyphens, and single quotes allowed";
+    }
+
+    if (!editForm.last_name.trim()) {
+      errors.last_name = "Last name is required";
+    } else if (!allowedNameChars.test(editForm.last_name)) {
+      errors.last_name = "Only letters, hyphens, and single quotes allowed";
+    }
+
     if (!editForm.phone.trim()) errors.phone = "Required";
+
+    if (editForm.email && !validateEmailFormat(editForm.email)) {
+      errors.email = "Invalid email format";
+    }
+
     setEditErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -224,15 +277,16 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">
-                      First Name
+                      First Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
+                      maxLength={50}
                       value={editForm.first_name}
                       onChange={(e) => {
                         setEditForm({
                           ...editForm,
-                          first_name: e.target.value,
+                          first_name: formatName(e.target.value),
                         });
                         setEditErrors({ ...editErrors, first_name: "" });
                       }}
@@ -246,13 +300,14 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">
-                      Last Name
+                      Last Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
+                      maxLength={50}
                       value={editForm.last_name}
                       onChange={(e) => {
-                        setEditForm({ ...editForm, last_name: e.target.value });
+                        setEditForm({ ...editForm, last_name: formatName(e.target.value) });
                         setEditErrors({ ...editErrors, last_name: "" });
                       }}
                       className={`${inputClass} ${editErrors.last_name ? "border-red-400" : ""}`}
@@ -266,7 +321,7 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
-                    Phone
+                    Phone <span className="text-red-500">*</span> 
                   </label>
                   <input
                     type="text"
@@ -285,16 +340,23 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
-                    Email
+                    Email 
                   </label>
                   <input
                     type="email"
+                    maxLength={100}
                     value={editForm.email ?? ""}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, email: e.target.value })
-                    }
-                    className={inputClass}
+                    onChange={(e) => {
+                      setEditForm({ ...editForm, email: e.target.value });
+                      setEditErrors({ ...editErrors, email: "" });
+                    }}
+                    className={`${inputClass} ${editErrors.email ? "border-red-400" : ""}`}
                   />
+                  {editErrors.email && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {editErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
@@ -302,6 +364,7 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   </label>
                   <input
                     type="text"
+                    maxLength={250}
                     value={editForm.message ?? ""}
                     onChange={(e) =>
                       setEditForm({ ...editForm, message: e.target.value })
