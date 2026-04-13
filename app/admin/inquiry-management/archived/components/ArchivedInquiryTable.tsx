@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-  Archive,
+  ArchiveRestore,
   ChevronDown,
   MessageSquare,
   Loader2,
@@ -15,47 +15,43 @@ import {
   getStatusDot,
   getStatusBg,
   initials,
-} from "../types";
+} from "../../types";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 
-interface InquiryTableProps {
+interface ArchivedInquiryTableProps {
   inquiries: Inquiry[];
   loading: boolean;
   searchQuery: string;
-  filterStatus: string;
   selectedIds: string[];
   isFilterOpen: boolean;
   filterRef: React.RefObject<HTMLDivElement | null>;
   dateFilter: DateFilter | null;
   onSearchChange: (v: string) => void;
-  onFilterChange: (v: string) => void;
   onFilterOpenToggle: () => void;
   onDateFilterChange: (f: DateFilter | null) => void;
   onRowClick: (inquiry: Inquiry) => void;
   onToggleAll: () => void;
   onToggleOne: (id: string) => void;
-  onDeleteClick: () => void;
+  onRestoreClick: () => void;
   allSelected: boolean;
   someSelected: boolean;
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
 }
 
-const InquiryTable: React.FC<InquiryTableProps> = ({
+const ArchivedInquiryTable: React.FC<ArchivedInquiryTableProps> = ({
   inquiries,
   loading,
-  filterStatus,
   selectedIds,
   isFilterOpen,
   filterRef,
   dateFilter,
-  onFilterChange,
   onFilterOpenToggle,
   onDateFilterChange,
   onRowClick,
   onToggleAll,
   onToggleOne,
-  onDeleteClick,
+  onRestoreClick,
   allSelected,
   someSelected,
   sortConfig,
@@ -65,54 +61,28 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Messages</h2>
+          <h2 className="text-base font-semibold text-gray-900">
+            Archived Messages
+          </h2>
           <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-            All inquiries submitted by customers are listed below.
+            Inquiries that have been archived are listed below.
             <br />
-            Click on a particular inquiry to view its full details.
+            Select rows and click Restore to move them back to the active list.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {someSelected && (
             <button
-              onClick={onDeleteClick}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors animate-in fade-in duration-150"
+              onClick={onRestoreClick}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors animate-in fade-in duration-150"
             >
-              <Archive size={13} />
-              Archive ({selectedIds.length})
+              <ArchiveRestore size={13} />
+              Restore ({selectedIds.length})
             </button>
           )}
 
           <CalendarPicker value={dateFilter} onChange={onDateFilterChange} />
-
-          <div className="relative" ref={filterRef}>
-            <button
-              onClick={onFilterOpenToggle}
-              className={`flex items-center gap-2 px-4 py-2 text-xs border rounded-lg font-medium transition-colors ${
-                isFilterOpen
-                  ? "bg-red-600 text-white border-red-600"
-                  : "border-red-200 text-red-600 hover:bg-red-50"
-              }`}
-            >
-              <span>{filterStatus}</span>
-              <ChevronDown size={14} />
-            </button>
-
-            {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                {["All", "New", "Viewed", "Resolved"].map((s) => (
-                  <button
-                    key={s}
-                    className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${s === filterStatus ? "text-red-600 font-medium" : "text-gray-600"}`}
-                    onClick={() => onFilterChange(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -120,12 +90,12 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
             <Loader2 className="animate-spin" size={20} />
-            <p className="text-sm">Loading inquiries...</p>
+            <p className="text-sm">Loading archived inquiries...</p>
           </div>
         ) : inquiries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 gap-2 text-gray-400">
             <MessageSquare size={24} strokeWidth={1.5} />
-            <p className="text-sm">No inquiries found.</p>
+            <p className="text-sm">No archived inquiries found.</p>
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
@@ -179,7 +149,9 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
                 <tr
                   key={inquiry.id}
                   onClick={() => onRowClick(inquiry)}
-                  className={`hover:bg-gray-100 transition-colors cursor-pointer ${selectedIds.includes(inquiry.id) ? "bg-red-50/80" : ""}`}
+                  className={`hover:bg-gray-100 transition-colors cursor-pointer ${
+                    selectedIds.includes(inquiry.id) ? "bg-green-50/80" : ""
+                  }`}
                 >
                   <td
                     className="py-3.5 pl-5"
@@ -231,4 +203,4 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
   );
 };
 
-export default InquiryTable;
+export default ArchivedInquiryTable;

@@ -125,15 +125,12 @@ export function Navbar() {
     { href: "/", label: "Home" },
     { href: "/about", label: "About Us" },
     { href: "/collection", label: "All Collection" },
-    ...["Tiles", "Stones", "Fixtures"].map((name) => ({
-      label: name,
+    ...categories.map((cat) => ({
+      label: cat.name,
       icon: ChevronDown,
       onClick: () => {
-        const cat = categories.find((c) => c.name === name);
-        if (cat) {
-          setActiveCategory(cat);
-          setIsCategoryOpen(true);
-        }
+        setActiveCategory(cat);
+        setIsCategoryOpen(true);
       },
     })),
     { href: "/faq", label: "FAQ" },
@@ -744,7 +741,7 @@ export function Navbar() {
                       <Button
                         onClick={() => clearCart()}
                         variant="ghost"
-                        className="flex-1 h-11 border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 rounded-lg font-medium text-sm cursor-pointer transition-colors"
+                        className="flex-1 h-11 border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 rounded-lg font-medium text-sm cursor-pointer transition-colors"
                       >
                         Clear Cart
                       </Button>

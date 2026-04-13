@@ -392,9 +392,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                     className={`${inputClass} appearance-none`}
                   >
                     <option value="cash">Cash</option>
-                    <option value="gcash">GCash</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="card">Card</option>
+                    <option value="online_payment">Online Payment</option>
                   </select>
                   <ChevronDown
                     size={14}
@@ -485,6 +483,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                                 src={v.image_url}
                                 alt={v.name}
                                 fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 className="object-cover"
                               />
                             ) : (

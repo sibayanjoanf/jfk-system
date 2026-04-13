@@ -4,6 +4,7 @@ import { Images } from "lucide-react";
 interface AddCategoryFormProps {
   newCategory: { name: string; image_url: string };
   thumbRef: React.RefObject<HTMLInputElement | null>;
+  existingNames: string[];
   onChange: (name: string) => void;
   onThumbnail: (file: File) => void;
   onAdd: () => void;
@@ -13,6 +14,7 @@ interface AddCategoryFormProps {
 const AddCategoryForm: React.FC<AddCategoryFormProps> = ({
   newCategory,
   thumbRef,
+  existingNames,
   onChange,
   onThumbnail,
   onAdd,

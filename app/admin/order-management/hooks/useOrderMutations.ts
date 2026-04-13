@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Order, OrderStatus, CreateOrderForm } from "../types";
+import { Order, OrderStatus, CreateOrderForm, OrderItem } from "../types";
 
 export function useOrderMutations() {
 
@@ -72,12 +72,47 @@ export function useOrderMutations() {
     }
   };
 
-  const deleteOrders = async (ids: string[]): Promise<{ error: string | null }> => {
+  // Archive instead of delete
+  const archiveOrders = async (ids: string[]): Promise<{ error: string | null }> => {
     try {
       const { error } = await supabase
         .from("inquiries")
-        .delete()
+        .update({ is_archived: true })
         .in("id", ids);
+
+      if (error) throw error;
+      return { error: null };
+    } catch (err) {
+      const e = err as { message: string };
+      return { error: e.message };
+    }
+  };
+
+  // Restore archived orders
+  const restoreOrders = async (ids: string[]): Promise<{ error: string | null }> => {
+    try {
+      const { error } = await supabase
+        .from("inquiries")
+        .update({ is_archived: false })
+        .in("id", ids);
+
+      if (error) throw error;
+      return { error: null };
+    } catch (err) {
+      const e = err as { message: string };
+      return { error: e.message };
+    }
+  };
+
+  const refundItems = async (
+    id: string,
+    refundedItems: OrderItem[]
+  ): Promise<{ error: string | null }> => {
+    try {
+      const { error } = await supabase
+        .from("inquiries")
+        .update({ refunded_items: refundedItems })
+        .eq("id", id);
 
       if (error) throw error;
       return { error: null };
@@ -106,7 +141,9 @@ export function useOrderMutations() {
     updateStatus,
     updateOrder,
     createOrder,
-    deleteOrders,
+    archiveOrders, 
+    restoreOrders,   
     bulkUpdateStatus,
+    refundItems,
   };
 }

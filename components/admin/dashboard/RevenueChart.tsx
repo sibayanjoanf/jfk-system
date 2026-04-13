@@ -13,7 +13,6 @@ import type { Payload } from "recharts/types/component/DefaultTooltipContent";
 
 interface RevenueData {
   name: string;
-  facebook: number;
   website: number;
 }
 
@@ -62,12 +61,10 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
   return (
     <div className="bg-white p-6 rounded-3xl border border-[#E1E1E1] shadow-sm h-[400px]">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-[#050F24]">Revenue</h3>
+        <h3 className="text-md font-semibold text-[#050F24]">
+          Revenue Over Time
+        </h3>
         <div className="flex gap-4 text-xs font-normal text-gray-500">
-          <span className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#DF2025]" />
-            Facebook
-          </span>
           <span className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-[#27D095]" />
             Website
@@ -121,21 +118,6 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
               fill: "#fff",
               strokeWidth: 3,
               stroke: "#27D095",
-            }}
-          />
-
-          <Line
-            type="monotone"
-            dataKey="facebook"
-            stroke="#DF2025"
-            strokeWidth={4}
-            dot={false}
-            strokeLinecap="round"
-            activeDot={{
-              r: 6,
-              fill: "#fff",
-              strokeWidth: 3,
-              stroke: "#DF2025",
             }}
           />
         </LineChart>

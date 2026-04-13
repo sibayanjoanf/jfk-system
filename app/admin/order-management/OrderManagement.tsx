@@ -1,19 +1,18 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { FileText, ShoppingCart, Search } from "lucide-react";
+import { ShoppingCart, Search, Archive } from "lucide-react";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
 import { useOrderData } from "./hooks/useOrderData";
 import OrderTable from "./components/OrderTable";
 import CreateOrderModal from "./components/CreateOrderModal";
-import InvoiceTemplate from "./components/InvoiceTemplate";
+import Link from "next/link";
 
-type TabType = "orders" | "invoice";
+type TabType = "orders";
 
 const tabs: { key: TabType; label: string; icon: React.ElementType }[] = [
   { key: "orders", label: "Orders", icon: ShoppingCart },
-  { key: "invoice", label: "Invoice Template", icon: FileText },
 ];
 
 const OrderManagement: React.FC = () => {
@@ -110,6 +109,13 @@ const OrderManagement: React.FC = () => {
             {label}
           </button>
         ))}
+        <Link
+          href="/admin/order-management/archived"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+        >
+          <Archive size={13} />
+          Archived
+        </Link>
       </div>
 
       {/* Tab Content */}
@@ -131,8 +137,6 @@ const OrderManagement: React.FC = () => {
           onSort={handleSort}
         />
       )}
-
-      {activeTab === "invoice" && <InvoiceTemplate />}
 
       {showCreateModal && (
         <CreateOrderModal

@@ -162,7 +162,7 @@ export default function RegisterPage() {
           alt="JFK Logo"
           width={45}
           height={45}
-          className="opacity-90"
+          className="opacity-90 mb-10"
         />
       </div>
 
@@ -453,7 +453,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => router.push("/admin")}
-              className="font-semibold text-red-600 hover:text-red-700 transition-colors"
+              className="font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full"
             >
               Sign in here
             </button>

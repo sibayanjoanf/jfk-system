@@ -75,7 +75,7 @@ const HeaderUser: React.FC = () => {
       </TooltipProvider>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-2xl py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="px-4 py-3 border-b border-gray-100">
             <p className="text-sm font-semibold text-gray-900">Maverick Kim</p>
             <p className="text-xs text-gray-400 truncate">
@@ -90,10 +90,12 @@ const HeaderUser: React.FC = () => {
             </button>
           </Link>
 
-          <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-            <Settings size={15} className="text-gray-400" />
-            Settings
-          </button>
+          <Link href="/admin/system-settings">
+            <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+              <Settings size={15} className="text-gray-400" />
+              Settings
+            </button>
+          </Link>
 
           <Link href="/">
             <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
@@ -102,11 +104,11 @@ const HeaderUser: React.FC = () => {
             </button>
           </Link>
 
-          <div className="border-t border-gray-100 mt-1">
+          <div className="border-t border-gray-100">
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm rounded-b-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
             >
               {isLoggingOut ? (
                 <Loader2 size={15} className="animate-spin" />

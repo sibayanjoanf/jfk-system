@@ -1,32 +1,16 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import {
-  ChevronDown,
-  Plus,
-  Archive,
-  RotateCcw,
-  Loader2,
-  ChevronUp,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import {
-  OrderRow,
-  OrderStatus,
-  ORDER_STATUSES,
-  ALLOWED_TRANSITIONS,
-} from "../types";
-import StatusBadge from "./StatusBadge";
+import { ChevronDown, ArchiveRestore, Loader2, ChevronUp } from "lucide-react";
+import { OrderRow, ORDER_STATUSES } from "../../types";
+import StatusBadge from "../../components/StatusBadge";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 import Pagination from "@/app/admin/inventory-management/components/Pagination";
-import { useOrderMutations } from "../hooks/useOrderMutations";
 import ConfirmModal from "@/app/admin/components/ConfirmModal";
 
-interface OrderTableProps {
+interface ArchivedOrderTableProps {
   rows: OrderRow[];
   loading: boolean;
-  onRefresh: () => void;
-  onCreateOrder: () => void;
   search: string;
   currentPage: number;
   pageSize: number;
@@ -34,6 +18,8 @@ interface OrderTableProps {
   onPageSizeChange: (size: number) => void;
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
+  onRestore: (ids: string[]) => Promise<void>;
+  onRefresh: () => void;
 }
 
 const SortArrows = ({
@@ -64,11 +50,9 @@ const SortArrows = ({
   );
 };
 
-const OrderTable: React.FC<OrderTableProps> = ({
+const ArchivedOrderTable: React.FC<ArchivedOrderTableProps> = ({
   rows,
   loading,
-  onRefresh,
-  onCreateOrder,
   search,
   currentPage,
   pageSize,
@@ -76,27 +60,20 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onPageSizeChange,
   sortConfig,
   onSort,
+  onRestore,
 }) => {
-  const router = useRouter();
-  const { archiveOrders, bulkUpdateStatus } = useOrderMutations();
   const [statusFilter, setStatusFilter] = useState("All");
   const [statusOpen, setStatusOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
-  const [bulkLoading, setBulkLoading] = useState(false);
-  const [archiveModalOpen, setArchiveModalOpen] = useState(false);
-  const [archiving, setArchiving] = useState(false);
-
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
-  const bulkRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (statusRef.current && !statusRef.current.contains(e.target as Node))
         setStatusOpen(false);
-      if (bulkRef.current && !bulkRef.current.contains(e.target as Node))
-        setBulkStatusOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -136,7 +113,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
           })();
         return matchesSearch && matchesStatus && matchesDate;
       }),
-    [rows, search, statusFilter, dateFilter, sortConfig],
+    [rows, search, statusFilter, dateFilter],
   );
 
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
@@ -144,10 +121,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
-
   const allSelected =
     paginated.length > 0 && paginated.every((o) => selectedIds.includes(o.id));
-  const someSelected = selectedIds.length > 0;
 
   const toggleAll = () => {
     if (allSelected) setSelectedIds([]);
@@ -160,43 +135,24 @@ const OrderTable: React.FC<OrderTableProps> = ({
     );
   };
 
-  const handleArchiveConfirm = async () => {
-    setArchiving(true);
-    await archiveOrders(selectedIds);
+  const handleRestoreConfirm = async () => {
+    setRestoring(true);
+    await onRestore(selectedIds);
     setSelectedIds([]);
-    onRefresh();
-    setArchiving(false);
-    setArchiveModalOpen(false);
+    setRestoring(false);
+    setRestoreModalOpen(false);
   };
-
-  const handleBulkStatus = async (status: OrderStatus) => {
-    setBulkLoading(true);
-    const { error } = await bulkUpdateStatus(selectedIds, status);
-    if (error) alert(`Error: ${error}`);
-    else {
-      setSelectedIds([]);
-      onRefresh();
-    }
-    setBulkStatusOpen(false);
-    setBulkLoading(false);
-  };
-
-  const selectedOrders = rows.filter((o) => selectedIds.includes(o.id));
-  const commonTransitions = ORDER_STATUSES.filter((status) =>
-    selectedOrders.every((o) => ALLOWED_TRANSITIONS[o.status].includes(status)),
-  );
 
   return (
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {/* Header */}
         <div className="px-6 pt-5 pb-4 flex flex-col sm:flex-row justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-gray-900">
-              Order Management
+              Archived Orders
             </h2>
             <p className="text-xs text-gray-400 mt-1">
-              All orders placed by customers. Click a row to view full details.
+              Orders that have been archived. Select rows to restore them.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
@@ -234,65 +190,23 @@ const OrderTable: React.FC<OrderTableProps> = ({
               )}
             </div>
 
-            {someSelected && (
-              <div className="flex items-center gap-2 animate-in fade-in duration-150">
-                <div className="relative" ref={bulkRef}>
-                  <button
-                    onClick={() => setBulkStatusOpen(!bulkStatusOpen)}
-                    disabled={bulkLoading || commonTransitions.length === 0}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <RotateCcw size={13} />
-                    Status ({selectedIds.length}) <ChevronDown size={12} />
-                  </button>
-                  {bulkStatusOpen && (
-                    <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                      {commonTransitions.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-3 px-4">
-                          No valid transitions for selected orders
-                        </p>
-                      ) : (
-                        commonTransitions.map((s) => (
-                          <button
-                            key={s}
-                            className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
-                            onClick={() => handleBulkStatus(s)}
-                          >
-                            <StatusBadge status={s} />
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => setArchiveModalOpen(true)}
-                  disabled={bulkLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
-                >
-                  <Archive size={13} />
-                  Archive ({selectedIds.length})
-                </button>
-              </div>
+            {selectedIds.length > 0 && (
+              <button
+                onClick={() => setRestoreModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors animate-in fade-in duration-150"
+              >
+                <ArchiveRestore size={13} />
+                Restore ({selectedIds.length})
+              </button>
             )}
-
-            <button
-              onClick={onCreateOrder}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            >
-              <Plus size={14} />
-              New Order
-            </button>
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3 text-gray-400">
               <Loader2 className="animate-spin" size={20} />
-              <p className="text-sm">Loading orders...</p>
+              <p className="text-sm">Loading archived orders...</p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
@@ -356,17 +270,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       colSpan={8}
                       className="py-10 text-center text-xs text-gray-400"
                     >
-                      No orders found.
+                      No archived orders found.
                     </td>
                   </tr>
                 ) : (
                   paginated.map((order) => (
                     <tr
                       key={order.id}
-                      onClick={() =>
-                        router.push(`/admin/order-management/${order.id}`)
-                      }
-                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(order.id) ? "bg-red-50/60" : ""}`}
+                      className={`hover:bg-gray-50 transition-colors ${selectedIds.includes(order.id) ? "bg-green-50/60" : ""}`}
                     >
                       <td
                         className="py-3.5 pl-5"
@@ -435,7 +346,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
           )}
         </div>
 
-        {/* Pagination */}
         <div className="p-5">
           {!loading && filtered.length > 0 && (
             <Pagination
@@ -450,19 +360,18 @@ const OrderTable: React.FC<OrderTableProps> = ({
         </div>
       </div>
 
-      {/* Archive Confirm Modal */}
       <ConfirmModal
-        open={archiveModalOpen}
-        title={`Archive ${selectedIds.length} order${selectedIds.length > 1 ? "s" : ""}?`}
-        description="Archived orders will be moved to the archive and can be restored later."
-        confirmLabel="Yes, archive"
-        loading={archiving}
-        variant="archive"
-        onConfirm={handleArchiveConfirm}
-        onCancel={() => setArchiveModalOpen(false)}
+        open={restoreModalOpen}
+        title={`Restore ${selectedIds.length} order${selectedIds.length > 1 ? "s" : ""}?`}
+        description="These orders will be moved back to the active list."
+        confirmLabel="Yes, restore"
+        loading={restoring}
+        variant="restore"
+        onConfirm={handleRestoreConfirm}
+        onCancel={() => setRestoreModalOpen(false)}
       />
     </>
   );
 };
 
-export default OrderTable;
+export default ArchivedOrderTable;

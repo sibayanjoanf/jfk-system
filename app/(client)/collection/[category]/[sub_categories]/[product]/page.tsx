@@ -103,42 +103,69 @@ export default async function ProductDetailPage({ params }: PageProps) {
     .from("products")
     .select(
       `
-      *,
-      sub_categories!inner (
-        name,
-        categories!inner (
-          name
-        )
-      ),
-      product_variants(*)
-    `,
+    *,
+    sub_categories!inner (
+      name,
+      categories!inner ( name )
+    ),
+    product_variants(*)
+  `,
     )
     .ilike("name", productName)
     .eq("sub_categories.name", subcatName)
     .eq("sub_categories.categories.name", categoryName)
+    .eq("is_archived", false)
     .single();
 
   if (error || !product) return notFound();
-  const firstVariant = product.product_variants?.[0];
+
+  // Fetch available_qty from view
+  const { data: available } = await supabase
+    .from("product_variants_available")
+    .select("id, available_qty");
+
+  const availableMap = Object.fromEntries(
+    (available || []).map((v) => [v.id, v.available_qty]),
+  );
+
+  const activeVariants = (product.product_variants ?? [])
+    .filter((v: { is_archived: boolean }) => !v.is_archived)
+    .map((v: { id: string; is_archived: boolean }) => ({
+      ...v,
+      stock_qty: availableMap[v.id] ?? 0,
+    }));
+
+  const firstVariant = activeVariants[0];
   if (!firstVariant) return notFound();
 
   const { data: relatedProducts } = await supabase
     .from("products")
     .select(
       `
-      *,
-      sub_categories!inner (
-        name,
-        categories!inner (
-          name
-        )
-      ),
-      product_variants(*)
-    `,
+    *,
+    sub_categories!inner (
+      name,
+      categories!inner ( name )
+    ),
+    product_variants(*)
+  `,
     )
     .eq("sub_categories.categories.name", categoryName)
+    .eq("is_archived", false)
     .neq("name", productName)
     .limit(10);
+
+  const activeRelated = (relatedProducts ?? [])
+    .map((p) => ({
+      ...p,
+      product_variants: (p.product_variants ?? [])
+        .filter((v: { is_archived: boolean }) => !v.is_archived)
+        .map((v: { id: string; is_archived: boolean }) => ({
+          ...v,
+          stock_qty: availableMap[v.id] ?? 0,
+        })),
+    }))
+    .filter((p) => p.product_variants.length > 0);
 
   return (
     <main className="min-h-screen bg-white">
@@ -169,16 +196,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
       </section>
 
       <div className="container mx-auto px-4 py-12">
-        <ProductDetailVariant
-          product={product}
-          variants={product.product_variants ?? []}
-        />
+        <ProductDetailVariant product={product} variants={activeVariants} />
 
         <Reveal>
           <section className="bg-white py-8">
             <AlsoLikeSection
               title="You Might Also Like"
-              products={relatedProducts ?? []}
+              products={activeRelated}
             />
           </section>
         </Reveal>

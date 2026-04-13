@@ -76,19 +76,41 @@ export default function CategoryPage({ params }: PageProps) {
         .select(
           `*, sub_categories!inner (name, categories!inner (name)), product_variants (*)`,
         )
-        .eq("sub_categories.name", name);
+        .eq("sub_categories.name", name)
+        .eq("is_archived", false);
 
       const { data: byCat } = await supabase
         .from("products")
         .select(
           `*, sub_categories!inner (name, categories!inner (name)), product_variants (*)`,
         )
-        .eq("sub_categories.categories.name", name);
+        .eq("sub_categories.categories.name", name)
+        .eq("is_archived", false);
+
+      // Fetch available_qty from view
+      const { data: available } = await supabase
+        .from("product_variants_available")
+        .select("id, available_qty");
+
+      const availableMap = Object.fromEntries(
+        (available || []).map((v) => [v.id, v.available_qty]),
+      );
 
       const merged = [...(bySubCat || []), ...(byCat || [])];
-      const productData = merged.filter(
-        (p, index, self) => index === self.findIndex((t) => t.id === p.id),
-      );
+      const productData = merged
+        .filter(
+          (p, index, self) => index === self.findIndex((t) => t.id === p.id),
+        )
+        .map((p) => ({
+          ...p,
+          product_variants: (p.product_variants ?? [])
+            .filter((v: { is_archived: boolean }) => !v.is_archived)
+            .map((v: { id: string; is_archived: boolean }) => ({
+              ...v,
+              stock_qty: availableMap[v.id] ?? 0,
+            })),
+        }))
+        .filter((p) => p.product_variants.length > 0);
 
       const { data: catData } = await supabase
         .from("categories")

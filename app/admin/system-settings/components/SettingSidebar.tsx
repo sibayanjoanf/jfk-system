@@ -44,7 +44,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           </div>
           <ChevronDown
             size={14}
-            className={`text-gray-300 transition-transform ${isActive ? "-rotate-90" : ""}`}
+            className={`text-gray-300 transition-transform ${
+              isActive ? "-rotate-90" : ""
+            }`}
           />
         </button>
       );

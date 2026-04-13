@@ -25,5 +25,6 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
     items:               data.items ?? [],
     total_amount:        data.total_amount,
     created_at:          data.created_at,
+    refunded_items:       data.refunded_items ?? [],
   };
 }

@@ -245,8 +245,9 @@ export default function CartPage() {
                       })}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400">
-                    Please proceed to the inquiry form to continue.
+                  <p className="text-[11px] text-gray-400 italic">
+                    * Final pricing may vary depending on delivery,
+                    installation, and other charges.
                   </p>
                   <Link href="/inquiry-form">
                     <Button className="cursor-pointer w-full bg-red-600 h-12 text-sm font-semibold hover:bg-red-700">

@@ -34,16 +34,13 @@ function ProductFeatureSection({
   products,
   categoryLink,
 }: ProductFeatureProps) {
-  if (products.length === 0) {
-    return null;
-  }
+  if (products.length === 0) return null;
 
   return (
     <div className="container mx-auto px-4 flex flex-col justify-between">
       <div
         className={cn(
-          "mb-8 flex flex-col lg:flex-row lg:justify-between gap-2",
-          title === "Tiles" ? "mt-0" : "mt-15",
+          "mb-8 flex flex-col lg:flex-row lg:justify-between gap-2 mt-5",
         )}
       >
         <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
@@ -54,13 +51,7 @@ function ProductFeatureSection({
           View all <ArrowRight className="ml-1 h-4 w-4" />
         </Link>
       </div>
-      <Carousel
-        opts={{
-          align: "start",
-          loop: false,
-        }}
-        className="w-full"
-      >
+      <Carousel opts={{ align: "start", loop: false }} className="w-full">
         <CarouselContent>
           {products.slice(0, 10).map((product) => {
             const variant = product.product_variants?.[0];
@@ -119,38 +110,61 @@ function CategorySection({ image, categoryLabel }: CategorySectionProps) {
   );
 }
 
-// Fetch directly from Supa
-async function getProducts(category?: string): Promise<Product[]> {
-  try {
-    let query = supabase.from("products").select(`
-        *,
-        sub_categories!inner (
-          name,
-          categories!inner (
-            name
-          )
-        ),
-        product_variants (*)
-      `);
+async function getProductsByCategory() {
+  const { data: products, error } = await supabase
+    .from("products")
+    .select(
+      `
+      *,
+      sub_categories!inner (
+        name,
+        categories!inner ( name )
+      ),
+      product_variants (*)
+    `,
+    )
+    .eq("is_archived", false);
 
-    if (category) {
-      query = query.eq("sub_categories.categories.name", category);
-    }
+  if (error || !products) return [];
 
-    const { data, error } = await query;
+  // Fetch available_qty from view
+  const { data: available } = await supabase
+    .from("product_variants_available")
+    .select("id, available_qty");
 
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.log("Using Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...");
-    return [];
+  const availableMap = Object.fromEntries(
+    (available || []).map((v) => [v.id, v.available_qty]),
+  );
+
+  const filtered = products
+    .map((p) => ({
+      ...p,
+      product_variants: (p.product_variants ?? [])
+        .filter((v: { is_archived: boolean }) => !v.is_archived)
+        .map((v: { id: string }) => ({
+          ...v,
+          stock_qty: availableMap[v.id] ?? 0,
+        })),
+    }))
+    .filter((p) => p.product_variants.length > 0);
+
+  const grouped: Record<string, Product[]> = {};
+  for (const p of filtered) {
+    const cat = p.sub_categories?.categories?.name;
+    if (!cat) continue;
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(p);
   }
+
+  return Object.entries(grouped).map(([category, products]) => ({
+    category,
+    products,
+  }));
 }
 
 async function getCategories(): Promise<Categories[]> {
   try {
     const { data, error } = await supabase.from("categories").select("*");
-
     if (error) throw error;
     return data || [];
   } catch (error) {
@@ -173,7 +187,6 @@ async function getShowcase(): Promise<ShowcaseProducts[]> {
           )
         )
       `);
-
     if (error) throw error;
     return data || [];
   } catch (error) {
@@ -183,16 +196,8 @@ async function getShowcase(): Promise<ShowcaseProducts[]> {
 }
 
 export default async function Page() {
-  const [
-    tilesProducts,
-    stonesProducts,
-    fixturesProducts,
-    categories,
-    showcase,
-  ] = await Promise.all([
-    getProducts("Tiles"),
-    getProducts("Stones"),
-    getProducts("Fixtures"),
+  const [productsByCategory, categories, showcase] = await Promise.all([
+    getProductsByCategory(),
     getCategories(),
     getShowcase(),
   ]);
@@ -244,7 +249,6 @@ export default async function Page() {
         </div>
       </section>
 
-      {/* Product Category Section */}
       {/* Product Category Section */}
       <Reveal>
         <section className="pt-30 pb-20">
@@ -300,23 +304,14 @@ export default async function Page() {
       {/* Featured Products Section */}
       <Reveal>
         <section className="bg-white py-15">
-          <ProductFeatureSection
-            title="Tiles"
-            products={tilesProducts}
-            categoryLink="Tiles"
-          />
-
-          <ProductFeatureSection
-            title="Stones"
-            products={stonesProducts}
-            categoryLink="Stones"
-          />
-
-          <ProductFeatureSection
-            title="Fixtures"
-            products={fixturesProducts}
-            categoryLink="Fixtures"
-          />
+          {productsByCategory.map(({ category, products }) => (
+            <ProductFeatureSection
+              key={category}
+              title={category}
+              products={products}
+              categoryLink={category}
+            />
+          ))}
         </section>
       </Reveal>
 
@@ -419,10 +414,7 @@ export default async function Page() {
               </p>
             ) : (
               <Carousel
-                opts={{
-                  align: "start",
-                  loop: false,
-                }}
+                opts={{ align: "start", loop: false }}
                 className="w-full"
               >
                 <CarouselContent>

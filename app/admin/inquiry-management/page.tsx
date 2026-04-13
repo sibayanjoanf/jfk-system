@@ -4,17 +4,17 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
-
 import { useInquiries } from "./hooks/useInquiries";
 import { Inquiry } from "./types";
-
 import InquiryTable from "./components/InquiryTable";
 import InquiryDrawer from "./components/InquiryDrawer";
-import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import ConfirmModal from "@/app/admin/components/ConfirmModal";
 import { DateFilter } from "@/components/admin/CalendarPicker";
+import Link from "next/link";
+import { Inbox, Archive } from "lucide-react";
 
 const InquiryManagement: React.FC = () => {
-  const { inquiries, loading, updateStatus, deleteInquiries } = useInquiries();
+  const { inquiries, loading, updateStatus, archiveInquiries } = useInquiries();
 
   const [filterStatus, setFilterStatus] = useState("All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -26,10 +26,9 @@ const InquiryManagement: React.FC = () => {
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   const [sending, setSending] = useState(false);
-  const [replyText, setReplyText] = useState("");
 
   const filterRef = useRef<HTMLDivElement>(null);
   const [sortConfig, setSortConfig] = useState<{
@@ -89,9 +88,8 @@ const InquiryManagement: React.FC = () => {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node))
         setIsFilterOpen(false);
-      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -119,7 +117,6 @@ const InquiryManagement: React.FC = () => {
     } else {
       setActiveInquiry(inquiry);
     }
-    setReplyText("");
     setDrawerOpen(true);
   };
 
@@ -128,15 +125,16 @@ const InquiryManagement: React.FC = () => {
     setTimeout(() => setActiveInquiry(null), 300);
   };
 
-  const handleConfirmDelete = async () => {
-    setDeleting(true);
-    const ok = await deleteInquiries(selectedIds);
+  // Archive instead of delete
+  const handleConfirmArchive = async () => {
+    setArchiving(true);
+    const ok = await archiveInquiries(selectedIds);
     if (ok) {
       if (activeInquiry && selectedIds.includes(activeInquiry.id))
         closeDrawer();
       setSelectedIds([]);
     }
-    setDeleting(false);
+    setArchiving(false);
     setConfirmOpen(false);
   };
 
@@ -204,6 +202,24 @@ const InquiryManagement: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5 mb-6 overflow-x-auto">
+        <Link
+          href="/admin/inquiry-management"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors bg-red-600 text-white shadow-sm"
+        >
+          <Inbox size={13} />
+          Active
+        </Link>
+        <Link
+          href="/admin/inquiry-management/archived"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+        >
+          <Archive size={13} />
+          Archived
+        </Link>
+      </div>
+
       {/* Table */}
       <InquiryTable
         inquiries={filteredInquiries}
@@ -231,13 +247,16 @@ const InquiryManagement: React.FC = () => {
         onSort={handleSort}
       />
 
-      {/* Delete Modal */}
-      <DeleteConfirmModal
+      {/* Archive Confirm Modal */}
+      <ConfirmModal
         open={confirmOpen}
-        count={selectedIds.length}
-        deleting={deleting}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => !deleting && setConfirmOpen(false)}
+        title={`Archive ${selectedIds.length} ${selectedIds.length === 1 ? "inquiry" : "inquiries"}?`}
+        description="Archived inquiries will be hidden from the list and can be restored later."
+        confirmLabel="Yes, archive"
+        loading={archiving}
+        variant="archive"
+        onConfirm={handleConfirmArchive}
+        onCancel={() => !archiving && setConfirmOpen(false)}
       />
 
       {/* Drawer */}
