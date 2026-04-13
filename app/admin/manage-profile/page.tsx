@@ -1,20 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CircleUserRound,
-  Camera,
   Trash2,
   LogOut,
   Shield,
   Eye,
   EyeOff,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
 import HeaderUser from "@/components/admin/HeaderUser";
+import { createBrowserClient } from "@supabase/ssr";
+import { useRouter } from "next/navigation";
+import { ROLE_LABELS, UserRole } from "@/app/admin/user-management/userTypes";
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
 
 const ProfilePage: React.FC = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "danger">(
     "profile",
   );
@@ -22,13 +31,19 @@ const ProfilePage: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [profileForm, setProfileForm] = useState({
-    firstName: "Maverick",
-    lastName: "Kim",
-    email: "jesusforeverking2009@gmail.com",
-    contact: "09123456789",
-    role: "Admin",
+    firstName: "",
+    lastName: "",
+    email: "",
+    contact: "",
+    role: "" as UserRole | "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -43,11 +58,139 @@ const ProfilePage: React.FC = () => {
     password: "",
   });
 
-  const tabs = [
-    { key: "profile", label: "Profile", icon: CircleUserRound },
-    { key: "security", label: "Security", icon: Shield },
-    { key: "danger", label: "Danger Zone", icon: Trash2 },
-  ] as const;
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("full_name, contact, role, email")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        const nameParts = (profile.full_name ?? "").split(" ");
+        setProfileForm({
+          firstName: nameParts[0] ?? "",
+          lastName: nameParts.slice(1).join(" ") ?? "",
+          email: profile.email ?? user.email ?? "",
+          contact: profile.contact ?? "",
+          role: profile.role ?? "",
+        });
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setErrorMessage("");
+    setTimeout(() => setSuccessMessage(""), 3000);
+  };
+
+  const showError = (msg: string) => {
+    setErrorMessage(msg);
+    setSuccessMessage("");
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setErrorMessage("");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const full_name = `${profileForm.firstName} ${profileForm.lastName}`.trim();
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({
+        full_name,
+        contact: profileForm.contact,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    setSaving(false);
+    if (error) showError(error.message);
+    else showSuccess("Profile updated successfully.");
+  };
+
+  const handleUpdatePassword = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showError("Passwords do not match.");
+      return;
+    }
+    setSavingPassword(true);
+    setErrorMessage("");
+
+    // Re-authenticate first
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: profileForm.email,
+      password: passwordForm.currentPassword,
+    });
+
+    if (signInError) {
+      showError("Current password is incorrect.");
+      setSavingPassword(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: passwordForm.newPassword,
+    });
+    setSavingPassword(false);
+    if (error) showError(error.message);
+    else {
+      showSuccess("Password updated successfully.");
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (emailForm.newEmail !== emailForm.confirmEmail) {
+      showError("Emails do not match.");
+      return;
+    }
+    setSavingEmail(true);
+    setErrorMessage("");
+
+    // Re-authenticate first
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: profileForm.email,
+      password: emailForm.password,
+    });
+
+    if (signInError) {
+      showError("Password is incorrect.");
+      setSavingEmail(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      email: emailForm.newEmail,
+    });
+    setSavingEmail(false);
+    if (error) showError(error.message);
+    else {
+      showSuccess("Confirmation sent to your new email address.");
+      setEmailForm({ newEmail: "", confirmEmail: "", password: "" });
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/admin");
+    router.refresh();
+  };
 
   const getPasswordStrength = (password: string) => {
     if (!password) return { label: "", color: "", width: "0%" };
@@ -61,6 +204,27 @@ const ProfilePage: React.FC = () => {
   };
 
   const strength = getPasswordStrength(passwordForm.newPassword);
+
+  const tabs = [
+    { key: "profile", label: "Profile", icon: CircleUserRound },
+    { key: "security", label: "Security", icon: Shield },
+    { key: "danger", label: "Danger Zone", icon: Trash2 },
+  ] as const;
+
+  const displayName =
+    `${profileForm.firstName} ${profileForm.lastName}`.trim() || "—";
+  const displayRole = profileForm.role
+    ? ROLE_LABELS[profileForm.role as UserRole]
+    : "—";
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-400 gap-2">
+        <Loader2 className="animate-spin" size={20} />
+        <span className="text-sm">Loading profile...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="p-0">
@@ -83,29 +247,23 @@ const ProfilePage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-4">
-          {/* Avatar Card */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
             <div className="relative mb-4">
-              <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center bg-gray-100/50">
-                  <CircleUserRound
-                    size={40}
-                    className="text-gray-400"
-                    strokeWidth={1}
-                  />
-                </div>
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+                <CircleUserRound
+                  size={40}
+                  className="text-gray-400"
+                  strokeWidth={1}
+                />
               </div>
             </div>
-            <p className="text-sm font-semibold text-gray-900">
-              {profileForm.firstName} {profileForm.lastName}
-            </p>
+            <p className="text-sm font-semibold text-gray-900">{displayName}</p>
             <p className="text-xs text-gray-400 mt-0.5">{profileForm.email}</p>
             <span className="mt-2 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
-              {profileForm.role}
+              {displayRole}
             </span>
           </div>
 
-          {/* Nav Tabs */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -116,9 +274,7 @@ const ProfilePage: React.FC = () => {
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium transition-all border-b border-gray-50 last:border-0 ${
                     isActive
-                      ? tab.key === "danger"
-                        ? "bg-red-50 text-red-600"
-                        : "bg-red-50 text-red-600"
+                      ? "bg-red-50 text-red-600"
                       : tab.key === "danger"
                         ? "text-red-500 hover:bg-red-50"
                         : "text-gray-600 hover:bg-gray-50"
@@ -132,8 +288,10 @@ const ProfilePage: React.FC = () => {
                 </button>
               );
             })}
-
-            <button className="flex items-center gap-2.5 w-full px-4 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all border-t border-gray-100">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 w-full px-4 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all border-t border-gray-100"
+            >
               <LogOut size={15} />
               Log out
             </button>
@@ -142,6 +300,18 @@ const ProfilePage: React.FC = () => {
 
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
+          {/* Feedback messages */}
+          {successMessage && (
+            <div className="px-4 py-3 bg-green-50 text-green-600 text-xs font-medium rounded-xl border border-green-100">
+              {successMessage}
+            </div>
+          )}
+          {errorMessage && (
+            <div className="px-4 py-3 bg-red-50 text-red-600 text-xs font-medium rounded-xl border border-red-100">
+              {errorMessage}
+            </div>
+          )}
+
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -153,7 +323,6 @@ const ProfilePage: React.FC = () => {
                   Update your personal details and contact information.
                 </p>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -220,15 +389,19 @@ const ProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={profileForm.role}
+                    value={displayRole}
                     disabled
                     className="w-full px-3.5 py-2.5 text-sm bg-gray-100 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed"
                   />
                 </div>
               </div>
-
               <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                <button className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {saving && <Loader2 size={13} className="animate-spin" />}
                   Save Changes
                 </button>
               </div>
@@ -240,17 +413,14 @@ const ProfilePage: React.FC = () => {
             <div className="space-y-6">
               {/* Change Password */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <div>
-                    <h2 className="text-base font-semibold text-gray-900">
-                      Change Password
-                    </h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Use a strong password you don&apos;t use elsewhere.
-                    </p>
-                  </div>
+                <div className="mb-6">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Change Password
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Use a strong password you don&apos;t use elsewhere.
+                  </p>
                 </div>
-
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -283,7 +453,6 @@ const ProfilePage: React.FC = () => {
                       </button>
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
                       New Password
@@ -319,15 +488,7 @@ const ProfilePage: React.FC = () => {
                             Password strength
                           </span>
                           <span
-                            className={`text-xs font-medium ${
-                              strength.label === "Strong"
-                                ? "text-green-500"
-                                : strength.label === "Good"
-                                  ? "text-yellow-500"
-                                  : strength.label === "Fair"
-                                    ? "text-orange-400"
-                                    : "text-red-500"
-                            }`}
+                            className={`text-xs font-medium ${strength.label === "Strong" ? "text-green-500" : strength.label === "Good" ? "text-yellow-500" : strength.label === "Fair" ? "text-orange-400" : "text-red-500"}`}
                           >
                             {strength.label}
                           </span>
@@ -341,7 +502,6 @@ const ProfilePage: React.FC = () => {
                       </div>
                     )}
                   </div>
-
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
                       Confirm New Password
@@ -357,13 +517,7 @@ const ProfilePage: React.FC = () => {
                           })
                         }
                         placeholder="Confirm new password"
-                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${
-                          passwordForm.confirmPassword &&
-                          passwordForm.newPassword !==
-                            passwordForm.confirmPassword
-                            ? "border-red-300 focus:ring-red-400 focus:border-red-400"
-                            : "border-gray-200 focus:ring-red-500 focus:border-red-500"
-                        }`}
+                        className={`w-full px-3.5 py-2.5 pr-10 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword ? "border-red-300 focus:ring-red-400 focus:border-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                       />
                       <button
                         onClick={() =>
@@ -387,9 +541,15 @@ const ProfilePage: React.FC = () => {
                       )}
                   </div>
                 </div>
-
                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                  <button className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                  <button
+                    onClick={handleUpdatePassword}
+                    disabled={savingPassword}
+                    className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {savingPassword && (
+                      <Loader2 size={13} className="animate-spin" />
+                    )}
                     Update Password
                   </button>
                 </div>
@@ -397,17 +557,14 @@ const ProfilePage: React.FC = () => {
 
               {/* Change Email */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <div>
-                    <h2 className="text-base font-semibold text-gray-900">
-                      Change Email
-                    </h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Update the email address associated with your account.
-                    </p>
-                  </div>
+                <div className="mb-6">
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Change Email
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Update the email address associated with your account.
+                  </p>
                 </div>
-
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -448,12 +605,7 @@ const ProfilePage: React.FC = () => {
                         })
                       }
                       placeholder="Confirm new email address"
-                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${
-                        emailForm.confirmEmail &&
-                        emailForm.newEmail !== emailForm.confirmEmail
-                          ? "border-red-300 focus:ring-red-400 focus:border-red-400"
-                          : "border-gray-200 focus:ring-red-500 focus:border-red-500"
-                      }`}
+                      className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:bg-white transition-all ${emailForm.confirmEmail && emailForm.newEmail !== emailForm.confirmEmail ? "border-red-300 focus:ring-red-400 focus:border-red-400" : "border-gray-200 focus:ring-red-500 focus:border-red-500"}`}
                     />
                     {emailForm.confirmEmail &&
                       emailForm.newEmail !== emailForm.confirmEmail && (
@@ -477,9 +629,15 @@ const ProfilePage: React.FC = () => {
                     />
                   </div>
                 </div>
-
                 <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                  <button className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                  <button
+                    onClick={handleUpdateEmail}
+                    disabled={savingEmail}
+                    className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {savingEmail && (
+                      <Loader2 size={13} className="animate-spin" />
+                    )}
                     Update Email
                   </button>
                 </div>
@@ -489,58 +647,47 @@ const ProfilePage: React.FC = () => {
 
           {/* Danger Zone Tab */}
           {activeTab === "danger" && (
-            <div className="space-y-6">
-              {/* Delete Account */}
-              <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
-                <div className="flex items-start gap-3 mb-5">
-                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Trash2 size={15} className="text-red-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-semibold text-gray-900">
-                      Delete Account
-                    </h2>
-                    <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                      Permanently delete your account and all associated data.
-                      This action is irreversible and cannot be undone. All your
-                      data will be permanently removed from our servers.
-                    </p>
-                  </div>
+            <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
+              <div className="flex items-start gap-3 mb-5">
+                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Trash2 size={15} className="text-red-600" />
                 </div>
-
-                <div className="p-3 bg-red-50 rounded-lg border border-red-100 mb-5">
-                  <p className="text-xs text-red-600 font-medium">
-                    ⚠ Warning: This will permanently delete all your data,
-                    orders, and account information.
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Delete Account
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                    Permanently delete your account and all associated data.
+                    This action is irreversible and cannot be undone.
                   </p>
                 </div>
-
-                <div className="mb-4">
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                    Type <span className="font-bold text-red-600">DELETE</span>{" "}
-                    to confirm
-                  </label>
-                  <input
-                    type="text"
-                    value={deleteConfirm}
-                    onChange={(e) => setDeleteConfirm(e.target.value)}
-                    placeholder="Type DELETE to confirm"
-                    className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
-                  />
-                </div>
-
-                <button
-                  disabled={deleteConfirm !== "DELETE"}
-                  className={`flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    deleteConfirm === "DELETE"
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  <Trash2 size={14} />
-                  Delete My Account
-                </button>
               </div>
+              <div className="p-3 bg-red-50 rounded-lg border border-red-100 mb-5">
+                <p className="text-xs text-red-600 font-medium">
+                  ⚠ Warning: This will permanently delete all your data, orders,
+                  and account information.
+                </p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Type <span className="font-bold text-red-600">DELETE</span> to
+                  confirm
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  placeholder="Type DELETE to confirm"
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                />
+              </div>
+              <button
+                disabled={deleteConfirm !== "DELETE"}
+                className={`flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-colors ${deleteConfirm === "DELETE" ? "bg-red-600 hover:bg-red-700 text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+              >
+                <Trash2 size={14} />
+                Delete My Account
+              </button>
             </div>
           )}
         </div>

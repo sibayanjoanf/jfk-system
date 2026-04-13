@@ -66,61 +66,61 @@ export default function RegisterPage() {
   };
 
   const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  if (password !== confirmPassword) {
-    setError("Passwords do not match.");
-    return;
-  }
-  if (password.length < 8) {
-    setError("Password must be at least 8 characters.");
-    return;
-  }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        first_name: firstName,
-        last_name: lastName,
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        },
       },
-    },
-  });
+    });
 
-  setLoading(false);
+    setLoading(false);
 
-  if (error) {
-    setError(error.message);
-    return;
-  }
+    if (error) {
+      setError(error.message);
+      return;
+    }
 
-  setOtpSent(true);
-};
+    setOtpSent(true);
+  };
 
-const handleVerifyOtp = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token: otp.join(""),
-    type: "signup", // 👈 different from forgot password which uses "email"
-  });
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp.join(""),
+      type: "signup", // 👈 different from forgot password which uses "email"
+    });
 
-  setLoading(false);
+    setLoading(false);
 
-  if (error) {
-    setError("Invalid or expired code. Please try again.");
-    return;
-  }
+    if (error) {
+      setError("Invalid or expired code. Please try again.");
+      return;
+    }
 
-  setConfirmed(true);
-};
+    setConfirmed(true);
+  };
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-between bg-transparent p-4">
@@ -341,18 +341,22 @@ const handleVerifyOtp = async (e: React.FormEvent) => {
               Account Created!
             </h2>
             <p className="text-sm text-gray-500">
-              Welcome,{" "}
+              Hi,{" "}
               <span className="font-semibold text-gray-900">
                 {firstName} {lastName}
               </span>
-              ! Your account has been successfully created.
+              ! Your account has been created and is{" "}
+              <span className="font-semibold text-amber-500">
+                pending approval
+              </span>
+              . You will be notified once an admin has approved your account.
             </p>
             <Button
               type="button"
               onClick={() => router.push("/admin")}
               className="mt-4 w-full h-12 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-all"
             >
-              Go to Login
+              Back to Login
             </Button>
           </div>
         )}

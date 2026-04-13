@@ -54,7 +54,21 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("status")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && ["pending", "inactive", "archived"].includes(profile.status)) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/admin";
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
 
   // --- SEC LOGIC ---
   const pathname = request.nextUrl.pathname

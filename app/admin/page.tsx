@@ -44,18 +44,64 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (authError) {
       setError("Unauthorized access. Please check your credentials.");
       setLoading(false);
-    } else {
-      router.push("/admin/dashboard");
-      router.refresh();
+      return;
     }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("status, role")
+      .eq("id", authData.user.id)
+      .single();
+
+    console.log("auth user id:", authData.user.id);
+    console.log("profile:", profile);
+    console.log("profile error:", profileError);
+
+    if (!profile) {
+      await supabase.auth.signOut();
+      setError("Account not found. Please contact your administrator.");
+      setLoading(false);
+      return;
+    }
+
+    if (profile.status === "pending") {
+      await supabase.auth.signOut();
+      setError(
+        "Your account is pending approval. Please wait for an administrator to approve your account.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (profile.status === "inactive") {
+      await supabase.auth.signOut();
+      setError(
+        "Your account has been deactivated. Please contact your administrator.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (profile.status === "archived") {
+      await supabase.auth.signOut();
+      setError(
+        "Your account no longer exists. Please contact your administrator.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    router.push("/admin/dashboard");
+    router.refresh();
   };
 
   if (checkingAuth) {
@@ -167,7 +213,7 @@ export default function AdminLoginPage() {
             type="button"
             onClick={() => router.push("/admin/register")}
             className="font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full"
-            >
+          >
             Register here
           </button>
         </p>

@@ -15,13 +15,85 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 import HeaderUser from "./HeaderUser";
 import HeaderNotifications from "./HeaderNotif";
+import {
+  UserProfile,
+  UserPermissions,
+} from "@/app/admin/user-management/userTypes";
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
+
+const ALL_MENU_ITEMS = [
+  {
+    icon: <Home size={18} />,
+    label: "Dashboard",
+    path: "/admin/dashboard",
+    permissionKey: "dashboard",
+  },
+  {
+    icon: <Package size={18} />,
+    label: "Order",
+    path: "/admin/order-management",
+    permissionKey: "orders",
+  },
+  {
+    icon: <List size={18} />,
+    label: "Products",
+    path: "/admin/product-management",
+    permissionKey: "products",
+  },
+  {
+    icon: <Layout size={18} />,
+    label: "Inventory",
+    path: "/admin/inventory-management",
+    permissionKey: "inventory",
+  },
+  {
+    icon: <TrendingUp size={18} />,
+    label: "Reports",
+    path: "/admin/sales-report",
+    permissionKey: "sales_report",
+  },
+  {
+    icon: <MessageSquare size={18} />,
+    label: "Inquiries",
+    path: "/admin/inquiry-management",
+    permissionKey: "inquiries",
+  },
+  {
+    icon: <Users size={18} />,
+    label: "Users",
+    path: "/admin/user-management",
+    permissionKey: "user_management",
+  },
+  {
+    icon: <Settings size={18} />,
+    label: "Settings",
+    path: "/admin/system-settings",
+    permissionKey: "system_settings",
+  },
+];
+
+function hasPermission(permissions: UserPermissions, key: string): boolean {
+  const value = permissions[key as keyof UserPermissions];
+  if (typeof value === "boolean") return value;
+  // For nested permissions (orders, inquiries), check if at least one sub-permission is true
+  if (typeof value === "object" && value !== null) {
+    return Object.values(value).some(Boolean);
+  }
+  return false;
+}
 
 const Sidebar: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const [logo, setLogo] = useState(
@@ -34,6 +106,23 @@ const Sidebar: React.FC = () => {
       .then((data) => {
         if (data.company_logo) setLogo(data.company_logo);
       });
+  }, []);
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("permissions")
+        .eq("id", user.id)
+        .single();
+      if (profile?.permissions)
+        setPermissions(profile.permissions as UserPermissions);
+    };
+    fetchPermissions();
   }, []);
 
   useEffect(() => {
@@ -54,44 +143,11 @@ const Sidebar: React.FC = () => {
     return () => clearTimeout(timer);
   }, [pathname]);
 
-  const menuItems = [
-    { icon: <Home size={18} />, label: "Dashboard", path: "/admin/dashboard" },
-    {
-      icon: <Package size={18} />,
-      label: "Order",
-      path: "/admin/order-management",
-    },
-    {
-      icon: <List size={18} />,
-      label: "Products",
-      path: "/admin/product-management",
-    },
-    {
-      icon: <Layout size={18} />,
-      label: "Inventory",
-      path: "/admin/inventory-management",
-    },
-    {
-      icon: <TrendingUp size={18} />,
-      label: "Reports",
-      path: "/admin/sales-report",
-    },
-    {
-      icon: <MessageSquare size={18} />,
-      label: "Inquiries",
-      path: "/admin/inquiry-management",
-    },
-    {
-      icon: <Users size={18} />,
-      label: "Users",
-      path: "/admin/user-management",
-    },
-    {
-      icon: <Settings size={18} />,
-      label: "Settings",
-      path: "/admin/system-settings",
-    },
-  ];
+  const menuItems = permissions
+    ? ALL_MENU_ITEMS.filter((item) =>
+        hasPermission(permissions, item.permissionKey),
+      )
+    : ALL_MENU_ITEMS; // show all while loading to avoid flicker
 
   return (
     <>
@@ -116,12 +172,9 @@ const Sidebar: React.FC = () => {
             </span>
           </div>
         </div>
-
         <div className="flex items-center gap-1">
           <HeaderNotifications />
           <HeaderUser />
-
-          {/* Burger */}
           <button
             onClick={() => setIsMobileOpen(!isMobileOpen)}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-900"
@@ -167,11 +220,7 @@ const Sidebar: React.FC = () => {
                 key={idx}
                 href={item.path}
                 className={`flex items-center h-11 rounded-lg transition-all duration-150
-                  ${
-                    isActive
-                      ? "bg-red-600 text-white shadow-sm"
-                      : "text-gray-900 hover:bg-gray-100"
-                  }`}
+                  ${isActive ? "bg-red-600 text-white shadow-sm" : "text-gray-900 hover:bg-gray-100"}`}
               >
                 <div className="w-[44px] min-w-[44px] flex justify-center items-center shrink-0 pl-2">
                   {item.icon}

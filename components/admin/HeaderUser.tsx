@@ -19,16 +19,37 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
+
 const HeaderUser: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+      if (profile) {
+        setFullName(profile.full_name ?? "");
+        setEmail(profile.email ?? user.email ?? "");
+      }
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -42,8 +63,7 @@ const HeaderUser: React.FC = () => {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
       router.push("/admin");
       router.refresh();
     } catch (error) {
@@ -77,10 +97,10 @@ const HeaderUser: React.FC = () => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">Maverick Kim</p>
-            <p className="text-xs text-gray-400 truncate">
-              jesusforeverking2009@gmail.com
+            <p className="text-sm font-semibold text-gray-900">
+              {fullName || "—"}
             </p>
+            <p className="text-xs text-gray-400 truncate">{email}</p>
           </div>
 
           <Link href="/admin/manage-profile">
