@@ -82,7 +82,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onSort,
 }) => {
   const router = useRouter();
-  const { deleteOrders, bulkUpdateStatus } = useOrderMutations();
+  const { archiveOrders, bulkUpdateStatus } = useOrderMutations();
   const [statusFilter, setStatusFilter] = useState("All");
   const [statusOpen, setStatusOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
@@ -176,7 +176,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     )
       return;
     setBulkLoading(true);
-    await deleteOrders(selectedIds);
+    await archiveOrders(selectedIds);
     setSelectedIds([]);
     onRefresh();
     setBulkLoading(false);

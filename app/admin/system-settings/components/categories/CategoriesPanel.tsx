@@ -346,6 +346,7 @@ const CategoriesPanel: React.FC = () => {
         <AddCategoryForm
           newCategory={newCategory}
           thumbRef={newCatThumbRef}
+          existingNames={categories.map((c) => c.name)}
           onChange={(name) => setNewCategory({ ...newCategory, name })}
           onThumbnail={handleNewCategoryThumbnail}
           onAdd={handleAddCategory}
