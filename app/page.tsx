@@ -168,7 +168,10 @@ async function getCategories(): Promise<Categories[]> {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.log("Using Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...");
+    console.log(
+      "Using Key:",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...",
+    );
     return [];
   }
 }
@@ -190,7 +193,10 @@ async function getShowcase(): Promise<ShowcaseProducts[]> {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.log("Using Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...");
+    console.log(
+      "Using Key:",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + "...",
+    );
     return [];
   }
 }
@@ -251,15 +257,14 @@ export default async function Page() {
 
       {/* Product Category Section */}
       <Reveal>
-        <section className="pt-30 pb-20">
+        <section className="pt-15 pb-20">
           <div className="container mx-auto px-4">
             <div className="mb-12 text-center">
               <h2 className="mb-4 text-2xl md:text-3xl font-bold text-gray-900">
                 Product Category
               </h2>
               <p className="text-sm mx-auto max-w-2xl text-gray-700">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
               </p>
             </div>
 
@@ -287,13 +292,17 @@ export default async function Page() {
                 </div>
               </Carousel>
             ) : (
-              <div className="grid gap-4 md:gap-8 md:grid-cols-3">
+              <div className="flex flex-wrap justify-center gap-4 md:gap-8">
                 {categories.map((category) => (
-                  <CategorySection
+                  <div
                     key={category.id}
-                    categoryLabel={category.name}
-                    image={category.image_url ?? "/images/placeholder.png"}
-                  />
+                    className="w-full sm:w-[calc(50%-1rem)] md:w-[calc(33.333%-2rem)] max-w-[400px]"
+                  >
+                    <CategorySection
+                      categoryLabel={category.name}
+                      image={category.image_url ?? "/images/placeholder.png"}
+                    />
+                  </div>
                 ))}
               </div>
             )}

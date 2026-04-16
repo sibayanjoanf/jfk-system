@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Plus, Images, Pencil, Trash2, Search, Loader2, X } from "lucide-react";
-import { useShowcase } from "../../hooks/useShowcase";
+import { Plus, Images, Trash2, Search, Loader2, X } from "lucide-react";
+import { useShowcase } from "../hooks/useShowcase";
 import { supabase } from "@/lib/supabase";
 
 interface ProductResult {
@@ -14,14 +14,8 @@ interface ProductResult {
 }
 
 const ShowcaseTab: React.FC = () => {
-  const {
-    showCaseImages,
-    loading,
-    addShowcase,
-    deleteShowcase,
-    updateShowcaseImage,
-    updateShowcaseName,
-  } = useShowcase();
+  const { showCaseImages, loading, addShowcase, deleteShowcase } =
+    useShowcase();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

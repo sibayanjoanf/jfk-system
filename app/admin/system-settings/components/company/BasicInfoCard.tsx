@@ -1,5 +1,6 @@
-import React, { useState } from "react"; 
+import React, { useState } from "react";
 import { CompanyForm } from "../../types";
+import { ContactInput } from "@/components/admin/ContactInput";
 
 interface BasicInfoCardProps {
   companyForm: CompanyForm;
@@ -73,7 +74,10 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({
     const newErrors: Record<string, string> = {};
     let hasError = false;
 
-    if (!companyForm.branchName || String(companyForm.branchName).trim() === "") {
+    if (
+      !companyForm.branchName ||
+      String(companyForm.branchName).trim() === ""
+    ) {
       newErrors.branchName = "Branch name is required";
       hasError = true;
     }
@@ -90,7 +94,9 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({
       hasError = true;
     }
 
-    const email = companyForm.companyEmail ? String(companyForm.companyEmail).trim() : "";
+    const email = companyForm.companyEmail
+      ? String(companyForm.companyEmail).trim()
+      : "";
     if (!email) {
       newErrors.companyEmail = "This cannot be empty";
       hasError = true;
@@ -121,8 +127,8 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({
       }
     } else if (key === "telephone") {
       const digits = value.replace(/\D/g, "");
-      if (digits.length <= 6) { 
-          onFieldChange(key, digits);
+      if (digits.length <= 7) {
+        onFieldChange(key, digits);
       }
     } else if (key === "companyEmail") {
       if (value.length <= 100) {
@@ -142,29 +148,44 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({
         Contact details shown to customers.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {fields.map(({ label, key, placeholder }) => (
-          <div key={key}>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-              {label}
-            </label>
-            <input
-              type="text"
-              value={companyForm[key] || ""} 
-              onChange={(e) => handleChange(key, e.target.value)} 
-              placeholder={placeholder}
-              className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all ${
-                errors[key] ? "border-red-400" : "border-gray-200"
-              }`}
-            />
-            {errors[key] && (
-              <p className="text-xs text-red-500 mt-1">{errors[key]}</p>
-            )}
-          </div>
-        ))}
+        {fields.map(({ label, key, placeholder }) => {
+          if (key === "phone") {
+            return (
+              <div key={key}>
+                <ContactInput
+                  label={label}
+                  value={String(companyForm[key] || "")}
+                  error={errors[key]}
+                  onChange={(value) => handleChange(key, value)}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div key={key}>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                {label}
+              </label>
+              <input
+                type="text"
+                value={companyForm[key] || ""}
+                onChange={(e) => handleChange(key, e.target.value)}
+                placeholder={placeholder}
+                className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all ${
+                  errors[key] ? "border-red-400" : "border-gray-200"
+                }`}
+              />
+              {errors[key] && (
+                <p className="text-xs text-red-500 mt-1">{errors[key]}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
       <div className="flex justify-end mt-6 pt-6 border-t border-gray-100">
         <button
-          onClick={handleSaveClick} 
+          onClick={handleSaveClick}
           disabled={saving}
           className="px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg transition-colors"
         >

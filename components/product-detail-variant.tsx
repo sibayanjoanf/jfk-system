@@ -59,7 +59,7 @@ export function ProductDetailVariant({ product, variants }: Props) {
 
           {/* Info */}
           <div className="flex flex-col space-y-2 md:space-y-5">
-            <nav className="text-sm font-medium text-gray-400 flex">
+            <nav className="text-sm font-medium text-gray-400 flex mb-3 md:mb-5">
               <Link
                 className="hover:text-gray-500 hover:no-underline underline"
                 href={`/collection/${category.toLowerCase().replace(/\s+/g, "-")}`}

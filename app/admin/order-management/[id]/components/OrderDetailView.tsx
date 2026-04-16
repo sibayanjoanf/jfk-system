@@ -29,6 +29,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { ContactInput } from "@/components/admin/ContactInput";
 
 interface Props {
   initialOrder: Order;
@@ -39,24 +41,24 @@ const inputClass =
 
 const formatName = (name: string) => {
   return name
-    .replace(/\s{2,}/g, ' ') 
-    .split(' ')
-    .map(word => {
+    .replace(/\s{2,}/g, " ")
+    .split(" ")
+    .map((word) => {
       if (word.length === 0) return word;
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
-    .join(' ');
+    .join(" ");
 };
 
 const validateEmailFormat = (val: string) => {
-  if (!val) return true; 
+  if (!val) return true;
   if (val.length > 100) return false;
-  
+
   if (!/^[a-zA-Z0-9]/.test(val)) return false;
   if (/\.\./.test(val)) return false;
 
   const parts = val.split("@");
-  if (parts.length !== 2) return false; 
+  if (parts.length !== 2) return false;
 
   const beforeAt = parts[0];
   const afterAt = parts[1];
@@ -75,7 +77,8 @@ const validateEmailFormat = (val: string) => {
 const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const router = useRouter();
   const { updateStatus, updateOrder } = useOrderMutations();
-
+  const { currentUser } = useCurrentUser();
+  const permissions = currentUser?.permissions;
   const [order, setOrder] = useState<Order>(initialOrder);
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -86,7 +89,11 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const allowedTransitions = ALLOWED_TRANSITIONS[order.status];
+  const allowedTransitions = ALLOWED_TRANSITIONS[order.status].filter((s) => {
+    if (s === "Cancelled" && !permissions?.orders.cancel) return false;
+    if (s === "Refunded" && !permissions?.orders.refund) return false;
+    return true;
+  });
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
     setStatusLoading(true);
@@ -103,7 +110,7 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
 
   const handleSaveEdit = async () => {
     const errors: Record<string, string> = {};
-    
+
     const allowedNameChars = /^[a-zA-Z\-' ]*$/;
 
     if (!editForm.first_name.trim()) {
@@ -227,6 +234,7 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
         <div className="lg:col-span-2 space-y-6">
           <OrderItems
             order={order}
+            canRefund={permissions?.orders.refund === true}
             onRefunded={(refundedItems, newStatus) =>
               setOrder((prev) => ({
                 ...prev,
@@ -247,12 +255,14 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                 Customer Info
               </h3>
               {!editing ? (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  <Pencil size={12} /> Edit
-                </button>
+                permissions?.orders.create && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-600 transition-colors"
+                  >
+                    <Pencil size={12} /> Edit
+                  </button>
+                )
               ) : (
                 <div className="flex items-center gap-2">
                   <button
@@ -316,7 +326,10 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                       maxLength={50}
                       value={editForm.last_name}
                       onChange={(e) => {
-                        setEditForm({ ...editForm, last_name: formatName(e.target.value) });
+                        setEditForm({
+                          ...editForm,
+                          last_name: formatName(e.target.value),
+                        });
                         setEditErrors({ ...editErrors, last_name: "" });
                       }}
                       className={`${inputClass} ${editErrors.last_name ? "border-red-400" : ""}`}
@@ -329,27 +342,19 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Phone <span className="text-red-500">*</span> 
-                  </label>
-                  <input
-                    type="text"
+                  <ContactInput
+                    label="Phone"
                     value={editForm.phone}
-                    onChange={(e) => {
-                      setEditForm({ ...editForm, phone: e.target.value });
+                    error={editErrors.phone}
+                    onChange={(value) => {
+                      setEditForm({ ...editForm, phone: value });
                       setEditErrors({ ...editErrors, phone: "" });
                     }}
-                    className={`${inputClass} ${editErrors.phone ? "border-red-400" : ""}`}
                   />
-                  {editErrors.phone && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {editErrors.phone}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
-                    Email 
+                    Email
                   </label>
                   <input
                     type="email"

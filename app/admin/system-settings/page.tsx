@@ -9,7 +9,6 @@ import SettingsSidebar from "./components/SettingSidebar";
 import CategoriesPanel from "./components/categories/CategoriesPanel";
 import NotificationsPanel from "./components/notifications/NotificationsPanel";
 import CompanyPanel from "./components/company/CompanyPanel";
-import StorefrontPanel from "./components/storefront/StorefrontPanel";
 
 const SystemSetting: React.FC = () => {
   const [activeTab, setActiveTab] = useState<MainTab>("categories");
@@ -41,7 +40,6 @@ const SystemSetting: React.FC = () => {
           {activeTab === "categories" && <CategoriesPanel />}
           {activeTab === "notifications" && <NotificationsPanel />}
           {activeTab === "company" && <CompanyPanel />}
-          {activeTab === "storefront" && <StorefrontPanel />}
         </div>
       </div>
     </div>

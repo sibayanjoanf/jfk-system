@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
-import { useAnnouncements } from "../../hooks/useAnnouncements";
-import Toggle from "../shared/Toggle";
+"use client";
+
+import { useState } from "react";
+import { useAnnouncements } from "../hooks/useAnnouncements";
+import { Loader2, Plus, Trash2 } from "lucide-react";
+import Toggle from "../../system-settings/components/shared/Toggle";
 
 const AnnouncementsTab: React.FC = () => {
   const {
@@ -11,24 +13,20 @@ const AnnouncementsTab: React.FC = () => {
     deleteAnnouncement,
     toggleAnnouncement,
   } = useAnnouncements();
-
   const [newText, setNewText] = useState("");
   const [adding, setAdding] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  
   const [error, setError] = useState(false);
 
   const handleAdd = async () => {
-
     if (!newText.trim()) {
       setError(true);
       return;
     }
-    
+
     setError(false);
-    
     setAdding(true);
     await addAnnouncement(newText);
     setNewText("");
@@ -80,7 +78,7 @@ const AnnouncementsTab: React.FC = () => {
                 error ? "border-red-400" : "border-gray-200"
               }`}
             />
-        
+
             {error && (
               <p className="text-xs text-red-500 mt-1">The field is empty</p>
             )}

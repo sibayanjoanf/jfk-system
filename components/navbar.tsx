@@ -716,7 +716,7 @@ export function Navbar() {
                           </p>
                           <button
                             onClick={() => removeItem(item.id)}
-                            className="text-xs text-red-500 underline cursor-pointer"
+                            className="text-xs text-red-500 hover:text-red-700 underline cursor-pointer"
                           >
                             Remove
                           </button>

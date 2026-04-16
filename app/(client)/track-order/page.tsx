@@ -15,18 +15,22 @@ import TrackOrderView from "./components/TrackOrderView";
 import { QRScannerModal } from "./components/QRScanner";
 
 const formatOrderId = (value: string, prevValue: string) => {
-  if (!value) return ""; 
+  if (!value) return "";
 
   const numbers = value.replace(/\D/g, "");
-  
+
   if (numbers.length === 0) return "ORD-";
-  
+
   if (numbers.length < 8) return `ORD-${numbers}`;
 
-  if (numbers.length === 8 && prevValue.endsWith("-") && value.length < prevValue.length) {
+  if (
+    numbers.length === 8 &&
+    prevValue.endsWith("-") &&
+    value.length < prevValue.length
+  ) {
     return `ORD-${numbers.slice(0, 7)}`;
   }
-  
+
   return `ORD-${numbers.slice(0, 8)}-${numbers.slice(8, 11)}`;
 };
 
@@ -159,30 +163,27 @@ export default function TrackOrderPage() {
               <div className="flex flex-col justify-between gap-7">
                 <div className="flex-col sm:flex sm:flex-row justify-center lg:justify-between gap-5 space-y-5 sm:space-y-0">
                   {/* Scan QR */}
-                  {/* Only show on mobile */}
-                  {isMobile && (
-                    <div
-                      onClick={() => setShowScanner(true)}
-                      className="group p-12 rounded-lg border border-dashed border-red-600 
-                                cursor-pointer transition-all duration-300
-                                hover:bg-red-600 hover:text-white hover:scale-105"
-                    >
-                      <QrCode
-                        className="mx-auto mb-4 text-red-600 transition-colors duration-300 group-hover:text-white"
-                        size={48}
-                      />
-                      <p className="text-sm font-semibold text-center">
-                        <span className="text-red-600 transition-colors duration-300 group-hover:text-white">
-                          Scan{" "}
-                        </span>
-                        your QR code here
-                        <br />
-                        <span className="group-hover:text-white text-xs text-gray-400 font-normal">
-                          Live camera scanner
-                        </span>
-                      </p>
-                    </div>
-                  )}
+                  <div
+                    onClick={() => setShowScanner(true)}
+                    className="group p-12 rounded-lg border border-dashed border-red-600 
+                    cursor-pointer transition-all duration-300
+                    hover:bg-red-600 hover:text-white hover:scale-105"
+                  >
+                    <QrCode
+                      className="mx-auto mb-4 text-red-600 transition-colors duration-300 group-hover:text-white"
+                      size={48}
+                    />
+                    <p className="text-sm font-semibold text-center">
+                      <span className="text-red-600 transition-colors duration-300 group-hover:text-white">
+                        Scan{" "}
+                      </span>
+                      your QR code here
+                      <br />
+                      <span className="group-hover:text-white text-xs text-gray-400 font-normal">
+                        Live camera scanner
+                      </span>
+                    </p>
+                  </div>
 
                   {/* Modal */}
                   {showScanner && (
@@ -260,7 +261,7 @@ export default function TrackOrderPage() {
                     <Field className="mb-4">
                       <Input
                         id="order-id"
-                        className={`text-sm ${error ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
+                        className={`text-sm ${error ? "border-red-400 focus-visible:ring-red-400" : ""}`}
                         placeholder="Enter your Order ID (e.g. ORD-20260331-001)"
                         maxLength={16}
                         value={orderId}

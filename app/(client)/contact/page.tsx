@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Reveal } from "@/components/reveal";
-import { Loader2, MapPin, Phone, Pin } from "lucide-react";
+import { Loader2, MapPin, Phone } from "lucide-react";
+import { ContactInput } from "@/components/admin/ContactInput";
 
 export default function ContactPage() {
   const [infoCategories, setInfoCategories] = useState<InfoBranch[]>([]);
@@ -50,7 +51,7 @@ export default function ContactPage() {
   const isValidEmailFormat = (val: string) => {
     if (!val) return true;
     if (val.length > 100) return false;
-    
+
     if (!/^[a-zA-Z0-9]/.test(val)) return false;
     if (/\.\./.test(val)) return false;
 
@@ -71,26 +72,6 @@ export default function ContactPage() {
     return true;
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value
-      .replace(/^\+63/, "")
-      .replace(/\D/g, "")
-      .slice(0, 10);
-    setPhone("+63" + digits);
-    
-    if (digits.length > 0 && errors.phone) {
-      setErrors((prev) => ({ ...prev, phone: "" }));
-    }
-  };
-
-  const handlePhoneFocus = () => {
-    if (!phone) setPhone("+63");
-  };
-
-  const handlePhoneBlur = () => {
-    if (phone === "+63") setPhone("");
-  };
-
   const resetFields = () => {
     setFirstName("");
     setLastName("");
@@ -102,7 +83,7 @@ export default function ContactPage() {
 
   const sendMessage = async () => {
     const newErrors: Record<string, string> = {};
-    
+
     const nameEdgeRegex = /^[a-zA-Z](.*[a-zA-Z])?$/;
 
     if (!firstName.trim()) {
@@ -110,20 +91,21 @@ export default function ContactPage() {
     } else if (!nameEdgeRegex.test(firstName.trim())) {
       newErrors.firstName = "First name must start and end with a letter";
     }
-  
+
     if (!lastName.trim()) {
       newErrors.lastName = "Last name is required";
     } else if (!nameEdgeRegex.test(lastName.trim())) {
       newErrors.lastName = "Last name must start and end with a letter";
     }
-    
+
     if (!email.trim()) {
       newErrors.email = "Email is required";
     } else if (!isValidEmailFormat(email)) {
       newErrors.email = "Please enter a valid email address";
     }
-
-    if (phone.length < 13) newErrors.phone = "Enter a valid phone number";
+    if (!phone || phone.length < 5) {
+      newErrors.phone = "Enter a valid phone number";
+    }
     if (!messageBox.trim()) newErrors.messageBox = "Message required";
 
     setErrors(newErrors);
@@ -310,28 +292,17 @@ export default function ContactPage() {
                     )}
                   </Field>
 
-                  <Field>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="Phone"
-                      className={cn(
-                        inputStyles,
-                        errors.phone && "border-red-500",
-                      )}
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      onFocus={handlePhoneFocus}
-                      onBlur={handlePhoneBlur}
-                      required
-                    />
-                    {errors.phone && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {errors.phone}
-                      </p>
-                    )}
-                  </Field>
+                  <ContactInput
+                    label=""
+                    value={phone}
+                    error={errors.phone}
+                    onChange={(value) => {
+                      setPhone(value);
+                      if (value && errors.phone) {
+                        setErrors((prev) => ({ ...prev, phone: "" }));
+                      }
+                    }}
+                  />
 
                   <Field>
                     <Textarea

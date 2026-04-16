@@ -8,7 +8,7 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useFaqs } from "../../hooks/useFaqs";
+import { useFaqs } from "../hooks/useFaqs";
 
 const capitalizeFirst = (val: string) => {
   if (!val) return val;
@@ -29,16 +29,12 @@ const FaqTab: React.FC = () => {
     toggleFaq,
   } = useFaqs();
 
-  // ── Add Category state ─────────────────────────────
   const [newCatName, setNewCatName] = useState("");
   const [showAddCat, setShowAddCat] = useState(false);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState("");
-
   const [newCatError, setNewCatError] = useState(false);
   const [editCatError, setEditCatError] = useState(false);
-
-  // ── Add FAQ state ──────────────────────────────────
   const [showAddFaqMap, setShowAddFaqMap] = useState<Record<string, boolean>>(
     {},
   );
@@ -59,7 +55,6 @@ const FaqTab: React.FC = () => {
     answer: false,
   });
 
-  // ── Delete confirm state ───────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
@@ -283,7 +278,10 @@ const FaqTab: React.FC = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditFaqErrors({ question: false, answer: false });
+                              setEditFaqErrors({
+                                question: false,
+                                answer: false,
+                              });
                               setEditingFaq({
                                 id: faq.id,
                                 question: faq.question,
@@ -325,7 +323,7 @@ const FaqTab: React.FC = () => {
                     </div>
                   ))}
 
-                  {/* Add FAQ inline */}
+                  {/* Add FAQ */}
                   {showAddFaqMap[cat.id] ? (
                     <div className="p-3 rounded-lg border border-dashed border-red-200 bg-red-50/30 space-y-2">
                       <div>
@@ -352,7 +350,9 @@ const FaqTab: React.FC = () => {
                             }
                           }}
                           className={`w-full px-3 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 transition-all ${
-                            newFaqErrors[cat.id]?.question ? "border-red-400" : "border-gray-200"
+                            newFaqErrors[cat.id]?.question
+                              ? "border-red-400"
+                              : "border-gray-200"
                           }`}
                         />
                         {newFaqErrors[cat.id]?.question && (
@@ -386,7 +386,9 @@ const FaqTab: React.FC = () => {
                           }}
                           rows={3}
                           className={`w-full px-3 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 transition-all resize-none ${
-                            newFaqErrors[cat.id]?.answer ? "border-red-400" : "border-gray-200"
+                            newFaqErrors[cat.id]?.answer
+                              ? "border-red-400"
+                              : "border-gray-200"
                           }`}
                         />
                         {newFaqErrors[cat.id]?.answer && (
@@ -492,12 +494,17 @@ const FaqTab: React.FC = () => {
                     const val = capitalizeFirst(e.target.value);
                     setEditingFaq({ ...editingFaq, question: val });
                     if (val.trim()) {
-                      setEditFaqErrors((prev) => ({ ...prev, question: false }));
+                      setEditFaqErrors((prev) => ({
+                        ...prev,
+                        question: false,
+                      }));
                     }
                   }}
                   placeholder="Question"
                   className={`w-full px-3.5 py-2.5 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white transition-all ${
-                    editFaqErrors.question ? "border-red-400" : "border-gray-200"
+                    editFaqErrors.question
+                      ? "border-red-400"
+                      : "border-gray-200"
                   }`}
                 />
                 {editFaqErrors.question && (
@@ -564,7 +571,7 @@ const FaqTab: React.FC = () => {
         </div>
       )}
 
-      {/* ── Delete Confirm Modal ── */}
+      {/* Delete Confirm Modal */}
       {confirmOpen && (
         <div
           className="fixed inset-0 bg-black/30 z-50 backdrop-blur-sm flex items-center justify-center"

@@ -176,8 +176,7 @@ export function ProductCard({
                 {name}
               </h3>
               <p className="text-sm font-medium text-red-600">
-                ₱{" "}
-                {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₱{price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </div>
             <TooltipProvider delayDuration={200}>
@@ -206,7 +205,7 @@ export function ProductCard({
 
       {/* Quick View Modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[95vw] md:max-w-4xl lg:max-w-4xl h-[90vh] md:h-fit p-0 overflow-hidden border-none shadow-none [&>button]:hidden">
+        <DialogContent className="w-[95vw] md:max-w-4xl lg:max-w-4xl h-auto max-h-[90vh] p-0 border-none shadow-none [&>button]:hidden overflow-y-auto">
           <DialogHeader className="sr-only">
             <DialogTitle>{name}</DialogTitle>
             <DialogDescription>
@@ -214,87 +213,90 @@ export function ProductCard({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-rows-[1fr_auto] md:grid-cols-2 gap-0">
-            <div className="relative flex-1 bg-white">
+          <div className="flex flex-col md:grid md:grid-cols-2 min-h-full relative">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 z-50 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-color rounded-full p-1 bg-white/80 backdrop-blur-sm"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Image */}
+            <div className="relative aspect-square md:aspect-auto md:h-full max-h-[40vh] md:max-h-none bg-white">
               <Image
                 src={activeImage}
                 alt={name}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
+                priority
               />
             </div>
 
-            <div className="flex flex-col justify-between p-6 md:p-12">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="absolute top-3 right-3 z-10 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-color rounded-sm p-1"
-              >
-                <X size={18} />
-              </button>
-              <div>
-                <h2 className="text-md md:text-xl font-semibold text-center md:text-left">
-                  {name}
-                </h2>
-                <p className="text-center md:text-left text-sm text-gray-400 font-semibold mt-1 mb-6">
-                  Category <span className="font-normal">{sub_category}</span>
-                </p>
+            {/* Content */}
+            <div className="flex flex-col flex-1 bg-white">
+              <div className="flex-1 p-6 md:p-12 pb-2 md:pb-12">
+                <div className="w-full">
+                  <h2 className="block text-md md:text-xl font-semibold text-center md:text-left break-words leading-snug text-gray-900 pr-6">
+                    {name}
+                  </h2>
+                  <p className="text-center md:text-left text-sm text-gray-400 font-semibold mt-1 mb-6">
+                    Category <span className="font-normal">{sub_category}</span>
+                  </p>
 
-                {/* Variants */}
-                <div className="grid gap-4 text-sm font-semibold py-6 border-t border-gray-100">
-                  {hasVariants ? (
-                    Object.entries(grouped).map(([attrName, attrVariants]) => (
-                      <div key={attrName}>
-                        <p className="font-semibold mb-2">{attrName}:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {attrVariants.map((v) => (
-                            <button
-                              key={v.id}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedVariant(v);
-                                setSelectedQty(1);
-                              }}
-                              disabled={v.stock_qty <= 0}
-                              className={cn(
-                                "relative px-4 py-1.5 border rounded-md text-xs font-medium transition-all overflow-hidden",
-                                selectedVariant?.id === v.id
-                                  ? "bg-red-600 text-white border-red-600"
-                                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
-                                v.stock_qty <= 0 &&
-                                  "opacity-40 cursor-not-allowed",
-                              )}
-                            >
-                              {v.attribute_value}
-                              {v.stock_qty <= 0 && (
-                                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                  <span className="absolute w-[140%] h-[1px] bg-current rotate-[-18deg]" />
-                                </span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="mt-3 text-xs text-gray-500 font-medium">
-                          Stock: <span>{activeStockQty}</span>
+                  <div className="grid gap-4 text-sm font-semibold py-6 border-t border-gray-100">
+                    {hasVariants ? (
+                      Object.entries(grouped).map(
+                        ([attrName, attrVariants]) => (
+                          <div key={attrName}>
+                            <p className="font-semibold mb-2">{attrName}:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {attrVariants.map((v) => (
+                                <button
+                                  key={v.id}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setSelectedVariant(v);
+                                    setSelectedQty(1);
+                                  }}
+                                  disabled={v.stock_qty <= 0}
+                                  className={cn(
+                                    "relative px-4 py-1.5 border rounded-md text-xs font-medium transition-all",
+                                    selectedVariant?.id === v.id
+                                      ? "bg-red-600 text-white border-red-600"
+                                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100",
+                                    v.stock_qty <= 0 &&
+                                      "opacity-40 cursor-not-allowed",
+                                  )}
+                                >
+                                  {v.attribute_value}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="mt-3 text-xs text-gray-500 font-medium">
+                              Stock: <span>{activeStockQty}</span>
+                            </p>
+                          </div>
+                        ),
+                      )
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="font-normal text-gray-600 leading-relaxed">
+                          {description}
+                        </p>
+                        <p>
+                          Stock:{" "}
+                          <span className="font-normal">{activeStockQty}</span>
                         </p>
                       </div>
-                    ))
-                  ) : (
-                    <div>
-                      <p className="mt-1 mb-3 font-normal text-gray-600">
-                        {description}
-                      </p>
-                      <p>
-                        Stock:{" "}
-                        <span className="font-normal">{activeStockQty}</span>
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-6 space-y-4">
+              {/* Pricing + Add to Cart Btn */}
+              <div className="sticky bottom-0 z-20 mt-auto md:-mt-5 bg-white border border-t-gray-100 p-6 md:p-12 md:border-none md:pt-0 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0,0.05)] md:shadow-none">
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-1 justify-between items-center">
                     <span className="text-2xl font-medium text-red-600">
@@ -305,43 +307,19 @@ export function ProductCard({
                     </span>
 
                     {!isOutOfStock && !isFullyStockedInCart && (
-                      <div className="flex items-center border rounded-md h-10">
+                      <div className="flex items-center border rounded-md h-10 bg-white">
                         <button
                           onClick={handleDecrement}
-                          className="p-2 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-                          disabled={selectedQty <= 1}
+                          className="p-2 hover:bg-gray-100"
                         >
                           <Minus size={16} />
                         </button>
-                        <input
-                          id={`qty-${activeSku}`}
-                          type="text"
-                          inputMode="numeric"
-                          tabIndex={-1}
-                          value={selectedQty === 0 ? "" : selectedQty}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "") {
-                              setSelectedQty(0);
-                              return;
-                            }
-                            if (/^\d+$/.test(val)) {
-                              const num = parseInt(val, 10);
-                              const maxAllowed = stockQtyNum - currentQtyInCart;
-                              setSelectedQty(Math.min(num, maxAllowed));
-                            }
-                          }}
-                          onBlur={() => {
-                            if (selectedQty < 1) setSelectedQty(1);
-                          }}
-                          className="w-10 text-center font-semibold text-sm bg-transparent focus:outline-none"
-                        />
+                        <span className="w-10 text-center font-semibold text-sm">
+                          {selectedQty}
+                        </span>
                         <button
                           onClick={handleIncrement}
-                          className="p-2 hover:bg-gray-100 disabled:opacity-30 transition-colors"
-                          disabled={
-                            currentQtyInCart + selectedQty >= stockQtyNum
-                          }
+                          className="p-2 hover:bg-gray-100"
                         >
                           <Plus size={16} />
                         </button>
@@ -349,24 +327,22 @@ export function ProductCard({
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                      onClick={handleAddToCart}
-                      disabled={isOutOfStock || isLimitReached}
-                      className={cn(
-                        "flex-1 h-12 py-3 rounded-lg font-bold uppercase tracking-wider cursor-pointer",
-                        isOutOfStock || isLimitReached
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-red-600 hover:bg-red-700 text-white",
-                      )}
-                    >
-                      {isOutOfStock
-                        ? "Out of Stock"
-                        : isLimitReached
-                          ? "Limit Reached"
-                          : "Add to Cart"}
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || isLimitReached}
+                    className={cn(
+                      "w-full h-12 py-3 rounded-lg font-bold uppercase tracking-wider",
+                      isOutOfStock || isLimitReached
+                        ? "bg-gray-300 text-gray-500"
+                        : "bg-red-600 text-white hover:bg-red-700",
+                    )}
+                  >
+                    {isOutOfStock
+                      ? "Out of Stock"
+                      : isLimitReached
+                        ? "Limit Reached"
+                        : "Add to Cart"}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -413,7 +389,7 @@ export function ProductCard({
                 </p>
                 <div className="flex flex-row justify-between items-center">
                   <p className="text-lg text-center md:text-start font-medium text-red-600">
-                    ₱{" "}
+                    ₱
                     {(activePrice * selectedQty).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                     })}

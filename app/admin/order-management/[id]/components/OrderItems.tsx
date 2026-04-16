@@ -5,13 +5,21 @@ import Image from "next/image";
 import { Order, OrderItem } from "../../types";
 import { ChevronDown, ChevronUp, RotateCcw, Loader2 } from "lucide-react";
 import { useOrderMutations } from "../../hooks/useOrderMutations";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 interface Props {
   order: Order;
+  canRefund?: boolean;
   onRefunded?: (refundedItems: OrderItem[], newStatus?: string) => void;
 }
 
-const OrderItems: React.FC<Props> = ({ order, onRefunded }) => {
+const OrderItems: React.FC<Props> = ({
+  order,
+  canRefund: canRefundProp,
+  onRefunded,
+}) => {
+  const { currentUser } = useCurrentUser();
+  const permissions = currentUser?.permissions;
   const { refundItems, updateStatus } = useOrderMutations();
   const [isExpanded, setIsExpanded] = useState(false);
   const [refundMode, setRefundMode] = useState(false);
@@ -29,7 +37,7 @@ const OrderItems: React.FC<Props> = ({ order, onRefunded }) => {
     alreadyRefunded.map((i) => [i.sku, i.quantity]),
   );
 
-  const canRefund = order.status === "Completed";
+  const canRefund = order.status === "Completed" && canRefundProp === true;
 
   const getRefundableQty = (item: OrderItem) => {
     const alreadyQty = refundedMap[item.sku] ?? 0;

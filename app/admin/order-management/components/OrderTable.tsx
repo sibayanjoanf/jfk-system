@@ -1,6 +1,5 @@
 "use client";
 
-
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Search,
@@ -22,7 +21,7 @@ import StatusBadge from "./StatusBadge";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
 import Pagination from "@/app/admin/inventory-management/components/Pagination";
 import { useOrderMutations } from "../hooks/useOrderMutations";
-
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 interface OrderTableProps {
   rows: OrderRow[];
@@ -37,7 +36,6 @@ interface OrderTableProps {
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
 }
-
 
 const SortArrows = ({
   field,
@@ -67,7 +65,6 @@ const SortArrows = ({
   );
 };
 
-
 const OrderTable: React.FC<OrderTableProps> = ({
   rows,
   loading,
@@ -89,11 +86,10 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
-
-
   const statusRef = useRef<HTMLDivElement>(null);
   const bulkRef = useRef<HTMLDivElement>(null);
-
+  const { currentUser } = useCurrentUser();
+  const permissions = currentUser?.permissions;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -105,7 +101,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
 
   const filtered = useMemo(
     () =>
@@ -144,24 +139,20 @@ const OrderTable: React.FC<OrderTableProps> = ({
     [rows, search, statusFilter, dateFilter, sortConfig],
   );
 
-
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const paginated = filtered.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
 
-
   const allSelected =
     paginated.length > 0 && paginated.every((o) => selectedIds.includes(o.id));
   const someSelected = selectedIds.length > 0;
-
 
   const toggleAll = () => {
     if (allSelected) setSelectedIds([]);
     else setSelectedIds(paginated.map((o) => o.id));
   };
-
 
   const toggleOne = (id: string) => {
     setSelectedIds((prev) =>
@@ -169,19 +160,15 @@ const OrderTable: React.FC<OrderTableProps> = ({
     );
   };
 
-
   const handleDelete = async () => {
-    if (
-      !confirm(`Delete ${selectedIds.length} order(s)? This cannot be undone.`)
-    )
-      return;
+    if (!permissions?.orders.archive) return;
+    if (!confirm(`Archive ${selectedIds.length} order(s)?`)) return;
     setBulkLoading(true);
     await archiveOrders(selectedIds);
     setSelectedIds([]);
     onRefresh();
     setBulkLoading(false);
   };
-
 
   const handleBulkStatus = async (status: OrderStatus) => {
     setBulkLoading(true);
@@ -195,17 +182,20 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setBulkLoading(false);
   };
 
-
   const selectedOrders = rows.filter((o) => selectedIds.includes(o.id));
-  const commonTransitions = ORDER_STATUSES.filter((status) =>
-    selectedOrders.every((o) => ALLOWED_TRANSITIONS[o.status].includes(status)),
+  const commonTransitions = ORDER_STATUSES.filter(
+    (status) =>
+      selectedOrders.every((o) =>
+        ALLOWED_TRANSITIONS[o.status].includes(status),
+      ) &&
+      (status !== "Cancelled" || permissions?.orders.cancel) &&
+      (status !== "Refunded" || permissions?.orders.refund),
   );
 
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
       {/* Header */}
-      <div className="px-6 pt-5 pb-4 flex flex-col sm:flex-row justify-between gap-4">
+      <div className="relative z-20 px-6 pt-5 pb-4 flex flex-col sm:flex-row justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold text-gray-900">
             Order Management
@@ -223,7 +213,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
               onPageChange(1);
             }}
           />
-
 
           {/* Status filter */}
           <div className="relative" ref={statusRef}>
@@ -252,50 +241,53 @@ const OrderTable: React.FC<OrderTableProps> = ({
             )}
           </div>
 
-
           {/* Bulk actions */}
           {someSelected && (
             <div className="flex items-center gap-2 animate-in fade-in duration-150">
-              <div className="relative" ref={bulkRef}>
+              {permissions?.orders.change_status && (
+                <div className="relative" ref={bulkRef}>
+                  <button
+                    onClick={() => setBulkStatusOpen(!bulkStatusOpen)}
+                    disabled={bulkLoading || commonTransitions.length === 0}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw size={13} />
+                    Status ({selectedIds.length}) <ChevronDown size={12} />
+                  </button>
+                  {bulkStatusOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                      {commonTransitions.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-3 px-4">
+                          No valid transitions for selected orders
+                        </p>
+                      ) : (
+                        commonTransitions.map((s) => (
+                          <button
+                            key={s}
+                            className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            onClick={() => handleBulkStatus(s)}
+                          >
+                            <StatusBadge status={s} />
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {permissions?.orders.archive && (
                 <button
-                  onClick={() => setBulkStatusOpen(!bulkStatusOpen)}
-                  disabled={bulkLoading || commonTransitions.length === 0}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleDelete}
+                  disabled={bulkLoading}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                 >
-                  <RotateCcw size={13} />
-                  Status ({selectedIds.length}) <ChevronDown size={12} />
+                  <Trash2 size={13} />
+                  Archive ({selectedIds.length})
                 </button>
-                {bulkStatusOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                    {commonTransitions.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-3 px-4">
-                        No valid transitions for selected orders
-                      </p>
-                    ) : (
-                      commonTransitions.map((s) => (
-                        <button
-                          key={s}
-                          className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
-                          onClick={() => handleBulkStatus(s)}
-                        >
-                          <StatusBadge status={s} />
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={handleDelete}
-                disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-              >
-                <Trash2 size={13} />
-                Delete ({selectedIds.length})
-              </button>
+              )}
             </div>
           )}
-
 
           {/* Create order */}
           <button
@@ -307,7 +299,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
           </button>
         </div>
       </div>
-
 
       {/* Table */}
       <div className="overflow-x-auto">
@@ -451,7 +442,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
         )}
       </div>
 
-
       {/* Pagination */}
       <div className="p-5">
         {!loading && filtered.length > 0 && (
@@ -468,6 +458,5 @@ const OrderTable: React.FC<OrderTableProps> = ({
     </div>
   );
 };
-
 
 export default OrderTable;

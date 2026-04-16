@@ -6,6 +6,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { CreateOrderForm, OrderItem } from "../types";
 import { useOrderMutations } from "../hooks/useOrderMutations";
+import { ContactInput } from "@/components/admin/ContactInput";
 
 interface VariantOption {
   id: string;
@@ -27,24 +28,24 @@ const labelClass = "block text-xs font-medium text-gray-600 mb-1.5";
 
 const formatName = (name: string) => {
   return name
-    .replace(/\s{2,}/g, ' ') 
-    .split(' ')
-    .map(word => {
+    .replace(/\s{2,}/g, " ")
+    .split(" ")
+    .map((word) => {
       if (word.length === 0) return word;
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
-    .join(' ');
+    .join(" ");
 };
 
 const validateEmailFormat = (val: string) => {
-  if (!val) return true; 
+  if (!val) return true;
   if (val.length > 100) return false;
-  
+
   if (!/^[a-zA-Z0-9]/.test(val)) return false;
   if (/\.\./.test(val)) return false;
 
   const parts = val.split("@");
-  if (parts.length !== 2) return false; 
+  if (parts.length !== 2) return false;
 
   const beforeAt = parts[0];
   const afterAt = parts[1];
@@ -161,7 +162,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       };
       setForm((prev) => ({ ...prev, items: [...prev.items, newItem] }));
     }
-    
+
     if (errors.items) {
       setErrors((prev) => ({ ...prev, items: "" }));
     }
@@ -192,7 +193,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    
+
     const allowedChars = /^[a-zA-Z\-' ]*$/;
 
     if (!form.first_name.trim()) {
@@ -277,9 +278,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                   maxLength={50}
                   value={form.first_name}
                   onChange={(e) => {
-                    setForm({ ...form, first_name: formatName(e.target.value) });
+                    setForm({
+                      ...form,
+                      first_name: formatName(e.target.value),
+                    });
                     if (e.target.value.trim() && errors.first_name) {
-                       setErrors(prev => ({ ...prev, first_name: "" }));
+                      setErrors((prev) => ({ ...prev, first_name: "" }));
                     }
                   }}
                   className={`${inputClass} ${errors.first_name ? "border-red-400" : ""}`}
@@ -302,7 +306,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                   onChange={(e) => {
                     setForm({ ...form, last_name: formatName(e.target.value) });
                     if (e.target.value.trim() && errors.last_name) {
-                       setErrors(prev => ({ ...prev, last_name: "" }));
+                      setErrors((prev) => ({ ...prev, last_name: "" }));
                     }
                   }}
                   className={`${inputClass} ${errors.last_name ? "border-red-400" : ""}`}
@@ -315,24 +319,17 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 )}
               </div>
               <div>
-                <label className={labelClass}>
-                  Phone <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
+                <ContactInput
+                  label="Phone"
                   value={form.phone}
-                  onChange={(e) => {
-                    setForm({ ...form, phone: e.target.value });
-                    if (e.target.value.trim() && errors.phone) {
-                       setErrors(prev => ({ ...prev, phone: "" }));
+                  error={errors.phone}
+                  onChange={(value) => {
+                    setForm({ ...form, phone: value });
+                    if (value.trim() && errors.phone) {
+                      setErrors((prev) => ({ ...prev, phone: "" }));
                     }
                   }}
-                  className={`${inputClass} ${errors.phone ? "border-red-400" : ""}`}
-                  placeholder="09XX XXX XXXX"
                 />
-                {errors.phone && (
-                  <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
-                )}
               </div>
               <div>
                 <label className={labelClass}>Email</label>
@@ -343,7 +340,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                   onChange={(e) => {
                     setForm({ ...form, email: e.target.value });
                     if (e.target.value.trim() && errors.email) {
-                       setErrors(prev => ({ ...prev, email: "" }));
+                      setErrors((prev) => ({ ...prev, email: "" }));
                     }
                   }}
                   className={`${inputClass} ${errors.email ? "border-red-400" : ""}`}
@@ -409,7 +406,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                   onChange={(e) => {
                     setForm({ ...form, message: e.target.value });
                     if (e.target.value.trim() && errors.message) {
-                       setErrors(prev => ({ ...prev, message: "" }));
+                      setErrors((prev) => ({ ...prev, message: "" }));
                     }
                   }}
                   className={`${inputClass} ${errors.message ? "border-red-400" : ""}`}
@@ -436,9 +433,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               <button
                 type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-               className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-gray-50 border rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left ${
-                errors.items ? "border-red-400" : "border-gray-200"
-              }`}
+                className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-gray-50 border rounded-lg hover:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all text-left ${
+                  errors.items ? "border-red-400" : "border-gray-200"
+                }`}
               >
                 <span className="text-sm text-gray-400 flex items-center gap-2">
                   <Plus size={14} /> Add a product...

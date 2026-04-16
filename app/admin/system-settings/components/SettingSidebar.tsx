@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  ChevronDown,
-  LayoutGrid,
-  BellRing,
-  Building2,
-  Megaphone,
-} from "lucide-react";
+import { ChevronDown, LayoutGrid, BellRing, Building2 } from "lucide-react";
 import { MainTab } from "../types";
 
 interface SettingsSidebarProps {
@@ -17,7 +11,6 @@ const tabs = [
   { key: "categories" as MainTab, label: "Categories", icon: LayoutGrid },
   { key: "notifications" as MainTab, label: "Notifications", icon: BellRing },
   { key: "company" as MainTab, label: "Company", icon: Building2 },
-  { key: "storefront" as MainTab, label: "Storefront", icon: Megaphone },
 ];
 
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({

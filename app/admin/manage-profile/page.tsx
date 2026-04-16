@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import {
   CircleUserRound,
-  Trash2,
   LogOut,
   Shield,
   Eye,
@@ -16,6 +15,7 @@ import HeaderUser from "@/components/admin/HeaderUser";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { ROLE_LABELS, UserRole } from "@/app/admin/user-management/userTypes";
+import { ContactInput } from "@/components/admin/ContactInput";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,21 +29,21 @@ const formatName = (value: string) => {
     .replace(/(^|[\s-])([a-z])/g, (_, sep, char) => sep + char.toUpperCase());
 };
 
-const isValidEmailFormat = (val: string) => {
-  if (!val) return false;
-  if (val.length > 100) return false;
-  if (!/^[a-zA-Z0-9]/.test(val)) return false;
-  if (/\.\./.test(val)) return false;
-  const parts = val.split("@");
-  if (parts.length !== 2) return false;
-  const [beforeAt, afterAt] = parts;
-  if (!beforeAt || !afterAt) return false;
-  if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
-  if (beforeAt.endsWith(".")) return false;
-  if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
-  if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
-  return true;
-};
+// const isValidEmailFormat = (val: string) => {
+//   if (!val) return false;
+//   if (val.length > 100) return false;
+//   if (!/^[a-zA-Z0-9]/.test(val)) return false;
+//   if (/\.\./.test(val)) return false;
+//   const parts = val.split("@");
+//   if (parts.length !== 2) return false;
+//   const [beforeAt, afterAt] = parts;
+//   if (!beforeAt || !afterAt) return false;
+//   if (!/^[a-zA-Z0-9_.+-]+$/.test(beforeAt)) return false;
+//   if (beforeAt.endsWith(".")) return false;
+//   if (!/^[a-zA-Z0-9.-]+$/.test(afterAt)) return false;
+//   if (afterAt.startsWith(".") || afterAt.endsWith(".")) return false;
+//   return true;
+// };
 
 const isNameEdgeValid = (val: string) =>
   /^[a-zA-Z](.*[a-zA-Z])?$/.test(val.trim());
@@ -56,11 +56,11 @@ const ProfilePage: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
+  // const [deleteConfirm, setDeleteConfirm] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [savingEmail, setSavingEmail] = useState(false);
+  // const [savingEmail, setSavingEmail] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -78,11 +78,11 @@ const ProfilePage: React.FC = () => {
     confirmPassword: "",
   });
 
-  const [emailForm, setEmailForm] = useState({
-    newEmail: "",
-    confirmEmail: "",
-    password: "",
-  });
+  // const [emailForm, setEmailForm] = useState({
+  //   newEmail: "",
+  //   confirmEmail: "",
+  //   password: "",
+  // });
 
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
     {},
@@ -90,12 +90,12 @@ const ProfilePage: React.FC = () => {
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>(
     {},
   );
-  const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});
+  // const [emailErrors, setEmailErrors] = useState<Record<string, string>>({});
 
   const tabs = [
     { key: "profile", label: "Profile", icon: CircleUserRound },
     { key: "security", label: "Security", icon: Shield },
-    { key: "danger", label: "Danger Zone", icon: Trash2 },
+    // { key: "danger", label: "Danger Zone", icon: Trash2 },
   ] as const;
 
   const getPasswordStrength = (password: string) => {
@@ -242,43 +242,43 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleSaveEmail = async () => {
-    const errs: Record<string, string> = {};
-    if (!emailForm.newEmail.trim() || !isValidEmailFormat(emailForm.newEmail))
-      errs.newEmail = "Please enter a valid email address";
-    else if (emailForm.newEmail === profileForm.email)
-      errs.newEmail = "New email cannot be the same as current email";
-    if (
-      !emailForm.confirmEmail.trim() ||
-      !isValidEmailFormat(emailForm.confirmEmail)
-    )
-      errs.confirmEmail = "Please enter a valid email address";
-    else if (emailForm.newEmail !== emailForm.confirmEmail)
-      errs.confirmEmail = "Emails do not match";
-    if (!emailForm.password) errs.password = "Please enter your password";
-    setEmailErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+  // const handleSaveEmail = async () => {
+  //   const errs: Record<string, string> = {};
+  //   if (!emailForm.newEmail.trim() || !isValidEmailFormat(emailForm.newEmail))
+  //     errs.newEmail = "Please enter a valid email address";
+  //   else if (emailForm.newEmail === profileForm.email)
+  //     errs.newEmail = "New email cannot be the same as current email";
+  //   if (
+  //     !emailForm.confirmEmail.trim() ||
+  //     !isValidEmailFormat(emailForm.confirmEmail)
+  //   )
+  //     errs.confirmEmail = "Please enter a valid email address";
+  //   else if (emailForm.newEmail !== emailForm.confirmEmail)
+  //     errs.confirmEmail = "Emails do not match";
+  //   if (!emailForm.password) errs.password = "Please enter your password";
+  //   setEmailErrors(errs);
+  //   if (Object.keys(errs).length > 0) return;
 
-    setSavingEmail(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: profileForm.email,
-      password: emailForm.password,
-    });
-    if (signInError) {
-      setEmailErrors({ password: "Password is incorrect" });
-      setSavingEmail(false);
-      return;
-    }
-    const { error } = await supabase.auth.updateUser({
-      email: emailForm.newEmail,
-    });
-    setSavingEmail(false);
-    if (error) showError(error.message);
-    else {
-      showSuccess("Confirmation sent to your new email address.");
-      setEmailForm({ newEmail: "", confirmEmail: "", password: "" });
-    }
-  };
+  //   setSavingEmail(true);
+  //   const { error: signInError } = await supabase.auth.signInWithPassword({
+  //     email: profileForm.email,
+  //     password: emailForm.password,
+  //   });
+  //   if (signInError) {
+  //     setEmailErrors({ password: "Password is incorrect" });
+  //     setSavingEmail(false);
+  //     return;
+  //   }
+  //   const { error } = await supabase.auth.updateUser({
+  //     email: emailForm.newEmail,
+  //   });
+  //   setSavingEmail(false);
+  //   if (error) showError(error.message);
+  //   else {
+  //     showSuccess("Confirmation sent to your new email address.");
+  //     setEmailForm({ newEmail: "", confirmEmail: "", password: "" });
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -338,9 +338,7 @@ const ProfilePage: React.FC = () => {
                   className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium transition-all border-b border-gray-50 last:border-0 ${
                     isActive
                       ? "bg-red-50 text-red-600"
-                      : tab.key === "danger"
-                        ? "text-red-500 hover:bg-red-50"
-                        : "text-gray-600 hover:bg-gray-50"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -449,19 +447,15 @@ const ProfilePage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                    Contact Number
-                  </label>
-                  <input
-                    type="text"
+                  <ContactInput
                     value={profileForm.contact}
-                    onChange={(e) =>
+                    error={profileErrors.contact}
+                    onChange={(value) =>
                       setProfileForm({
                         ...profileForm,
-                        contact: e.target.value,
+                        contact: value,
                       })
                     }
-                    className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
                   />
                 </div>
                 <div>
@@ -673,7 +667,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               {/* Change Email */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              {/* <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <div className="mb-6">
                   <h2 className="text-base font-semibold text-gray-900">
                     Change Email
@@ -779,12 +773,12 @@ const ProfilePage: React.FC = () => {
                     Update Email
                   </button>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
 
           {/* Danger Zone Tab */}
-          {activeTab === "danger" && (
+          {/* {activeTab === "danger" && (
             <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
               <div className="flex items-start gap-3 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
@@ -827,7 +821,7 @@ const ProfilePage: React.FC = () => {
                 Delete My Account
               </button>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

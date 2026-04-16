@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/cart";
 import Image from "next/image";
+import { ContactInput } from "@/components/admin/ContactInput";
 
 export default function InquiryFormPage() {
   const [logo, setLogo] = useState(
@@ -81,21 +82,6 @@ export default function InquiryFormPage() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value
-      .replace(/^\+63/, "")
-      .replace(/\D/g, "")
-      .slice(0, 10);
-    setPhone("+63" + digits);
-  };
-
-  const handlePhoneFocus = () => {
-    if (!phone) setPhone("+63");
-  };
-  const handlePhoneBlur = () => {
-    if (phone === "+63") setPhone("");
-  };
-
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
     if (!firstName.trim()) newErrors.firstName = "First name is required.";
@@ -103,7 +89,9 @@ export default function InquiryFormPage() {
     if (!email.trim()) newErrors.email = "Email is required.";
     else if (!isValidEmail(email))
       newErrors.email = "Enter a valid email address.";
-    if (phone.length < 13) newErrors.phone = "Enter a valid phone number.";
+    if (!phone || phone.length < 5) {
+      newErrors.phone = "Enter a valid phone number.";
+    }
     if (!deliveryPref)
       newErrors.deliveryPref = "Please select a delivery preference.";
     if (!paymentPref)
@@ -312,22 +300,17 @@ export default function InquiryFormPage() {
               )}
             </Field>
 
-            <Field>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Phone"
-                className={cn(inputStyles, errors.phone && "border-red-400")}
-                value={phone}
-                onChange={handlePhoneChange}
-                onFocus={handlePhoneFocus}
-                onBlur={handlePhoneBlur}
-                disabled={isSubmitting}
-              />
-              {errors.phone && (
-                <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
-              )}
-            </Field>
+            <ContactInput
+              label=""
+              value={phone}
+              error={errors.phone}
+              onChange={(value) => {
+                setPhone(value);
+                if (value && errors.phone) {
+                  setErrors((prev) => ({ ...prev, phone: "" }));
+                }
+              }}
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -340,8 +323,8 @@ export default function InquiryFormPage() {
                 >
                   <SelectTrigger
                     className={cn(
-                      "w-full py-6 bg-transparent text-sm border-gray-200 text-gray-900",
-                      errors.deliveryPref && "border-red-400",
+                      "w-full py-6 bg-transparent text-sm border-gray-200 border-2 text-gray-900",
+                      errors.deliveryPref && "border-red-400 border-2",
                     )}
                   >
                     <SelectValue placeholder="Delivery Preference" />
@@ -369,8 +352,8 @@ export default function InquiryFormPage() {
                 >
                   <SelectTrigger
                     className={cn(
-                      "w-full py-6 bg-transparent text-sm border-gray-200",
-                      errors.paymentPref && "border-red-400",
+                      "w-full py-6 bg-transparent text-sm border-gray-200 border-2",
+                      errors.paymentPref && "border-red-400 border-2",
                     )}
                   >
                     <SelectValue placeholder="Payment Preference" />
@@ -417,19 +400,19 @@ export default function InquiryFormPage() {
             <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100 text-xs text-gray-400 justify-center lg:justify-start">
               <Link
                 href="/terms-and-conditions"
-                className="hover:text-red-600 transition-colors"
+                className="hover:text-red-600 transition-colors underline"
               >
                 Terms & Conditions
               </Link>
               <Link
                 href="/privacy-policy"
-                className="hover:text-red-600 transition-colors"
+                className="hover:text-red-600 transition-colors underline"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="/contact"
-                className="hover:text-red-600 transition-colors"
+                className="hover:text-red-600 transition-colors underline"
               >
                 Contact
               </Link>
@@ -510,7 +493,7 @@ export default function InquiryFormPage() {
               </div>
 
               <div className="flex justify-between items-center font-semibold text-gray-900 pt-5 pb-2 border-t border-gray-200">
-                <p>Total</p>
+                <p>Subtotal</p>
                 <p>
                   ₱{" "}
                   {totalAmount.toLocaleString(undefined, {

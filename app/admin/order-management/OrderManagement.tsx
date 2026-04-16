@@ -8,6 +8,7 @@ import { useOrderData } from "./hooks/useOrderData";
 import OrderTable from "./components/OrderTable";
 import CreateOrderModal from "./components/CreateOrderModal";
 import Link from "next/link";
+import { useCurrentUser } from "././hooks/useCurrentUser";
 
 type TabType = "orders";
 
@@ -16,6 +17,8 @@ const tabs: { key: TabType; label: string; icon: React.ElementType }[] = [
 ];
 
 const OrderManagement: React.FC = () => {
+  const { currentUser } = useCurrentUser();
+  const permissions = currentUser?.permissions;
   const [activeTab, setActiveTab] = useState<TabType>("orders");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -109,13 +112,15 @@ const OrderManagement: React.FC = () => {
             {label}
           </button>
         ))}
-        <Link
-          href="/admin/order-management/archived"
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
-        >
-          <Archive size={13} />
-          Archived
-        </Link>
+        {permissions?.orders.archive && (
+          <Link
+            href="/admin/order-management/archived"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+          >
+            <Archive size={13} />
+            Archived
+          </Link>
+        )}
       </div>
 
       {/* Tab Content */}

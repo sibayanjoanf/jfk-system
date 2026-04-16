@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import {
   CircleUserRound,
   User,
-  Settings,
   LogOut,
   Laptop,
   Loader2,
+  Megaphone,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -110,10 +110,10 @@ const HeaderUser: React.FC = () => {
             </button>
           </Link>
 
-          <Link href="/admin/system-settings">
+          <Link href="/admin/storefront">
             <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-              <Settings size={15} className="text-gray-400" />
-              Settings
+              <Megaphone size={15} className="text-gray-400" />
+              Storefront
             </button>
           </Link>
 

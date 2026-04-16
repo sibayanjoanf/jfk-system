@@ -39,6 +39,7 @@ interface InquiryTableProps {
   someSelected: boolean;
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
+  canArchive: boolean;
 }
 
 const InquiryTable: React.FC<InquiryTableProps> = ({
@@ -60,6 +61,7 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
   someSelected,
   sortConfig,
   onSort,
+  canArchive,
 }) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -74,7 +76,7 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {someSelected && (
+          {someSelected && canArchive && (
             <button
               onClick={onDeleteClick}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors animate-in fade-in duration-150"

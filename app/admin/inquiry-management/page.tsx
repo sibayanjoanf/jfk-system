@@ -12,24 +12,23 @@ import ConfirmModal from "@/app/admin/components/ConfirmModal";
 import { DateFilter } from "@/components/admin/CalendarPicker";
 import Link from "next/link";
 import { Inbox, Archive } from "lucide-react";
+import { useCurrentUser } from "@/app/admin/order-management/hooks/useCurrentUser";
 
 const InquiryManagement: React.FC = () => {
   const { inquiries, loading, updateStatus, archiveInquiries } = useInquiries();
-
+  const { currentUser, loading: userLoading } = useCurrentUser();
+  const canArchive =
+    !userLoading && currentUser?.permissions?.orders.archive === true;
   const [filterStatus, setFilterStatus] = useState("All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
-
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
-
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
-
   const [sending, setSending] = useState(false);
-
   const filterRef = useRef<HTMLDivElement>(null);
   const [sortConfig, setSortConfig] = useState<{
     field: string;
@@ -211,13 +210,15 @@ const InquiryManagement: React.FC = () => {
           <Inbox size={13} />
           Active
         </Link>
-        <Link
-          href="/admin/inquiry-management/archived"
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
-        >
-          <Archive size={13} />
-          Archived
-        </Link>
+        {canArchive && (
+          <Link
+            href="/admin/inquiry-management/archived"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+          >
+            <Archive size={13} />
+            Archived
+          </Link>
+        )}
       </div>
 
       {/* Table */}
@@ -245,6 +246,7 @@ const InquiryManagement: React.FC = () => {
         someSelected={selectedIds.length > 0}
         sortConfig={sortConfig}
         onSort={handleSort}
+        canArchive={canArchive}
       />
 
       {/* Archive Confirm Modal */}

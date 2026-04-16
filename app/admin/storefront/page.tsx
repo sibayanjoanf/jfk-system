@@ -1,10 +1,13 @@
-import React, { useState } from "react";
-import { Megaphone, Images, HelpCircle } from "lucide-react";
-import { StorefrontTab } from "../../types";
-import AnnouncementsTab from "./AnnouncementsTab";
-import ShowcaseTab from "./ShowcaseTab";
-import FaqTab from "./FaqTab";
+"use client";
 
+import { HelpCircle, Images, Megaphone } from "lucide-react";
+import { StorefrontTab } from "./types";
+import { useState } from "react";
+import AnnouncementsTabs from "./components/AnnouncementsTab";
+import HeaderNotifications from "@/components/admin/HeaderNotif";
+import HeaderUser from "@/components/admin/HeaderUser";
+import ShowcaseTab from "./components/ShowcaseTab";
+import FaqTab from "./components/FaqTab";
 
 const storefrontTabs = [
   {
@@ -12,19 +15,37 @@ const storefrontTabs = [
     label: "Announcements",
     icon: Megaphone,
   },
-  { key: "showcase" as StorefrontTab, label: "Showcase", icon: Images },
-  { key: "faq" as StorefrontTab, label: "FAQ", icon: HelpCircle },
+  {
+    key: "showcase" as StorefrontTab,
+    label: "Showcase",
+    icon: Images,
+  },
+  {
+    key: "faq" as StorefrontTab,
+    label: "FAQ",
+    icon: HelpCircle,
+  },
 ];
-
 
 const StorefrontPanel: React.FC = () => {
   const [activeStorefrontTab, setActiveStorefrontTab] =
     useState<StorefrontTab>("announcements");
 
-
   return (
     <div className="space-y-6">
-      {/* Sub-tab switcher */}
+      <div className="flex justify-between items-center mb-8 w-full gap-4">
+        <div className="shrink-0">
+          <p className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">
+            Manage
+          </p>
+          <h1 className="text-lg font-semibold text-gray-900">Storefront</h1>
+        </div>
+        <div className="hidden lg:flex items-center gap-1">
+          <HeaderNotifications />
+          <HeaderUser />
+        </div>
+      </div>
+
       <div className="flex gap-2 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5 overflow-x-auto scrollbar-none">
         {storefrontTabs.map((tab) => {
           const Icon = tab.icon;
@@ -45,13 +66,11 @@ const StorefrontPanel: React.FC = () => {
         })}
       </div>
 
-
-      {activeStorefrontTab === "announcements" && <AnnouncementsTab />}
+      {activeStorefrontTab === "announcements" && <AnnouncementsTabs />}
       {activeStorefrontTab === "showcase" && <ShowcaseTab />}
       {activeStorefrontTab === "faq" && <FaqTab />}
     </div>
   );
 };
-
 
 export default StorefrontPanel;
