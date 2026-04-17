@@ -21,7 +21,8 @@ type NotificationType =
   | "order_status"
   | "new_inquiry"
   | "low_stock"
-  | "out_of_stock";
+  | "out_of_stock"
+  | "new_user";
 
 interface Notification {
   id: string;

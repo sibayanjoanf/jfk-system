@@ -59,7 +59,7 @@ interface RevenueChartProps {
 
 const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
   return (
-    <div className="bg-white p-6 rounded-3xl border border-[#E1E1E1] shadow-sm h-[400px]">
+    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-[400px]">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-md font-semibold text-[#050F24]">
           Revenue Over Time

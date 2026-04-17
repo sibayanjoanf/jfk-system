@@ -10,6 +10,7 @@ import {
   XCircle,
   X,
   CheckCheck,
+  UserPlus,
 } from "lucide-react";
 
 type NotificationType =
@@ -17,7 +18,8 @@ type NotificationType =
   | "order_status"
   | "new_inquiry"
   | "low_stock"
-  | "out_of_stock";
+  | "out_of_stock"
+  | "new_user";
 
 interface Notification {
   id: string;
@@ -71,6 +73,12 @@ function NotifIcon({ type }: { type: NotificationType }) {
         <XCircle size={14} className="text-red-500" />
       </div>
     );
+  if (type === "new_user")
+    return (
+      <div className={`${base} bg-orange-50`}>
+        <UserPlus size={14} className="text-orange-500" />
+      </div>
+    );
   return (
     <div className={`${base} bg-gray-50`}>
       <Package size={14} className="text-gray-500" />
@@ -88,6 +96,8 @@ function getRoute(type: NotificationType): string {
     case "low_stock":
     case "out_of_stock":
       return "/admin/inventory-management";
+    case "new_user":
+      return "/admin/user-management";
     default:
       return "/admin";
   }
