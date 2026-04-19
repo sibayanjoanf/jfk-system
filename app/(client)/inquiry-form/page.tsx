@@ -310,6 +310,7 @@ export default function InquiryFormPage() {
                   setErrors((prev) => ({ ...prev, phone: "" }));
                 }
               }}
+              className="h-12 border-2"
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

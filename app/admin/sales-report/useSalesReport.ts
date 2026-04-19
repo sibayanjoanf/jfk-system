@@ -114,38 +114,6 @@ function groupByPeriod(orders: Order[], filter: TimeFilter): StatPoint[] {
   }));
 }
 
-function getTopProducts(orders: Order[]): TopProduct[] {
-  const map = new Map<string, TopProduct>();
-
-  orders
-    .filter((o) => o.status === "Completed" || o.status === "Refunded")
-    .forEach((order) => {
-      if (!order.items || !Array.isArray(order.items)) return;
-      order.items.forEach((item: OrderItem) => {
-        const key = item.sku || item.name;
-        const existing = map.get(key) || {
-          name: item.name,
-          sku: item.sku || "-",
-          quantity: 0,
-          revenue: 0,
-          refunds: 0,
-        };
-        map.set(key, {
-          ...existing,
-          quantity: existing.quantity + (item.quantity || 0),
-          revenue:
-            existing.revenue +
-            (order.status === "Completed" ? (item.price || 0) * (item.quantity || 0) : 0),
-          refunds: existing.refunds + (order.status === "Refunded" ? 1 : 0),
-        });
-      });
-    });
-
-  return Array.from(map.values())
-    .sort((a, b) => b.quantity - a.quantity)
-    .slice(0, 10);
-}
-
 function deriveReportData(allOrders: Order[], timeFilter: TimeFilter): SalesReportData {
   const { start } = getDateRange(timeFilter);
   const filtered = allOrders.filter((o) => new Date(o.created_at) >= start);
@@ -167,6 +135,38 @@ function deriveReportData(allOrders: Order[], timeFilter: TimeFilter): SalesRepo
     }),
   );
 
+  // Exact same logic as useDashboard
+  const productMap = new Map<string, TopProduct>();
+  allOrders
+    .filter((o) => o.status === "Completed" || o.status === "Refunded")
+    .forEach((order) => {
+      if (!order.items || !Array.isArray(order.items)) return;
+      order.items.forEach((item) => {
+        const key = item.sku || item.name;
+        const existing = productMap.get(key) || {
+          name: item.name,
+          sku: item.sku || "-",
+          quantity: 0,
+          revenue: 0,
+          refunds: 0,
+        };
+        productMap.set(key, {
+          ...existing,
+          quantity: existing.quantity + (item.quantity || 0),
+          revenue:
+            existing.revenue +
+            (order.status === "Completed"
+              ? (item.price || 0) * (item.quantity || 0)
+              : 0),
+          refunds: existing.refunds + (order.status === "Refunded" ? (item.quantity || 0) : 0),
+        });
+      });
+    });
+
+  const topProducts = Array.from(productMap.values())
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10);
+
   return {
     totalRevenue,
     totalOrders,
@@ -174,7 +174,7 @@ function deriveReportData(allOrders: Order[], timeFilter: TimeFilter): SalesRepo
     cancelledRate: totalOrders ? (cancelledCount / totalOrders) * 100 : 0,
     refundedRate: totalOrders ? (refundedCount / totalOrders) * 100 : 0,
     statPoints: groupByPeriod(filtered, timeFilter),
-    topProducts: getTopProducts(allOrders),
+    topProducts,
     orderStatusCounts: statusCounts,
   };
 }

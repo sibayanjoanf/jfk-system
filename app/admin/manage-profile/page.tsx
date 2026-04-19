@@ -16,6 +16,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { ROLE_LABELS, UserRole } from "@/app/admin/user-management/userTypes";
 import { ContactInput } from "@/components/admin/ContactInput";
+import ConfirmModal from "../components/ConfirmModal";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -63,6 +64,8 @@ const ProfilePage: React.FC = () => {
   // const [savingEmail, setSavingEmail] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     firstName: "",
@@ -155,6 +158,7 @@ const ProfilePage: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     await supabase.auth.signOut();
     router.push("/admin");
     router.refresh();
@@ -350,7 +354,7 @@ const ProfilePage: React.FC = () => {
               );
             })}
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               className="flex items-center gap-2.5 w-full px-4 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all border-t border-gray-100"
             >
               <LogOut size={15} />
@@ -362,7 +366,7 @@ const ProfilePage: React.FC = () => {
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
           {successMessage && (
-            <div className="px-4 py-3 bg-green-50 text-green-600 text-xs font-medium rounded-xl border border-green-100">
+            <div className="px-4 py-3 bg-green-100/60 text-green-600 text-xs font-medium rounded-xl border border-green-100">
               {successMessage}
             </div>
           )}
@@ -456,6 +460,7 @@ const ProfilePage: React.FC = () => {
                         contact: value,
                       })
                     }
+                    className="bg-gray-100/50"
                   />
                 </div>
                 <div>
@@ -824,6 +829,18 @@ const ProfilePage: React.FC = () => {
           )} */}
         </div>
       </div>
+
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Log out"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Log out"
+        cancelLabel="Cancel"
+        loading={loggingOut}
+        variant="danger"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </div>
   );
 };

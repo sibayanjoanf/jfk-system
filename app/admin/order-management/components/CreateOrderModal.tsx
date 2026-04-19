@@ -7,6 +7,14 @@ import { supabase } from "@/lib/supabase";
 import { CreateOrderForm, OrderItem } from "../types";
 import { useOrderMutations } from "../hooks/useOrderMutations";
 import { ContactInput } from "@/components/admin/ContactInput";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface VariantOption {
   id: string;
@@ -329,6 +337,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                       setErrors((prev) => ({ ...prev, phone: "" }));
                     }
                   }}
+                  className="border"
                 />
               </div>
               <div>
@@ -361,41 +370,43 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Delivery Preference</label>
-                <div className="relative">
-                  <select
-                    value={form.delivery_preference}
-                    onChange={(e) =>
-                      setForm({ ...form, delivery_preference: e.target.value })
-                    }
-                    className={`${inputClass} appearance-none`}
-                  >
-                    <option value="pickup">Pickup</option>
-                    <option value="delivery">Delivery</option>
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
+                <Select
+                  value={form.delivery_preference}
+                  onValueChange={(val) =>
+                    setForm({ ...form, delivery_preference: val })
+                  }
+                >
+                  <SelectTrigger className="w-full h-10 bg-gray-50 text-sm border-gray-200 focus:ring-1 focus:ring-red-500 focus:border-red-500">
+                    <SelectValue placeholder="Select preference" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="pickup">Pickup</SelectItem>
+                      <SelectItem value="delivery">Delivery</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className={labelClass}>Payment Preference</label>
-                <div className="relative">
-                  <select
-                    value={form.payment_preference}
-                    onChange={(e) =>
-                      setForm({ ...form, payment_preference: e.target.value })
-                    }
-                    className={`${inputClass} appearance-none`}
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="online_payment">Online Payment</option>
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
+                <Select
+                  value={form.payment_preference}
+                  onValueChange={(val) =>
+                    setForm({ ...form, payment_preference: val })
+                  }
+                >
+                  <SelectTrigger className="w-full h-10 bg-gray-50 text-sm border-gray-200 focus:ring-1 focus:ring-red-500 focus:border-red-500">
+                    <SelectValue placeholder="Select preference" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="online_payment">
+                        Online Payment
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="col-span-2">
                 <label className={labelClass}>Notes</label>

@@ -47,7 +47,6 @@ export function useInquiries() {
     return true;
   };
 
-  // Archive instead of delete
   const archiveInquiries = async (ids: string[]) => {
     const { error } = await supabase
       .from("contact")
@@ -62,7 +61,6 @@ export function useInquiries() {
     return true;
   };
 
-  // Restore archived inquiries
   const restoreInquiries = async (ids: string[]) => {
     const { error } = await supabase
       .from("contact")

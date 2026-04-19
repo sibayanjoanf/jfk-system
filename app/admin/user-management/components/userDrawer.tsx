@@ -9,6 +9,7 @@ import {
   DEFAULT_PERMISSIONS,
   ROLE_LABELS,
 } from "../userTypes";
+import ConfirmModal from "../../components/ConfirmModal";
 
 interface UserDrawerProps {
   user: UserProfile | null;
@@ -70,9 +71,6 @@ function resolveInitialPermissions(user: UserProfile): UserPermissions {
   return DEFAULT_PERMISSIONS.staff;
 }
 
-// Inner component receives a guaranteed non-null user and remounts via
-// key={user.id} in the parent, so all useState initialisers re-run
-// naturally whenever the selected user changes — no effects needed.
 const UserDrawerInner: React.FC<
   Omit<UserDrawerProps, "user"> & { user: UserProfile }
 > = ({
@@ -94,8 +92,18 @@ const UserDrawerInner: React.FC<
   const [success, setSuccess] = useState(false);
 
   const handleRoleChange = (role: UserRole) => {
-    setSelectedRole(role);
-    setPermissions(DEFAULT_PERMISSIONS[role]);
+    setConfirmModal({
+      open: true,
+      title: "Change Role",
+      description: `Are you sure you want to change the role to ${ROLE_LABELS[role]}?`,
+      confirmLabel: "Change Role",
+      variant: "restore",
+      onConfirm: () => {
+        setSelectedRole(role);
+        setPermissions(DEFAULT_PERMISSIONS[role]);
+        closeConfirm();
+      },
+    });
   };
 
   const toggleSimplePermission = (key: keyof UserPermissions) => {
@@ -118,39 +126,90 @@ const UserDrawerInner: React.FC<
     }));
   };
 
-  const handleSave = async () => {
-    if (!selectedRole) return;
-    setSaving(true);
-    setError(null);
-
-    const result =
-      user.status === "pending"
-        ? await onApprove(user.id, selectedRole, permissions)
-        : await onUpdate(user.id, { role: selectedRole, permissions });
-
-    setSaving(false);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-    }
+  const handleSave = () => {
+    setConfirmModal({
+      open: true,
+      title: isPending ? "Approve User" : "Save Changes",
+      description: isPending
+        ? "Are you sure you want to approve this user?"
+        : "Are you sure you want to save these changes?",
+      confirmLabel: isPending ? "Approve" : "Save",
+      variant: "restore",
+      onConfirm: async () => {
+        if (!selectedRole) return;
+        setSaving(true);
+        setError(null);
+        closeConfirm();
+        const result = isPending
+          ? await onApprove(user.id, selectedRole, permissions)
+          : await onUpdate(user.id, { role: selectedRole, permissions });
+        setSaving(false);
+        if (result.error) setError(result.error);
+        else {
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+        }
+      },
+    });
   };
 
-  const handleStatusToggle = async () => {
+  const handleStatusToggle = () => {
     const newStatus = user.status === "active" ? "inactive" : "active";
-    setSaving(true);
-    const result = await onUpdate(user.id, { status: newStatus });
-    setSaving(false);
-    if (result.error) setError(result.error);
+    setConfirmModal({
+      open: true,
+      title: newStatus === "inactive" ? "Set Inactive" : "Set Active",
+      description:
+        newStatus === "inactive"
+          ? "This will block the user from logging in."
+          : "This will allow the user to log in again.",
+      confirmLabel: newStatus === "inactive" ? "Set Inactive" : "Set Active",
+      variant: newStatus === "inactive" ? "danger" : "restore",
+      onConfirm: async () => {
+        setSaving(true);
+        closeConfirm();
+        const result = await onUpdate(user.id, { status: newStatus });
+        setSaving(false);
+        if (result.error) setError(result.error);
+      },
+    });
   };
 
-  const handleArchive = async () => {
-    setArchiving(true);
-    await onArchive(user.id);
-    setArchiving(false);
-    onClose();
+  const handleArchive = () => {
+    setConfirmModal({
+      open: true,
+      title: "Archive User",
+      description:
+        "This will archive the user. They will no longer have access.",
+      confirmLabel: "Archive",
+      variant: "archive",
+      onConfirm: async () => {
+        setArchiving(true);
+        closeConfirm();
+        await onArchive(user.id);
+        setArchiving(false);
+        onClose();
+      },
+    });
   };
+
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant: "archive" | "restore" | "danger";
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    confirmLabel: "Confirm",
+    variant: "restore",
+    onConfirm: () => {},
+  });
+
+  const closeConfirm = () =>
+    setConfirmModal((prev) => ({ ...prev, open: false }));
 
   const isPending = user.status === "pending";
   const isReadOnly = !isSuperAdmin;
@@ -174,7 +233,7 @@ const UserDrawerInner: React.FC<
             {user.contact && (
               <p className="text-xs text-gray-400">{user.contact}</p>
             )}
-            <p className="text-[11px] text-gray-300 mt-0.5">
+            <p className="text-[11px] text-gray-400/60 mt-0.5">
               Registered{" "}
               {new Date(user.created_at).toLocaleDateString("en-PH", {
                 month: "short",
@@ -199,7 +258,7 @@ const UserDrawerInner: React.FC<
                 className={`px-3 py-2 text-xs rounded-lg border font-medium transition-colors text-left ${
                   selectedRole === role
                     ? "bg-red-600 text-white border-red-600"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-100"
                 } ${isReadOnly ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 {ROLE_LABELS[role]}
@@ -342,7 +401,7 @@ const UserDrawerInner: React.FC<
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   user.status === "active"
                     ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                    : "bg-green-100 text-green-600 hover:bg-green-200"
+                    : "bg-green-600/10 text-green-600 hover:bg-green-600/20"
                 }`}
               >
                 {user.status === "active" ? "Set Inactive" : "Set Active"}
@@ -388,6 +447,17 @@ const UserDrawerInner: React.FC<
               {archiving ? "Archiving..." : "Archive User"}
             </button>
           )}
+
+          <ConfirmModal
+            open={confirmModal.open}
+            title={confirmModal.title}
+            description={confirmModal.description}
+            confirmLabel={confirmModal.confirmLabel}
+            variant={confirmModal.variant}
+            loading={saving || archiving}
+            onConfirm={confirmModal.onConfirm}
+            onCancel={closeConfirm}
+          />
         </div>
       )}
     </>
@@ -415,7 +485,6 @@ const UserDrawer: React.FC<UserDrawerProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <Shield size={15} className="text-red-600" />
             <p className="text-sm font-semibold text-gray-900">
               {user?.status === "pending" ? "Approve User" : "User Details"}
             </p>

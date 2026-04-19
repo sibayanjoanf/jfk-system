@@ -10,7 +10,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseBrowser } from "@/lib/supabase";
 import { AdjustmentRow } from "../types";
 import Pagination from "./Pagination";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
@@ -88,7 +88,8 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   const [quantityError, setQuantityError] = useState("");
   const [productError, setProductError] = useState("");
   const [reasonError, setReasonError] = useState("");
-  
+  const [adjustedBy, setAdjustedBy] = useState<string | null>(null);
+
   const typeRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState({
@@ -195,7 +196,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
     }
   };
 
-  const handleOpenForm = () => {
+  const handleOpenForm = async () => {
     fetchVariants();
     setShowForm(true);
     setDropdownOpen(false);
@@ -203,6 +204,11 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
     setProductError("");
     setQuantityError("");
     setReasonError("");
+
+    const {
+      data: { session },
+    } = await supabaseBrowser.auth.getSession();
+    setAdjustedBy(session?.user?.email ?? null);
   };
 
   const handleSelectVariant = (v: VariantOption) => {
@@ -267,7 +273,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
       p_quantity: Number(form.quantity),
       p_adjustment_type: form.type.toLowerCase(),
       p_notes: form.reason || null,
-      p_adjusted_by: null,
+      p_adjusted_by: adjustedBy,
     });
     if (error) {
       alert(`Error: ${error.message}`);
@@ -296,16 +302,16 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <div>
+        <div className="min-w-0 max-w-sm">
           <h2 className="text-base font-semibold text-gray-900">
             Stock Adjustments
           </h2>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-400 mt-1 leading-relaxed">
             Manually correct stock levels due to damage, returns, showroom use,
             or counting discrepancies.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end w-full sm:auto">
+        <div className="flex items-start gap-2 shrink-0 flex-wrap sm:flex-nowrap sm:justify-end w-full sm:w-auto">
           <div className="relative group flex-1 sm:flex-none">
             <span className="absolute inset-y-0 right-3 flex items-center text-gray-400 pointer-events-none group-focus-within:text-red-600 transition-colors">
               <Search size={13} />
@@ -559,9 +565,15 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                     Select a reason
                   </option>
                   <option value="Damaged goods">Damaged goods</option>
-                  <option value="Consumed in showroom">Consumed in showroom</option>
-                  <option value="Returned by customer">Returned by customer</option>
-                  <option value="Counting discrepancy">Counting discrepancy</option>
+                  <option value="Consumed in showroom">
+                    Consumed in showroom
+                  </option>
+                  <option value="Returned by customer">
+                    Returned by customer
+                  </option>
+                  <option value="Counting discrepancy">
+                    Counting discrepancy
+                  </option>
                   <option value="Theft / Loss">Theft / Loss</option>
                   <option value="Other">Other</option>
                 </select>
@@ -695,8 +707,16 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                     <td className="py-3.5 px-4 text-xs text-gray-500">
                       {adj.notes ?? "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-gray-500">
-                      {adj.adjusted_by ?? "—"}
+                    <td className="py-3.5 px-4">
+                      {adj.adjusted_by ? (
+                        <>
+                          <p className="text-xs text-gray-400 font-normal">
+                            {adj.adjusted_by}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400">system</span>
+                      )}
                     </td>
                     <td className="py-3.5 pr-5 text-xs text-gray-500 text-center whitespace-nowrap">
                       <p>

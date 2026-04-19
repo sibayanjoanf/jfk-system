@@ -28,7 +28,7 @@ export interface DashboardData {
     orders: number;
     price: number;
     category: string;
-    refunds: string;
+    refunds: number, 
   }[];
 }
 
@@ -106,24 +106,30 @@ export function useDashboard() {
         .filter((s) => s.value > 0);
 
       // Top selling produ
-      const productMap = new Map<string, { name: string; sku: string; quantity: number; price: number; refunds: number }>();
+      const productMap = new Map<string, { name: string; sku: string; quantity: number; price: number; revenue: number; refunds: number }>();
       orders
         .filter((o) => o.status === "Completed" || o.status === "Refunded")
         .forEach((order) => {
-            if (!order.items || !Array.isArray(order.items)) return;
-            order.items.forEach((item: OrderItem) => {
+          if (!order.items || !Array.isArray(order.items)) return;
+          order.items.forEach((item: OrderItem) => {
             const key = item.sku || item.name;
             const existing = productMap.get(key) || {
               name: item.name,
               sku: item.sku || "-",
               quantity: 0,
               price: item.price || 0,
+              revenue: 0,
               refunds: 0,
             };
             productMap.set(key, {
               ...existing,
               quantity: existing.quantity + (item.quantity || 0),
-              refunds: existing.refunds + (order.status === "Refunded" ? 1 : 0),
+              revenue:
+                existing.revenue +
+                (order.status === "Completed"
+                  ? (item.price || 0) * (item.quantity || 0)
+                  : 0),
+              refunds: existing.refunds + (order.status === "Refunded" ? (item.quantity || 0) : 0),
             });
           });
         });
@@ -135,9 +141,9 @@ export function useDashboard() {
           name: p.name,
           type: p.sku,
           orders: p.quantity,
-          price: p.price,
+          price: p.revenue,
           category: "-",
-          refunds: p.refunds > 0 ? `> ${p.refunds}` : "< 1",
+          refunds: p.refunds,
         }));
 
       setData({

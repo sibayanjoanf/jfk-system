@@ -117,3 +117,9 @@
   white-space: nowrap;
   padding-right: 4rem;
 }
+
+select option {
+  background-color: white;
+  color: #111827;
+  font-size: 0.875rem;
+}

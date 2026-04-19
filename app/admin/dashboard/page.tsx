@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
         case "price":
           return (a.price - b.price) * dir;
         case "refunds":
-          return a.refunds.localeCompare(b.refunds) * dir;
+          return (a.refunds - b.refunds) * dir;
         default:
           return 0;
       }
@@ -219,7 +219,7 @@ const Dashboard: React.FC = () => {
                         </td>
                         <td className="py-3.5 pr-6 text-sm text-center">
                           <span
-                            className={`font-medium ${item.refunds !== "< 1" ? "text-red-500" : "text-gray-400"}`}
+                            className={`font-medium ${item.refunds > 0 ? "text-red-500" : "text-gray-400"}`}
                           >
                             {item.refunds}
                           </span>

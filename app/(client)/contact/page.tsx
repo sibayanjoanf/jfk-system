@@ -302,6 +302,7 @@ export default function ContactPage() {
                         setErrors((prev) => ({ ...prev, phone: "" }));
                       }
                     }}
+                    className="h-12 border-2"
                   />
 
                   <Field>
@@ -317,7 +318,7 @@ export default function ContactPage() {
                         }
                       }}
                       className={cn(
-                        "h-[180px] border-2 shadow-xs selection:bg-gray-200 focus-visible:ring-transparent focus-visible:border-red-600 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
+                        "h-[180px] border-2 selection:bg-gray-200 focus-visible:ring-transparent focus-visible:border-red-600 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400",
                         "resize-none overflow-y-auto transition-colors",
                         errors.messageBox && "border-red-500",
                       )}

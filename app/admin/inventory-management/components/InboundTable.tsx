@@ -10,7 +10,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseBrowser } from "@/lib/supabase";
 import { InboundRow } from "../types";
 import Pagination from "./Pagination";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
@@ -98,6 +98,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
   const [variantSearch, setVariantSearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [receivedBy, setReceivedBy] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     variant_id: "",
@@ -216,12 +217,23 @@ const InboundTable: React.FC<InboundTableProps> = ({
     }
   };
 
-  const handleOpenForm = () => {
+  const handleOpenForm = async () => {
     fetchVariants();
     setShowForm(true);
     setDropdownOpen(false);
     setVariantSearch("");
-    setFormErrors({ product: false, quantity: false, notes: false, supplier: false });
+    setFormErrors({
+      product: false,
+      quantity: false,
+      notes: false,
+      supplier: false,
+    });
+
+    const {
+      data: { session },
+    } = await supabaseBrowser.auth.getSession();
+    setReceivedBy(session?.user?.email ?? null);
+    console.log("session user email:", session?.user?.email);
   };
 
   const handleSelectVariant = (v: VariantOption) => {
@@ -259,13 +271,13 @@ const InboundTable: React.FC<InboundTableProps> = ({
       });
       return;
     }
-
+    console.log("receivedBy at save time:", receivedBy);
     setSaving(true);
     const { error } = await supabase.rpc("record_inbound", {
       p_variant_id: form.variant_id,
       p_quantity: Number(form.quantity),
       p_supplier: form.supplier || null,
-      p_received_by: null,
+      p_received_by: receivedBy,
     });
     if (error) {
       alert(`Error: ${error.message}`);
@@ -282,7 +294,12 @@ const InboundTable: React.FC<InboundTableProps> = ({
       supplier: "",
       notes: "",
     });
-    setFormErrors({ product: false, quantity: false, notes: false, supplier: false });
+    setFormErrors({
+      product: false,
+      quantity: false,
+      notes: false,
+      supplier: false,
+    });
     setShowForm(false);
     setSaving(false);
     onSaved();
@@ -508,7 +525,8 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 value={form.supplier}
                 onChange={(e) => {
                   setForm({ ...form, supplier: e.target.value });
-                  if (e.target.value.trim()) setFormErrors((prev) => ({ ...prev, supplier: false }));
+                  if (e.target.value.trim())
+                    setFormErrors((prev) => ({ ...prev, supplier: false }));
                 }}
                 className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.supplier ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
               />
@@ -529,7 +547,8 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 value={form.notes}
                 onChange={(e) => {
                   setForm({ ...form, notes: e.target.value });
-                  if (e.target.value.trim()) setFormErrors((prev) => ({ ...prev, notes: false }));
+                  if (e.target.value.trim())
+                    setFormErrors((prev) => ({ ...prev, notes: false }));
                 }}
                 className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.notes ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
               />
@@ -638,8 +657,16 @@ const InboundTable: React.FC<InboundTableProps> = ({
                     <td className="py-3.5 px-4 text-sm text-gray-500">
                       {batch.supplier ?? "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-sm text-gray-500">
-                      {batch.received_by ?? "—"}
+                    <td className="py-3.5 px-4">
+                      {batch.received_by ? (
+                        <>
+                          <p className="text-xs text-gray-400">
+                            {batch.received_by}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400">system</span>
+                      )}
                     </td>
                     <td className="py-3.5 pr-5 text-xs text-gray-500 text-center whitespace-nowrap">
                       <p>

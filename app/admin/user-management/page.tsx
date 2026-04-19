@@ -14,6 +14,23 @@ import {
   ROLE_LABELS,
   STATUS_LABELS,
 } from "./userTypes";
+import { Users2 } from "lucide-react";
+import Link from "next/link";
+
+const getStatusBg = (status: UserStatus) => {
+  switch (status) {
+    case "active":
+      return "bg-green-600/10";
+    case "pending":
+      return "bg-amber-500/10";
+    case "inactive":
+      return "bg-gray-500/10";
+    case "archived":
+      return "bg-red-600/10";
+    default:
+      return "bg-gray-500/10";
+  }
+};
 
 const getStatusStyles = (status: UserStatus) => {
   switch (status) {
@@ -159,6 +176,25 @@ const UserManagement: React.FC = () => {
           <HeaderNotifications />
           <HeaderUser />
         </div>
+      </div>
+
+      <div className="flex gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5 mb-6 overflow-x-auto">
+        <Link
+          href="/admin/user-management"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors bg-red-600 text-white shadow-sm"
+        >
+          <Users2 size={13} />
+          Active
+        </Link>
+        {isSuperAdmin && (
+          <Link
+            href="/admin/user-management/archived"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+          >
+            <Archive size={13} />
+            Archived
+          </Link>
+        )}
       </div>
 
       {/* Card */}
@@ -359,7 +395,7 @@ const UserManagement: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyles(u.status)}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyles(u.status)} ${getStatusBg(u.status)}`}
                       >
                         <div
                           className={`w-1.5 h-1.5 rounded-full ${getDotColor(u.status)}`}

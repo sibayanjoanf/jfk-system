@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import ConfirmModal from "@/app/admin/components/ConfirmModal";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,6 +32,8 @@ const HeaderUser: React.FC = () => {
   const [email, setEmail] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -61,6 +64,7 @@ const HeaderUser: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     setIsLoggingOut(true);
     try {
       await supabase.auth.signOut();
@@ -126,7 +130,7 @@ const HeaderUser: React.FC = () => {
 
           <div className="border-t border-gray-100">
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               disabled={isLoggingOut}
               className="flex items-center gap-3 w-full px-4 py-2.5 text-sm rounded-b-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
             >
@@ -140,6 +144,18 @@ const HeaderUser: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Log out"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Log out"
+        cancelLabel="Cancel"
+        loading={loggingOut}
+        variant="danger"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </div>
   );
 };

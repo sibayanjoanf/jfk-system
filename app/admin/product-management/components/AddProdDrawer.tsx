@@ -10,6 +10,7 @@ import {
   emptyVariant,
 } from "../types";
 import VariantFields from "./VariantFields";
+import { useRef } from "react";
 
 const inputClass =
   "w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all";
@@ -37,6 +38,16 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
   const [subCategories, setSubCategories] = useState<SubCategoryOption[]>([]);
   const [variants, setVariants] = useState<VariantForm[]>([emptyVariant()]);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (variants.length > 0 && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [variants.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -193,7 +204,10 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-6 py-5 space-y-6"
+        >
           {/* Product Info */}
           <div className="space-y-4">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
@@ -315,7 +329,9 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
                 onUpdate={updateVariant}
                 onImageChange={handleVariantImage}
                 onRemove={variants.length > 1 ? removeVariant : undefined}
-                clearError={(key) => setFormErrors((prev) => ({ ...prev, [key]: "" }))}
+                clearError={(key) =>
+                  setFormErrors((prev) => ({ ...prev, [key]: "" }))
+                }
               />
             ))}
           </div>
