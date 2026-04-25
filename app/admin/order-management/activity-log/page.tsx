@@ -5,27 +5,21 @@ import { Search, ShoppingCart, Archive, Activity } from "lucide-react";
 import Link from "next/link";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
-import { useArchivedOrderData } from "../hooks/useArchivedOrderData";
-import { useOrderMutations } from "../hooks/useOrderMutations";
-import ArchivedOrderTable from "./components/ArchivedOrderTable";
+import { useActivityLogData } from "../hooks/useActivityLogData";
+import ActivityLogTable from "../components/ActivityLogTable";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
-const ArchivedOrderManagement: React.FC = () => {
-  const { rows, loading, fetchArchivedOrders, restoreFromLocal } =
-    useArchivedOrderData();
-  const { restoreOrders } = useOrderMutations();
-
+const ActivityLogPage: React.FC = () => {
+  const { rows, loading } = useActivityLogData();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const { currentUser } = useCurrentUser();
+  const permissions = currentUser?.permissions;
   const [sortConfig, setSortConfig] = useState<{
     field: string;
     dir: "asc" | "desc";
-  }>({
-    field: "order_number",
-    dir: "desc",
-  });
+  }>({ field: "changed_at", dir: "desc" });
 
   const handleSort = (field: string) => {
     setSortConfig((prev) => ({
@@ -50,15 +44,6 @@ const ArchivedOrderManagement: React.FC = () => {
     });
   }, [rows, sortConfig]);
 
-  const handleRestore = async (ids: string[]) => {
-    const { error } = await restoreOrders(ids, currentUser?.email ?? "system");
-    if (error) {
-      alert(`Error: ${error}`);
-      return;
-    }
-    restoreFromLocal(ids);
-  };
-
   return (
     <div className="p-0">
       {/* Header */}
@@ -76,7 +61,7 @@ const ArchivedOrderManagement: React.FC = () => {
             </span>
             <input
               type="text"
-              placeholder="Search by order ID, name, email, phone..."
+              placeholder="Search by order ID or user..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -101,26 +86,27 @@ const ArchivedOrderManagement: React.FC = () => {
           <ShoppingCart size={13} />
           Orders
         </Link>
-        <Link
-          href="/admin/order-management/archived"
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors bg-red-600 text-white shadow-sm"
-        >
-          <Archive size={13} />
-          Archived
-        </Link>
+        {permissions?.orders.archive && (
+          <Link
+            href="/admin/order-management/archived"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+          >
+            <Archive size={13} />
+            Archived
+          </Link>
+        )}
         <Link
           href="/admin/order-management/activity-log"
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors bg-red-600 text-white shadow-sm"
         >
           <Activity size={13} />
           Activity Log
         </Link>
       </div>
 
-      <ArchivedOrderTable
+      <ActivityLogTable
         rows={sortedRows}
         loading={loading}
-        search={search}
         currentPage={currentPage}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
@@ -130,11 +116,9 @@ const ArchivedOrderManagement: React.FC = () => {
         }}
         sortConfig={sortConfig}
         onSort={handleSort}
-        onRestore={handleRestore}
-        onRefresh={fetchArchivedOrders}
       />
     </div>
   );
 };
 
-export default ArchivedOrderManagement;
+export default ActivityLogPage;

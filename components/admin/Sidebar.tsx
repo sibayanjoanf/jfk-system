@@ -82,8 +82,10 @@ const ALL_MENU_ITEMS = [
 function hasPermission(permissions: UserPermissions, key: string): boolean {
   const value = permissions[key as keyof UserPermissions];
   if (typeof value === "boolean") return value;
-  // For nested permissions (orders, inquiries), check if at least one sub-permission is true
   if (typeof value === "object" && value !== null) {
+    if (key === "orders") return (value as UserPermissions["orders"]).view;
+    if (key === "inquiries")
+      return (value as UserPermissions["inquiries"]).view;
     return Object.values(value).some(Boolean);
   }
   return false;

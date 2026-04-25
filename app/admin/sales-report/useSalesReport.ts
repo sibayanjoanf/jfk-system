@@ -141,6 +141,13 @@ function deriveReportData(allOrders: Order[], timeFilter: TimeFilter): SalesRepo
     .filter((o) => o.status === "Completed" || o.status === "Refunded")
     .forEach((order) => {
       if (!order.items || !Array.isArray(order.items)) return;
+      
+      const refundedQtyMap = new Map<string, number>();
+      (order.refunded_items ?? []).forEach((item) => {
+        const key = item.sku || item.name;
+        refundedQtyMap.set(key, (refundedQtyMap.get(key) ?? 0) + (item.quantity || 0));
+      });
+
       order.items.forEach((item) => {
         const key = item.sku || item.name;
         const existing = productMap.get(key) || {
@@ -150,15 +157,18 @@ function deriveReportData(allOrders: Order[], timeFilter: TimeFilter): SalesRepo
           revenue: 0,
           refunds: 0,
         };
+
+        const refundedQty = refundedQtyMap.get(key) ?? 0;
+
         productMap.set(key, {
           ...existing,
           quantity: existing.quantity + (item.quantity || 0),
           revenue:
             existing.revenue +
             (order.status === "Completed"
-              ? (item.price || 0) * (item.quantity || 0)
+              ? (item.price || 0) * ((item.quantity || 0) - refundedQty)
               : 0),
-          refunds: existing.refunds + (order.status === "Refunded" ? (item.quantity || 0) : 0),
+          refunds: existing.refunds + refundedQty,
         });
       });
     });

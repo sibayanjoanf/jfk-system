@@ -3,14 +3,32 @@ import { Order, OrderStatus, CreateOrderForm, OrderItem } from "../types";
 
 export function useOrderMutations() {
 
-  const updateStatus = async (id: string, status: OrderStatus): Promise<{ error: string | null }> => {
+  const updateStatus = async (id: string, status: OrderStatus, performedBy = "system"): Promise<{ error: string | null }> => {
     try {
+      const { data: orders } = await supabase
+        .from("inquiries")
+        .select("id, order_number, status")
+        .eq("id", id)
+        .single();
+
       const { error } = await supabase
         .from("inquiries")
         .update({ status })
         .eq("id", id);
 
       if (error) throw error;
+
+      if (orders && status !== "Pending") {
+        await supabase.from("order_status_history").insert({
+          order_id: orders.id,
+          order_number: orders.order_number,
+          from_status: orders.status,
+          status: status,
+          changed_by: performedBy,
+          action: "status_change",
+        });
+      }
+
       return { error: null };
     } catch (err) {
       const e = err as { message: string };
@@ -73,36 +91,73 @@ export function useOrderMutations() {
   };
 
   // Archive instead of delete
-  const archiveOrders = async (ids: string[]): Promise<{ error: string | null }> => {
-    try {
-      const { error } = await supabase
-        .from("inquiries")
-        .update({ is_archived: true })
-        .in("id", ids);
+  const archiveOrders = async (ids: string[], performedBy = "system"): Promise<{ error: string | null }> => {
+  try {
+    const { data: orders } = await supabase
+      .from("inquiries")
+      .select("id, order_number, status")
+      .in("id", ids);
 
-      if (error) throw error;
-      return { error: null };
-    } catch (err) {
-      const e = err as { message: string };
-      return { error: e.message };
+    const { error } = await supabase
+      .from("inquiries")
+      .update({ is_archived: true })
+      .in("id", ids);
+
+    if (error) throw error;
+
+    if (orders) {
+      await supabase.from("order_status_history").insert(
+        orders.map((o) => ({
+          order_id: o.id,
+          order_number: o.order_number,
+          from_status: o.status,
+          status: o.status,
+          changed_by: performedBy,
+          action: "archived",
+        }))
+      );
     }
-  };
 
-  // Restore archived orders
-  const restoreOrders = async (ids: string[]): Promise<{ error: string | null }> => {
-    try {
-      const { error } = await supabase
-        .from("inquiries")
-        .update({ is_archived: false })
-        .in("id", ids);
+    return { error: null };
+  } catch (err) {
+    const e = err as { message: string };
+    return { error: e.message };
+  }
+};
 
-      if (error) throw error;
-      return { error: null };
-    } catch (err) {
-      const e = err as { message: string };
-      return { error: e.message };
+const restoreOrders = async (ids: string[], performedBy = "system"): Promise<{ error: string | null }> => {
+  try {
+    const { data: orders } = await supabase
+      .from("inquiries")
+      .select("id, order_number, status")
+      .in("id", ids);
+
+    const { error } = await supabase
+      .from("inquiries")
+      .update({ is_archived: false })
+      .in("id", ids);
+
+    if (error) throw error;
+
+    if (orders) {
+      await supabase.from("order_status_history").insert(
+        orders.map((o) => ({
+          order_id: o.id,
+          order_number: o.order_number,
+          from_status: o.status,
+          status: o.status,
+          changed_by: performedBy,
+          action: "restored",
+        }))
+      );
     }
-  };
+
+    return { error: null };
+  } catch (err) {
+    const e = err as { message: string };
+    return { error: e.message };
+  }
+};
 
   const refundItems = async (
   id: string,
@@ -124,14 +179,33 @@ export function useOrderMutations() {
   }
 };
 
-  const bulkUpdateStatus = async (ids: string[], status: OrderStatus): Promise<{ error: string | null }> => {
+  const bulkUpdateStatus = async (ids: string[], status: OrderStatus, performedBy = "system"): Promise<{ error: string | null }> => {
     try {
+      const { data: orders } = await supabase
+        .from("inquiries")
+        .select("id, order_number, status")
+        .in("id", ids);
+
       const { error } = await supabase
         .from("inquiries")
         .update({ status })
         .in("id", ids);
 
       if (error) throw error;
+
+      if (orders && status !== "Pending") {
+        await supabase.from("order_status_history").insert(
+          orders.map((o) => ({
+            order_id: o.id,
+            order_number: o.order_number,
+            from_status: o.status,
+            status: status,
+            changed_by: performedBy,
+            action: "status_change",
+          }))
+        );
+      }
+
       return { error: null };
     } catch (err) {
       const e = err as { message: string };

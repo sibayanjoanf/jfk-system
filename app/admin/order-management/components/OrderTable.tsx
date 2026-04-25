@@ -35,6 +35,8 @@ interface OrderTableProps {
   onPageSizeChange: (size: number) => void;
   sortConfig: { field: string; dir: "asc" | "desc" };
   onSort: (field: string) => void;
+  canCreate?: boolean;
+  canChangeStatus?: boolean;
 }
 
 interface ConfirmModalState {
@@ -95,6 +97,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onPageSizeChange,
   sortConfig,
   onSort,
+  canCreate = false,
+  canChangeStatus = false,
 }) => {
   const router = useRouter();
   const { archiveOrders, bulkUpdateStatus } = useOrderMutations();
@@ -196,8 +200,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
       setConfirmModal({
         open: true,
         title: "Cannot Archive",
-        description:
-          "Only Completed, Cancelled, or Refunded orders can be archived.",
+        description: "Only Cancelled or Refunded orders can be archived.",
         confirmLabel: "Got it",
         variant: "danger",
         onConfirm: () => setConfirmModal(CLOSED_MODAL),
@@ -208,13 +211,13 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setConfirmModal({
       open: true,
       title: "Archive Orders",
-      description: `${archivableIds.length} of ${selectedIds.length} selected order${archivableIds.length > 1 ? "s" : ""} can be archived (Completed, Cancelled, or Refunded only). Continue?`,
+      description: `${archivableIds.length} of ${selectedIds.length} selected order${archivableIds.length > 1 ? "s" : ""} can be archived (Cancelled, or Refunded only). Continue?`,
       confirmLabel: "Archive",
       variant: "archive",
       onConfirm: async () => {
         setBulkLoading(true);
         setConfirmModal(CLOSED_MODAL);
-        await archiveOrders(archivableIds);
+        await archiveOrders(archivableIds, currentUser?.email ?? "system");
         setSelectedIds([]);
         onRefresh();
         setBulkLoading(false);
@@ -233,7 +236,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
       onConfirm: async () => {
         setBulkLoading(true);
         setConfirmModal(CLOSED_MODAL);
-        const { error } = await bulkUpdateStatus(selectedIds, status);
+        const { error } = await bulkUpdateStatus(
+          selectedIds,
+          status,
+          currentUser?.email ?? "system",
+        );
         if (error) {
           setConfirmModal({
             open: true,
@@ -259,7 +266,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
         ALLOWED_TRANSITIONS[o.status].includes(status),
       ) &&
       (status !== "Cancelled" || permissions?.orders.cancel) &&
-      (status !== "Refunded" || permissions?.orders.refund),
+      // (status !== "Refunded" || permissions?.orders.refund) &&
+      status !== "Refunded",
   );
 
   return (
@@ -326,7 +334,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             {/* Bulk actions */}
             {someSelected && (
               <div className="flex items-center gap-2 animate-in fade-in duration-150">
-                {permissions?.orders.change_status && (
+                {canChangeStatus && (
                   <div className="relative" ref={bulkRef}>
                     <button
                       onClick={() => setBulkStatusOpen(!bulkStatusOpen)}
@@ -391,13 +399,15 @@ const OrderTable: React.FC<OrderTableProps> = ({
             )}
 
             {/* Create order */}
-            <button
-              onClick={onCreateOrder}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            >
-              <Plus size={14} />
-              New Order
-            </button>
+            {canCreate && (
+              <button
+                onClick={onCreateOrder}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              >
+                <Plus size={14} />
+                New Order
+              </button>
+            )}
           </div>
         </div>
 

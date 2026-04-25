@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { ShoppingCart, Search, Archive } from "lucide-react";
+import { ShoppingCart, Search, Archive, Activity } from "lucide-react";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
 import { useOrderData } from "./hooks/useOrderData";
@@ -17,7 +17,7 @@ const tabs: { key: TabType; label: string; icon: React.ElementType }[] = [
 ];
 
 const OrderManagement: React.FC = () => {
-  const { currentUser } = useCurrentUser();
+  const { currentUser, loading: userLoading } = useCurrentUser();
   const permissions = currentUser?.permissions;
   const [activeTab, setActiveTab] = useState<TabType>("orders");
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,6 +56,14 @@ const OrderManagement: React.FC = () => {
       return strA.localeCompare(strB) * dir;
     });
   }, [rows, sortConfig]);
+
+  if (!userLoading && permissions && !permissions.orders.view) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
+        You don&apos;t have permission to view orders.
+      </div>
+    );
+  }
 
   return (
     <div className="p-0">
@@ -121,6 +129,13 @@ const OrderManagement: React.FC = () => {
             Archived
           </Link>
         )}
+        <Link
+          href="/admin/order-management/activity-log"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+        >
+          <Activity size={13} />
+          Activity Log
+        </Link>
       </div>
 
       {/* Tab Content */}
@@ -140,6 +155,8 @@ const OrderManagement: React.FC = () => {
           }}
           sortConfig={sortConfig}
           onSort={handleSort}
+          canCreate={permissions?.orders.create ?? false}
+          canChangeStatus={permissions?.orders.change_status ?? false}
         />
       )}
 

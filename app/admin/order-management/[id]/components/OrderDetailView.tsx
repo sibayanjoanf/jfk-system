@@ -100,7 +100,11 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const handleStatusChange = async (newStatus: OrderStatus) => {
     setStatusLoading(true);
     setStatusError(null);
-    const { error } = await updateStatus(order.id, newStatus);
+    const { error } = await updateStatus(
+      order.id,
+      newStatus,
+      currentUser?.email ?? "system",
+    );
     if (error) {
       setStatusError(error);
     } else {

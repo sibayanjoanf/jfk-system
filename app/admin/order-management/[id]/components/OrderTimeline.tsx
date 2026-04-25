@@ -60,8 +60,16 @@ const OrderTimeline: React.FC<Props> = ({ order }) => {
     fetchHistory();
   }, [order.id]);
 
-  const getHistoryForStatus = (status: string) =>
-    history.find((h) => h.status === status);
+  const getHistoryForStatus = (status: string) => {
+    if (status === "Pending") {
+      return {
+        status: "Pending",
+        changed_at: order.created_at,
+        changed_by: "system",
+      };
+    }
+    return history.find((h) => h.status === status);
+  };
 
   const currentIndex = STATUS_ORDER.indexOf(order.status);
   const isCancelled = order.status === "Cancelled";

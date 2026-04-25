@@ -11,11 +11,11 @@ import InquiryDrawer from "../components/InquiryDrawer";
 import ConfirmModal from "@/app/admin/components/ConfirmModal";
 import { DateFilter } from "@/components/admin/CalendarPicker";
 import Link from "next/link";
-import { Inbox, Archive } from "lucide-react";
+import { Inbox, Archive, Activity } from "lucide-react";
+import { useCurrentUser } from "@/app/admin/order-management/hooks/useCurrentUser";
 
 const ArchivedInquiryManagement: React.FC = () => {
   const { inquiries, loading, restoreInquiries } = useArchivedInquiries();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null);
@@ -25,7 +25,8 @@ const ArchivedInquiryManagement: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
-
+  const { currentUser } = useCurrentUser();
+  const permissions = currentUser?.permissions;
   const [sortConfig, setSortConfig] = useState<{
     field: string;
     dir: "asc" | "desc";
@@ -115,7 +116,10 @@ const ArchivedInquiryManagement: React.FC = () => {
 
   const handleConfirmRestore = async () => {
     setRestoring(true);
-    const ok = await restoreInquiries(selectedIds);
+    const ok = await restoreInquiries(
+      selectedIds,
+      currentUser?.email ?? "system",
+    );
     if (ok) {
       if (activeInquiry && selectedIds.includes(activeInquiry.id))
         closeDrawer();
@@ -172,6 +176,13 @@ const ArchivedInquiryManagement: React.FC = () => {
           <Archive size={13} />
           Archived
         </Link>
+        <Link
+          href="/admin/inquiry-management/activity-log"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+        >
+          <Activity size={13} />
+          Activity Log
+        </Link>
       </div>
 
       <ArchivedInquiryTable
@@ -212,6 +223,7 @@ const ArchivedInquiryManagement: React.FC = () => {
         sending={false}
         onClose={closeDrawer}
         onSendReply={async () => {}}
+        canReply={false}
       />
     </div>
   );

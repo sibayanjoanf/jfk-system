@@ -17,6 +17,7 @@ interface InquiryDrawerProps {
   sending: boolean;
   onClose: () => void;
   onSendReply: (text: string) => void;
+  canReply?: boolean;
 }
 
 const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
@@ -25,6 +26,7 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
   sending,
   onClose,
   onSendReply,
+  canReply = false,
 }) => {
   const [replyText, setReplyText] = useState("");
 
@@ -153,32 +155,33 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
               </div>
 
               {/* Reply */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                  Reply
-                </h3>
-                <textarea
-                  value={replyText}
-                  onChange={(e) => {
-                    const text = e.target.value;
-                    const nonWhitespaceCount = text.replace(/\s/g, "").length;
-                    
-                    if (nonWhitespaceCount <= 500) {
-                      setReplyText(text);
-                    }
-                  }}
-                  placeholder="Write your reply to the customer here..."
-                  rows={5}
-                  disabled={inquiry.status === "Resolved" || sending}
-                  className="w-full px-3.5 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                {inquiry.status === "Resolved" && (
-                  <p className="text-xs text-[#27D095] flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#27D095] inline-block" />
-                    This inquiry has been resolved.
-                  </p>
-                )}
-              </div>
+              {canReply && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                    Reply
+                  </h3>
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => {
+                      const text = e.target.value;
+                      const nonWhitespaceCount = text.replace(/\s/g, "").length;
+                      if (nonWhitespaceCount <= 500) {
+                        setReplyText(text);
+                      }
+                    }}
+                    placeholder="Write your reply to the customer here..."
+                    rows={5}
+                    disabled={inquiry.status === "Resolved" || sending}
+                    className="w-full px-3.5 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  {inquiry.status === "Resolved" && (
+                    <p className="text-xs text-[#27D095] flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#27D095] inline-block" />
+                      This inquiry has been resolved.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -189,21 +192,25 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
               >
                 Close
               </button>
-              <button
-                onClick={handleSend}
-                disabled={
-                  !replyText.trim() || inquiry.status === "Resolved" || sending
-                }
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {sending ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" /> Sending...
-                  </>
-                ) : (
-                  "Send Reply"
-                )}
-              </button>
+              {canReply && (
+                <button
+                  onClick={handleSend}
+                  disabled={
+                    !replyText.trim() ||
+                    inquiry.status === "Resolved" ||
+                    sending
+                  }
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sending ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    "Send Reply"
+                  )}
+                </button>
+              )}
             </div>
           </>
         )}

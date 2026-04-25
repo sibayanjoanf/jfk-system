@@ -123,17 +123,44 @@ const UserDrawerInner: React.FC<
   };
 
   const toggleOrderPermission = (key: keyof UserPermissions["orders"]) => {
-    setPermissions((prev) => ({
-      ...prev,
-      orders: { ...prev.orders, [key]: !prev.orders[key] },
-    }));
+    if (key === "view") {
+      const newView = !permissions.orders.view;
+      setPermissions((prev) => ({
+        ...prev,
+        orders: {
+          view: newView,
+          create: newView ? prev.orders.create : false,
+          change_status: newView ? prev.orders.change_status : false,
+          cancel: newView ? prev.orders.cancel : false,
+          refund: newView ? prev.orders.refund : false,
+          archive: newView ? prev.orders.archive : false,
+        },
+      }));
+    } else {
+      setPermissions((prev) => ({
+        ...prev,
+        orders: { ...prev.orders, [key]: !prev.orders[key] },
+      }));
+    }
   };
 
   const toggleInquiryPermission = (key: keyof UserPermissions["inquiries"]) => {
-    setPermissions((prev) => ({
-      ...prev,
-      inquiries: { ...prev.inquiries, [key]: !prev.inquiries[key] },
-    }));
+    if (key === "view") {
+      const newView = !permissions.inquiries.view;
+      setPermissions((prev) => ({
+        ...prev,
+        inquiries: {
+          view: newView,
+          reply: newView ? prev.inquiries.reply : false,
+          archive: newView ? prev.inquiries.archive : false,
+        },
+      }));
+    } else {
+      setPermissions((prev) => ({
+        ...prev,
+        inquiries: { ...prev.inquiries, [key]: !prev.inquiries[key] },
+      }));
+    }
   };
 
   const handleSave = () => {
@@ -284,12 +311,15 @@ const UserDrawerInner: React.FC<
                         {ORDER_SUB.map(({ key: subKey, label: subLabel }) => (
                           <label
                             key={subKey}
-                            className={`flex items-center gap-2 ${isReadOnly ? "cursor-not-allowed" : "cursor-pointer"}`}
+                            className={`flex items-center gap-2 ${isReadOnly || (subKey !== "view" && !permissions.orders.view) ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
                           >
                             <input
                               type="checkbox"
                               checked={permissions.orders[subKey]}
-                              disabled={isReadOnly}
+                              disabled={
+                                isReadOnly ||
+                                (subKey !== "view" && !permissions.orders.view)
+                              }
                               onChange={() => toggleOrderPermission(subKey)}
                               className="w-3.5 h-3.5 accent-red-600"
                             />
@@ -318,12 +348,16 @@ const UserDrawerInner: React.FC<
                         {INQUIRY_SUB.map(({ key: subKey, label: subLabel }) => (
                           <label
                             key={subKey}
-                            className={`flex items-center gap-2 ${isReadOnly ? "cursor-not-allowed" : "cursor-pointer"}`}
+                            className={`flex items-center gap-2 ${isReadOnly || (subKey !== "view" && !permissions.inquiries.view) ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
                           >
                             <input
                               type="checkbox"
                               checked={permissions.inquiries[subKey]}
-                              disabled={isReadOnly}
+                              disabled={
+                                isReadOnly ||
+                                (subKey !== "view" &&
+                                  !permissions.inquiries.view)
+                              }
                               onChange={() => toggleInquiryPermission(subKey)}
                               className="w-3.5 h-3.5 accent-red-600"
                             />
@@ -461,7 +495,6 @@ const UserDrawer: React.FC<UserDrawerProps> = ({
   }, [isOpen]);
 
   const handleShowConfirm = useCallback((modal: ConfirmModalState) => {
-    // Slide drawer out first, then show modal after transition
     setDrawerVisible(false);
     setTimeout(() => {
       setConfirmModal({ ...modal, open: true });

@@ -11,14 +11,14 @@ import InquiryDrawer from "./components/InquiryDrawer";
 import ConfirmModal from "@/app/admin/components/ConfirmModal";
 import { DateFilter } from "@/components/admin/CalendarPicker";
 import Link from "next/link";
-import { Inbox, Archive } from "lucide-react";
+import { Inbox, Archive, Activity } from "lucide-react";
 import { useCurrentUser } from "@/app/admin/order-management/hooks/useCurrentUser";
 
 const InquiryManagement: React.FC = () => {
   const { inquiries, loading, updateStatus, archiveInquiries } = useInquiries();
   const { currentUser, loading: userLoading } = useCurrentUser();
   const canArchive =
-    !userLoading && currentUser?.permissions?.orders.archive === true;
+    !userLoading && currentUser?.permissions?.inquiries.archive === true;
   const [filterStatus, setFilterStatus] = useState("All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -127,7 +127,10 @@ const InquiryManagement: React.FC = () => {
   // Archive instead of delete
   const handleConfirmArchive = async () => {
     setArchiving(true);
-    const ok = await archiveInquiries(selectedIds);
+    const ok = await archiveInquiries(
+      selectedIds,
+      currentUser?.email ?? "system",
+    );
     if (ok) {
       if (activeInquiry && selectedIds.includes(activeInquiry.id))
         closeDrawer();
@@ -159,6 +162,13 @@ const InquiryManagement: React.FC = () => {
         }),
       },
     );
+
+    await updateStatus(
+      activeInquiry.id,
+      "Resolved",
+      currentUser?.email ?? "system",
+    );
+    setActiveInquiry({ ...activeInquiry, status: "Resolved" });
 
     setSending(false);
 
@@ -219,6 +229,13 @@ const InquiryManagement: React.FC = () => {
             Archived
           </Link>
         )}
+        <Link
+          href="/admin/inquiry-management/activity-log"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 hover:bg-gray-100"
+        >
+          <Activity size={13} />
+          Activity Log
+        </Link>
       </div>
 
       {/* Table */}
