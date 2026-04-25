@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Loader2, Shield, CheckCheck } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { X, Loader2, CheckCheck } from "lucide-react";
 import {
   UserProfile,
   UserRole,
@@ -72,28 +72,39 @@ function resolveInitialPermissions(user: UserProfile): UserPermissions {
 }
 
 const UserDrawerInner: React.FC<
-  Omit<UserDrawerProps, "user"> & { user: UserProfile }
+  Omit<UserDrawerProps, "user"> & {
+    user: UserProfile;
+    onShowConfirm: (modal: ConfirmModalState) => void;
+    saving: boolean;
+    archiving: boolean;
+    setSaving: (v: boolean) => void;
+    setArchiving: (v: boolean) => void;
+  }
 > = ({
   user,
-  isOpen,
   isSuperAdmin,
   onClose,
   onApprove,
   onUpdate,
   onArchive,
+  onShowConfirm,
+  saving,
+  archiving,
+  setSaving,
+  setArchiving,
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(user.role);
   const [permissions, setPermissions] = useState<UserPermissions>(
     resolveInitialPermissions(user),
   );
-  const [saving, setSaving] = useState(false);
-  const [archiving, setArchiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const isPending = user.status === "pending";
+  const isReadOnly = !isSuperAdmin;
+
   const handleRoleChange = (role: UserRole) => {
-    setConfirmModal({
-      open: true,
+    onShowConfirm({
       title: "Change Role",
       description: `Are you sure you want to change the role to ${ROLE_LABELS[role]}?`,
       confirmLabel: "Change Role",
@@ -101,7 +112,6 @@ const UserDrawerInner: React.FC<
       onConfirm: () => {
         setSelectedRole(role);
         setPermissions(DEFAULT_PERMISSIONS[role]);
-        closeConfirm();
       },
     });
   };
@@ -127,8 +137,7 @@ const UserDrawerInner: React.FC<
   };
 
   const handleSave = () => {
-    setConfirmModal({
-      open: true,
+    onShowConfirm({
       title: isPending ? "Approve User" : "Save Changes",
       description: isPending
         ? "Are you sure you want to approve this user?"
@@ -139,7 +148,6 @@ const UserDrawerInner: React.FC<
         if (!selectedRole) return;
         setSaving(true);
         setError(null);
-        closeConfirm();
         const result = isPending
           ? await onApprove(user.id, selectedRole, permissions)
           : await onUpdate(user.id, { role: selectedRole, permissions });
@@ -155,8 +163,7 @@ const UserDrawerInner: React.FC<
 
   const handleStatusToggle = () => {
     const newStatus = user.status === "active" ? "inactive" : "active";
-    setConfirmModal({
-      open: true,
+    onShowConfirm({
       title: newStatus === "inactive" ? "Set Inactive" : "Set Active",
       description:
         newStatus === "inactive"
@@ -166,7 +173,6 @@ const UserDrawerInner: React.FC<
       variant: newStatus === "inactive" ? "danger" : "restore",
       onConfirm: async () => {
         setSaving(true);
-        closeConfirm();
         const result = await onUpdate(user.id, { status: newStatus });
         setSaving(false);
         if (result.error) setError(result.error);
@@ -175,8 +181,7 @@ const UserDrawerInner: React.FC<
   };
 
   const handleArchive = () => {
-    setConfirmModal({
-      open: true,
+    onShowConfirm({
       title: "Archive User",
       description:
         "This will archive the user. They will no longer have access.",
@@ -184,35 +189,12 @@ const UserDrawerInner: React.FC<
       variant: "archive",
       onConfirm: async () => {
         setArchiving(true);
-        closeConfirm();
         await onArchive(user.id);
         setArchiving(false);
         onClose();
       },
     });
   };
-
-  const [confirmModal, setConfirmModal] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    confirmLabel: string;
-    variant: "archive" | "restore" | "danger";
-    onConfirm: () => void;
-  }>({
-    open: false,
-    title: "",
-    description: "",
-    confirmLabel: "Confirm",
-    variant: "restore",
-    onConfirm: () => {},
-  });
-
-  const closeConfirm = () =>
-    setConfirmModal((prev) => ({ ...prev, open: false }));
-
-  const isPending = user.status === "pending";
-  const isReadOnly = !isSuperAdmin;
 
   return (
     <>
@@ -442,27 +424,24 @@ const UserDrawerInner: React.FC<
             <button
               onClick={handleArchive}
               disabled={archiving}
-              className="w-full px-4 py-2.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-full px-4 py-2.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 transition-colors"
             >
               {archiving ? "Archiving..." : "Archive User"}
             </button>
           )}
-
-          <ConfirmModal
-            open={confirmModal.open}
-            title={confirmModal.title}
-            description={confirmModal.description}
-            confirmLabel={confirmModal.confirmLabel}
-            variant={confirmModal.variant}
-            loading={saving || archiving}
-            onConfirm={confirmModal.onConfirm}
-            onCancel={closeConfirm}
-          />
         </div>
       )}
     </>
   );
 };
+
+interface ConfirmModalState {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  variant: "archive" | "restore" | "danger";
+  onConfirm: () => void | Promise<void>;
+}
 
 const UserDrawer: React.FC<UserDrawerProps> = ({
   user,
@@ -470,17 +449,48 @@ const UserDrawer: React.FC<UserDrawerProps> = ({
   onClose,
   ...rest
 }) => {
+  const [drawerVisible, setDrawerVisible] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<
+    (ConfirmModalState & { open: boolean }) | null
+  >(null);
+
+  useEffect(() => {
+    if (isOpen) setDrawerVisible(true);
+  }, [isOpen]);
+
+  const handleShowConfirm = useCallback((modal: ConfirmModalState) => {
+    // Slide drawer out first, then show modal after transition
+    setDrawerVisible(false);
+    setTimeout(() => {
+      setConfirmModal({ ...modal, open: true });
+    }, 300);
+  }, []);
+
+  const handleConfirm = async () => {
+    if (!confirmModal) return;
+    await confirmModal.onConfirm();
+    setConfirmModal(null);
+    setDrawerVisible(true);
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmModal(null);
+    setDrawerVisible(true);
+  };
+
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/30 z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={onClose}
       />
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white shadow-2xl z-60 flex flex-col transition-transform duration-300 ease-in-out ${isOpen && drawerVisible ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
@@ -512,17 +522,35 @@ const UserDrawer: React.FC<UserDrawerProps> = ({
           </button>
         </div>
 
-        {/* Remount inner content whenever the selected user changes */}
         {user && (
           <UserDrawerInner
             key={user.id}
             user={user}
             isOpen={isOpen}
             onClose={onClose}
+            onShowConfirm={handleShowConfirm}
+            saving={saving}
+            archiving={archiving}
+            setSaving={setSaving}
+            setArchiving={setArchiving}
             {...rest}
           />
         )}
       </div>
+
+      {/* Confirm modal */}
+      {confirmModal && (
+        <ConfirmModal
+          open={confirmModal.open}
+          title={confirmModal.title}
+          description={confirmModal.description}
+          confirmLabel={confirmModal.confirmLabel}
+          variant={confirmModal.variant}
+          loading={saving || archiving}
+          onConfirm={handleConfirm}
+          onCancel={handleCancelConfirm}
+        />
+      )}
     </>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Plus, X, Loader2, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -10,7 +10,7 @@ import {
   emptyVariant,
 } from "../types";
 import VariantFields from "./VariantFields";
-import { useRef } from "react";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const inputClass =
   "w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all";
@@ -40,6 +40,30 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Internal drawer visibility — separate from `open` so we can hide/show
+  // the drawer independently when the warning modal is displayed
+  const [drawerVisible, setDrawerVisible] = useState(true);
+
+  // Warning modal state
+  const [warningModal, setWarningModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+  }>({ open: false, title: "", description: "" });
+
+  // Close drawer first, then show warning; on warning close, reopen drawer
+  const showWarning = (title: string, description: string) => {
+    setDrawerVisible(false);
+    setTimeout(() => {
+      setWarningModal({ open: true, title, description });
+    }, 300); // wait for drawer slide-out transition
+  };
+
+  const closeWarning = () => {
+    setWarningModal((prev) => ({ ...prev, open: false }));
+    setDrawerVisible(true);
+  };
+
   useEffect(() => {
     if (variants.length > 0 && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
@@ -57,6 +81,8 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
     setSelectedSubCategoryId("");
     setVariants([emptyVariant()]);
     setFormErrors({});
+    setWarningModal({ open: false, title: "", description: "" });
+    setDrawerVisible(true);
   }, [open]);
 
   useEffect(() => {
@@ -117,10 +143,68 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
     return Object.keys(errors).length === 0;
   };
 
+  // Returns true if no duplicates found, false if a duplicate was detected
+  const checkDuplicates = async (): Promise<boolean> => {
+    const skus = variants
+      .map((v) => v.sku.toUpperCase().trim())
+      .filter(Boolean);
+
+    // 1. Duplicate SKUs within the form itself
+    const skuSet = new Set<string>();
+    for (const sku of skus) {
+      if (skuSet.has(sku)) {
+        showWarning(
+          "Duplicate SKU in Form",
+          `You've entered "${sku}" more than once. Each variant must have a unique SKU.`,
+        );
+        return false;
+      }
+      skuSet.add(sku);
+    }
+
+    const { data: existingProducts } = await supabase
+      .from("products")
+      .select("id")
+      .ilike("name", productName.trim())
+      .limit(1);
+
+    if (existingProducts && existingProducts.length > 0) {
+      showWarning(
+        "Duplicate Product Name",
+        `A product named "${productName.trim()}" already exists. Please use a different name.`,
+      );
+      return false;
+    }
+
+    if (skus.length > 0) {
+      const { data: existingVariants } = await supabase
+        .from("product_variants")
+        .select("sku")
+        .in("sku", skus);
+
+      if (existingVariants && existingVariants.length > 0) {
+        const dupes = existingVariants.map((v) => v.sku).join(", ");
+        showWarning(
+          "Duplicate SKU",
+          `The following SKU${existingVariants.length > 1 ? "s are" : " is"} already in use: ${dupes}. Please use a unique SKU.`,
+        );
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
     try {
+      const noDuplicates = await checkDuplicates();
+      if (!noDuplicates) {
+        setSaving(false);
+        return;
+      }
+
       const { data: productData, error: productError } = await supabase
         .from("products")
         .insert({
@@ -168,7 +252,7 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
       onClose();
     } catch (err) {
       const error = err as Error;
-      alert(`Error: ${error.message}`);
+      showWarning("Something went wrong", error.message);
     } finally {
       setSaving(false);
     }
@@ -176,6 +260,17 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
 
   return (
     <>
+      <ConfirmModal
+        open={warningModal.open}
+        title={warningModal.title}
+        description={warningModal.description}
+        confirmLabel="Okay"
+        cancelLabel="Close"
+        variant="danger"
+        onConfirm={closeWarning}
+        onCancel={closeWarning}
+      />
+
       {open && (
         <div
           className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
@@ -183,7 +278,7 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
         />
       )}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-xl bg-white z-50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-full max-w-xl bg-white z-50 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open && drawerVisible ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
@@ -278,7 +373,6 @@ const AddProductDrawer: React.FC<AddProductDrawerProps> = ({
                     value={selectedSubCategoryId}
                     onChange={(e) => {
                       setSelectedSubCategoryId(e.target.value);
-                      /* ADDED: Clear the error when the user starts selecting/typing */
                       if (e.target.value.trim()) {
                         setFormErrors((prev) => ({ ...prev, subCategory: "" }));
                       }

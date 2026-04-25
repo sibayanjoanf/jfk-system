@@ -2,19 +2,18 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { MovementRow } from "../types";
 
-interface RawStockAdjustment {
+interface RawMovementRow {
   id: string;
-  adjustment_code: string;
-  adjustment_type: "add" | "deduct" | "set";
-  quantity: number;
-  quantity_before: number | null;
-  quantity_after: number | null;
-  adjusted_by: string | null;
-  notes: string | null;
+  movement_type: string;
+  quantity_change: number;
+  quantity_before: number;
+  quantity_after: number;
+  reference_type: string | null;
+  reference_id: string | null;
+  performed_by: string | null;
   created_at: string;
   product_variants: {
     sku: string;
-    stock_qty: number;
     products: { name: string } | null;
   } | null;
 }
@@ -27,58 +26,34 @@ export function useMovementData() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("StockAdjustment")
+        .from("StockMovement")
         .select(`
-          id, adjustment_code, adjustment_type,
-          quantity, quantity_before, quantity_after,
-          adjusted_by, notes, created_at,
+          id, movement_type,
+          quantity_change, quantity_before, quantity_after,
+          reference_type, reference_id, performed_by, created_at,
           product_variants (
-            sku, stock_qty,
+            sku,
             products ( name )
           )
         `)
+        .or("reference_type.neq.order,movement_type.eq.consumed,reference_type.eq.refund")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       if (!data) return;
 
-      const flattened: MovementRow[] = (data as unknown as RawStockAdjustment[]).map((m) => {
-        const qty = m.quantity;
-        const notes = m.notes ?? "";
-
-        let movement_type: MovementRow["movement_type"];
-        if (notes.startsWith("Inbound Received")) {
-          movement_type = "inbound";
-        } else if (m.adjustment_type === "deduct" && notes.startsWith("Order completed")) {
-          movement_type = "consumed";
-        } else if (m.adjustment_type === "add" && notes.startsWith("Order refunded")) {
-          movement_type = "returned";
-        } else {
-          movement_type = "adjustment";
-        }
-
-        let quantity_change: number;
-        if (m.adjustment_type === "set") {
-          quantity_change = m.quantity_after ?? qty; 
-        } else if (m.adjustment_type === "deduct") {
-          quantity_change = -qty;
-        } else {
-          quantity_change = qty;
-        }
-
-        return {
-          id:              m.id,
-          sku:             m.product_variants?.sku ?? "—",
-          product_name:    m.product_variants?.products?.name ?? "—",
-          movement_type,
-          quantity_change,
-          quantity_before: m.quantity_before ?? 0,
-          quantity_after:  m.quantity_after ?? 0,
-          reference_type:  m.notes ?? null,
-          performed_by:    m.adjusted_by,
-          created_at:      m.created_at,
-        };
-      });
+      const flattened: MovementRow[] = (data as unknown as RawMovementRow[]).map((m) => ({
+        id:              m.id,
+        sku:             m.product_variants?.sku ?? "—",
+        product_name:    m.product_variants?.products?.name ?? "—",
+        movement_type:   m.movement_type as MovementRow["movement_type"],
+        quantity_change: m.quantity_change,
+        quantity_before: m.quantity_before,
+        quantity_after:  m.quantity_after,
+        reference_type:  m.reference_type,
+        performed_by:    m.performed_by,
+        created_at:      m.created_at,
+      }));
 
       setRows(flattened);
     } catch (err) {

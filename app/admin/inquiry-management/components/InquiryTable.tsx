@@ -79,10 +79,21 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
           {someSelected && canArchive && (
             <button
               onClick={onDeleteClick}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors animate-in fade-in duration-150"
+              disabled={
+                !inquiries.some(
+                  (i) => selectedIds.includes(i.id) && i.status === "Resolved",
+                )
+              }
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors animate-in fade-in duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Archive size={13} />
-              Archive ({selectedIds.length})
+              Archive (
+              {
+                inquiries.filter(
+                  (i) => selectedIds.includes(i.id) && i.status === "Resolved",
+                ).length
+              }
+              /{selectedIds.length})
             </button>
           )}
 

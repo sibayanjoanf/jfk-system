@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useCompany } from "../../hooks/useCompany";
 import BrandCard from "./BrandCard";
 import BasicInfoCard from "./BasicInfoCard";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 const CompanyPanel: React.FC = () => {
   const {
@@ -19,13 +20,18 @@ const CompanyPanel: React.FC = () => {
     if (!success) setErrorOpen(true);
   };
 
+  const handleLogoUpload = async (file: File) => {
+    const success = await uploadLogo(file);
+    if (!success) setErrorOpen(true);
+  };
+
   return (
     <>
       <div className="space-y-6">
         <BrandCard
           companyForm={companyForm}
           onNameChange={(name) => updateField("companyName", name)}
-          onLogoUpload={uploadLogo}
+          onLogoUpload={handleLogoUpload}
           uploading={uploading}
         />
         <BasicInfoCard
@@ -36,33 +42,16 @@ const CompanyPanel: React.FC = () => {
         />
       </div>
 
-      {/* Error Modal */}
-      {errorOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-50 backdrop-blur-sm flex items-center justify-center"
-          onClick={() => setErrorOpen(false)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">
-              Failed to save
-            </h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Something went wrong while saving your changes. Please try again.
-            </p>
-            <div className="flex justify-end mt-5">
-              <button
-                onClick={() => setErrorOpen(false)}
-                className="w-full px-4 py-2 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Okay
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={errorOpen}
+        title="Failed to save"
+        description="Something went wrong while saving your changes. Please try again."
+        confirmLabel="Okay"
+        cancelLabel="Close"
+        variant="danger"
+        onConfirm={() => setErrorOpen(false)}
+        onCancel={() => setErrorOpen(false)}
+      />
     </>
   );
 };

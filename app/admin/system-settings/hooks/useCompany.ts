@@ -46,38 +46,39 @@ export const useCompany = () => {
     setCompanyForm((prev) => ({ ...prev, [key]: value }));
 
   const uploadLogo = async (file: File): Promise<boolean> => {
-  setUploading(true);
-  try {
-    const ext = file.name.split(".").pop();
-    const path = `company/logo.${ext}`;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const timestamp = Date.now();
+      const path = `company/logo_${timestamp}.${ext}`;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("path", path);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("path", path);
 
-    const res = await fetch("/api/upload", { 
-      method: "POST",
-      body: formData,
-    });
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!res.ok) return false;
+      if (!res.ok) return false;
 
-    const { url } = await res.json();
+      const { url } = await res.json();
 
-    setCompanyForm((prev) => ({ ...prev, companyLogo: url }));
+      setCompanyForm((prev) => ({ ...prev, companyLogo: url }));
 
-    await supabase
-      .from("info_branch")
-      .update({ company_logo: url })
-      .eq("id", rowId);
+      await supabase
+        .from("info_branch")
+        .update({ company_logo: url })
+        .eq("id", rowId);
 
-    return true;
-  } catch {
-    return false;
-  } finally {
-    setUploading(false);
-  }
-};
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const saveChanges = async (): Promise<boolean> => {
     if (!rowId) {

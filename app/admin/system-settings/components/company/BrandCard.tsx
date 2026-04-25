@@ -4,7 +4,7 @@ import { CompanyForm } from "../../types";
 
 interface BrandCardProps {
   companyForm: CompanyForm;
-  onLogoUpload: (file: File) => Promise<boolean>;
+  onLogoUpload: (file: File) => Promise<boolean | void>;
   uploading: boolean;
   onNameChange: (name: string) => void;
 }
@@ -21,6 +21,7 @@ const BrandCard: React.FC<BrandCardProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     await onLogoUpload(file);
+    e.target.value = "";
   };
 
   return (

@@ -241,7 +241,20 @@ const InquiryManagement: React.FC = () => {
         onRowClick={openDrawer}
         onToggleAll={toggleAll}
         onToggleOne={toggleOne}
-        onDeleteClick={() => setConfirmOpen(true)}
+        onDeleteClick={() => {
+          const archivableIds = selectedIds.filter((id) => {
+            const inquiry = inquiries.find((i) => i.id === id);
+            return inquiry?.status === "Resolved";
+          });
+
+          if (archivableIds.length === 0) {
+            alert("Only Resolved inquiries can be archived.");
+            return;
+          }
+
+          setSelectedIds(archivableIds);
+          setConfirmOpen(true);
+        }}
         allSelected={allSelected}
         someSelected={selectedIds.length > 0}
         sortConfig={sortConfig}

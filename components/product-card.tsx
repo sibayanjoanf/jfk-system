@@ -167,7 +167,7 @@ export function ProductCard({
                 <span className="inline-block mb-2 bg-red-600 text-white px-3 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider">
                   Out of Stock
                 </span>
-              ) : stockQtyNum <= 5 ? (
+              ) : stockQtyNum <= 10 ? (
                 <span className="inline-block mb-2 bg-amber-500 text-white px-3 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider">
                   Low Stock
                 </span>

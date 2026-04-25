@@ -313,7 +313,7 @@ const UserManagement: React.FC = () => {
         <div className="overflow-x-auto rounded-xl border border-gray-100 min-h-[300px]">
           {loading ? (
             <div className="flex items-center justify-center h-48 text-gray-400 text-sm gap-2">
-              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
               Loading users...
             </div>
           ) : filteredUsers.length === 0 ? (

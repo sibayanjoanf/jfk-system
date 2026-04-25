@@ -105,22 +105,24 @@ export function useOrderMutations() {
   };
 
   const refundItems = async (
-    id: string,
-    refundedItems: OrderItem[]
-  ): Promise<{ error: string | null }> => {
-    try {
-      const { error } = await supabase
-        .from("inquiries")
-        .update({ refunded_items: refundedItems })
-        .eq("id", id);
+  id: string,
+  refundedItems: OrderItem[],
+  newRefundedItems: OrderItem[]
+): Promise<{ error: string | null }> => {
+  try {
+    const { error } = await supabase.rpc("record_partial_refund", {
+      p_order_id: id,
+      p_refunded_items: refundedItems,
+      p_new_refund_items: newRefundedItems,
+    });
 
-      if (error) throw error;
-      return { error: null };
-    } catch (err) {
-      const e = err as { message: string };
-      return { error: e.message };
-    }
-  };
+    if (error) throw error;
+    return { error: null };
+  } catch (err) {
+    const e = err as { message: string };
+    return { error: e.message };
+  }
+};
 
   const bulkUpdateStatus = async (ids: string[], status: OrderStatus): Promise<{ error: string | null }> => {
     try {

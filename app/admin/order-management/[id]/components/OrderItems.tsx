@@ -75,7 +75,6 @@ const OrderItems: React.FC<Props> = ({
       },
     );
 
-    // Merge with existing refunded items
     const merged = [...alreadyRefunded];
     for (const newItem of newRefundedItems) {
       const existing = merged.find((i) => i.sku === newItem.sku);
@@ -86,7 +85,7 @@ const OrderItems: React.FC<Props> = ({
       }
     }
 
-    const { error } = await refundItems(order.id, merged);
+    const { error } = await refundItems(order.id, merged, newRefundedItems);
     if (error) {
       setRefundError(error);
       setRefunding(false);

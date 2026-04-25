@@ -92,6 +92,8 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const allowedTransitions = ALLOWED_TRANSITIONS[order.status].filter((s) => {
     if (s === "Cancelled" && !permissions?.orders.cancel) return false;
     if (s === "Refunded" && !permissions?.orders.refund) return false;
+    if (s === "Refunded" && (order.refunded_items ?? []).length > 0)
+      return false;
     return true;
   });
 

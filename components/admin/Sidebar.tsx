@@ -214,7 +214,7 @@ const Sidebar: React.FC = () => {
         {/* Nav Items */}
         <nav className="flex flex-col py-3 gap-0.5 px-2 flex-1">
           {menuItems.map((item, idx) => {
-            const isActive = pathname === item.path;
+            const isActive = pathname.startsWith(item.path);
             return (
               <Link
                 key={idx}
