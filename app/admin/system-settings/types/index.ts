@@ -9,17 +9,8 @@ export interface Category {
   id: string;
   name: string;
   image_url: string;
-  expanded: boolean;      // for UI only, not listed in DB
+  expanded: boolean;
   subCategories: SubCategory[];
-}
-
-export interface NotificationSettings {
-  inquiriesPush: boolean;
-  inquiriesEmail: boolean;
-  reportPush: boolean;
-  reportEmail: boolean;
-  remindersPush: boolean;
-  remindersEmail: boolean;
 }
 
 export interface CompanyForm {
@@ -32,4 +23,4 @@ export interface CompanyForm {
   companyEmail: string;
 }
 
-export type MainTab = "categories" | "notifications" | "company" | "storefront";
+export type MainTab = "categories" | "company" | "storefront";

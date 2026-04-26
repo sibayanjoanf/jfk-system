@@ -94,7 +94,7 @@ export function Navbar() {
         }
       });
 
-    fetch("api/announcements")
+    fetch("/api/announcements")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setAnnouncements(data.data);
@@ -814,6 +814,7 @@ export function Navbar() {
                         alt="all_collection_img"
                         fill
                         className="object-cover rounded-md"
+                        sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     </div>
                     <div className="absolute inset-0 rounded-md bg-black/30 hover:bg-black/0 transition-colors duration-300 z-10"></div>

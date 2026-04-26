@@ -17,12 +17,7 @@ import Link from "next/link";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
 import { useArchivedInventory } from "../hooks/useArchivedInventory";
-import {
-  ProductRow,
-  SortField,
-  CategoryOption,
-  SubCategoryOption,
-} from "../types";
+import { SortField, CategoryOption, SubCategoryOption } from "../types";
 import Pagination from "../components/Pagination";
 import ConfirmModal from "@/app/admin/components/ConfirmModal";
 
@@ -240,7 +235,7 @@ const ArchivedProductManagement: React.FC = () => {
               Archived Products
             </h2>
             <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-              Total {products.length} archived product variants found.
+              Products that have been archived. Select rows to restore them.
             </p>
           </div>
           <div
@@ -375,7 +370,6 @@ const ArchivedProductManagement: React.FC = () => {
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 gap-2 text-gray-400">
-              <Package size={24} strokeWidth={1.5} />
               <p className="text-sm">No archived products found.</p>
             </div>
           ) : (

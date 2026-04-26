@@ -260,8 +260,8 @@ const SalesReport: React.FC = () => {
               </div>
             </div>
 
-            <div className="h-[240px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full">
+              <ResponsiveContainer width="100%" height={240}>
                 <BarChart
                   data={data?.statPoints ?? []}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -433,7 +433,7 @@ const SalesReport: React.FC = () => {
             <p className="text-xs text-gray-400 mb-4">
               Distribution of all orders
             </p>
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center justify-center">
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie

@@ -167,13 +167,15 @@ export default function RegisterPage() {
   return (
     <div className="h-full w-full flex flex-col items-center justify-between bg-transparent p-4">
       <div className="flex justify-center w-full">
-        <Image
-          src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
-          alt="JFK Logo"
-          width={45}
-          height={45}
-          className="opacity-90 mb-10"
-        />
+        <div className="relative w-[45px] h-[45px]">
+          <Image
+            src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
+            alt="JFK Logo"
+            fill
+            sizes="45px"
+            className="opacity-90 object-contain"
+          />
+        </div>
       </div>
 
       <div className="w-[250px] md:w-[400px] overflow-x-hidden">

@@ -298,6 +298,7 @@ const InquiryManagement: React.FC = () => {
         sending={sending}
         onClose={closeDrawer}
         onSendReply={handleSendReply}
+        canReply={currentUser?.permissions?.inquiries.reply ?? false}
       />
     </div>
   );

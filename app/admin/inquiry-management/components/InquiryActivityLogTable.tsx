@@ -156,7 +156,7 @@ const InquiryActivityLogTable: React.FC<Props> = ({
             Activity Log
           </h2>
           <p className="text-xs text-gray-400 mt-1">
-            History of resolved inquiries, archiving, and restores.
+            Complete history of resolved inquiries, archiving, and restores.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap sm:justify-end">
@@ -266,7 +266,7 @@ const InquiryActivityLogTable: React.FC<Props> = ({
                 paginated.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-100 transition-colors"
                   >
                     <td className="py-3.5 pl-5 text-sm text-gray-700">
                       {row.inquiry_email ?? "—"}

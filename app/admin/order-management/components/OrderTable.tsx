@@ -490,7 +490,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       onClick={() =>
                         router.push(`/admin/order-management/${order.id}`)
                       }
-                      className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.includes(order.id) ? "bg-red-50/60" : ""}`}
+                      className={`hover:bg-gray-100 transition-colors cursor-pointer ${selectedIds.includes(order.id) ? "bg-red-50/60" : ""}`}
                     >
                       <td
                         className="py-3.5 pl-5"

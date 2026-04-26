@@ -268,7 +268,7 @@ const ActivityLogTable: React.FC<ActivityLogTableProps> = ({
                 paginated.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-100 transition-colors"
                   >
                     <td className="py-3.5 pl-5 text-sm font-mono font-medium text-gray-700">
                       {row.order_number}

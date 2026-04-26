@@ -293,7 +293,8 @@ const ProductManagement: React.FC = () => {
               Product Management
             </h2>
             <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-              Total {products.length} product variants found in database.
+              Total {products.length} product variants found. Click a row to
+              view and edit full details.
             </p>
           </div>
           <div

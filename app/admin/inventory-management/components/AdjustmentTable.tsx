@@ -14,6 +14,14 @@ import { supabase, supabaseBrowser } from "@/lib/supabase";
 import { AdjustmentRow } from "../types";
 import Pagination from "./Pagination";
 import CalendarPicker, { DateFilter } from "@/components/admin/CalendarPicker";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface VariantOption {
   id: string;
@@ -98,7 +106,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
     product: "",
     image_url: null as string | null,
     stock_qty: 0,
-    type: "Add" as "Add" | "Deduct" | "Set",
+    type: "Deduct" as "Deduct" | "Set",
     quantity: "",
     reason: "",
   });
@@ -287,7 +295,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
       product: "",
       image_url: null,
       stock_qty: 0,
-      type: "Add",
+      type: "Deduct",
       quantity: "",
       reason: "",
     });
@@ -302,7 +310,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <div className="min-w-0 max-w-sm">
+        <div className="min-w-0 max-w-2xl">
           <h2 className="text-base font-semibold text-gray-900">
             Stock Adjustments
           </h2>
@@ -378,7 +386,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
             Adjustment Form
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            {/* ── Product picker ── */}
+            {/* Product picker */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Product / SKU <span className="text-red-600">*</span>
@@ -505,27 +513,32 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Adjustment Type <span className="text-red-600">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      type: e.target.value as "Add" | "Deduct" | "Set",
-                    })
-                  }
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all appearance-none"
-                >
-                  <option value="Add">Add (increase stock)</option>
-                  <option value="Deduct">Deduct (decrease stock)</option>
-                  <option value="Set">Set (override to exact value)</option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
+              <Select
+                value={form.type}
+                onValueChange={(val) =>
+                  setForm({
+                    ...form,
+                    type: val as "Deduct" | "Set",
+                    reason: "",
+                  })
+                }
+              >
+                <SelectTrigger className="w-full text-sm border-gray-200 bg-white h-10.25!">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="Deduct">
+                      Deduct (decrease stock)
+                    </SelectItem>
+                    <SelectItem value="Set">
+                      Set (override to exact value)
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Quantity <span className="text-red-600">*</span>
@@ -548,40 +561,68 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                 <p className="text-xs text-red-500 mt-1">{quantityError}</p>
               )}
             </div>
+
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Reason <span className="text-red-600">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={form.reason}
-                  onChange={(e) => {
-                    setForm({ ...form, reason: e.target.value });
-                    setReasonError("");
-                  }}
-                  className={`appearance-none w-full px-3.5 py-2.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all ${reasonError ? "border-red-400" : "border-gray-200"}`}
+              <Select
+                value={form.reason}
+                onValueChange={(val) => {
+                  setForm({ ...form, reason: val });
+                  setReasonError("");
+                }}
+              >
+                <SelectTrigger
+                  className={`w-full text-sm bg-white ${reasonError ? "border-red-400" : "border-gray-200"} h-10.25!`}
                 >
-                  <option value="" disabled hidden>
-                    Select a reason
-                  </option>
-                  <option value="Damaged goods">Damaged goods</option>
-                  <option value="Consumed in showroom">
-                    Consumed in showroom
-                  </option>
-                  <option value="Returned by customer">
-                    Returned by customer
-                  </option>
-                  <option value="Counting discrepancy">
-                    Counting discrepancy
-                  </option>
-                  <option value="Theft / Loss">Theft / Loss</option>
-                  <option value="Other">Other</option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {form.type === "Deduct" ? (
+                      <>
+                        <SelectItem value="Damaged goods">
+                          Damaged goods
+                        </SelectItem>
+                        <SelectItem value="Theft / Loss">
+                          Theft / Loss
+                        </SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </>
+                    ) : form.type === "Set" ? (
+                      <>
+                        <SelectItem value="Counting discrepancy">
+                          Counting discrepancy
+                        </SelectItem>
+                        <SelectItem value="Stock correction">
+                          Stock correction
+                        </SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="Damaged goods">
+                          Damaged goods
+                        </SelectItem>
+                        <SelectItem value="Consumed in showroom">
+                          Consumed in showroom
+                        </SelectItem>
+                        <SelectItem value="Returned by customer">
+                          Returned by customer
+                        </SelectItem>
+                        <SelectItem value="Counting discrepancy">
+                          Counting discrepancy
+                        </SelectItem>
+                        <SelectItem value="Theft / Loss">
+                          Theft / Loss
+                        </SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </>
+                    )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               {reasonError && (
                 <p className="text-xs text-red-500 mt-1">{reasonError}</p>
               )}

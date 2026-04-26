@@ -18,14 +18,22 @@ const OrderStatusChart: React.FC<OrderStatusChartProps> = ({ data }) => {
     !data || data.length === 0 || data.every((d) => d.value === 0);
   const chartData = isEmpty ? EMPTY_DATA : data;
 
+  if (!data) {
+    return (
+      <div className="bg-white h-[400px] p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-center">
+        <p className="text-sm text-gray-400">No data available.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white h-[400px] p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
       <h3 className="font-semibold text-md text-[#050F24] mb-4">
         Order Status Review
       </h3>
 
-      <div className="flex-1 relative">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full relative">
+        <ResponsiveContainer width="100%" height={200}>
           <PieChart>
             <Pie
               data={chartData}

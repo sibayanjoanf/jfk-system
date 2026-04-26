@@ -175,8 +175,8 @@ const InquiryDrawer: React.FC<InquiryDrawerProps> = ({
                     className="w-full px-3.5 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   {inquiry.status === "Resolved" && (
-                    <p className="text-xs text-[#27D095] flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#27D095] inline-block" />
+                    <p className="text-xs text-green-600 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-600 inline-block" />
                       This inquiry has been resolved.
                     </p>
                   )}

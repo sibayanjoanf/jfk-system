@@ -65,9 +65,7 @@ const ArchivedInquiryTable: React.FC<ArchivedInquiryTableProps> = ({
             Archived Messages
           </h2>
           <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-            Inquiries that have been archived are listed below.
-            <br />
-            Select rows and click Restore to move them back to the active list.
+            Inquiries that have been archived. Select rows to restore them.
           </p>
         </div>
 

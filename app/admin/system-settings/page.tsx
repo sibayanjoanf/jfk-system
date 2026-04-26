@@ -7,7 +7,6 @@ import HeaderNotifications from "@/components/admin/HeaderNotif";
 import { MainTab } from "./types";
 import SettingsSidebar from "./components/SettingSidebar";
 import CategoriesPanel from "./components/categories/CategoriesPanel";
-import NotificationsPanel from "./components/notifications/NotificationsPanel";
 import CompanyPanel from "./components/company/CompanyPanel";
 
 const SystemSetting: React.FC = () => {
@@ -32,13 +31,9 @@ const SystemSetting: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        {/* Sidebar */}
         <SettingsSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
-        {/* Main Content */}
         <div className="lg:col-span-3">
           {activeTab === "categories" && <CategoriesPanel />}
-          {activeTab === "notifications" && <NotificationsPanel />}
           {activeTab === "company" && <CompanyPanel />}
         </div>
       </div>

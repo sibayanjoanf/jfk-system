@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { ContactInput } from "@/components/admin/ContactInput";
+import ConfirmModal from "@/app/admin/components/ConfirmModal";
 
 interface Props {
   initialOrder: Order;
@@ -88,6 +89,11 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const [saving, setSaving] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [errorModal, setErrorModal] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    newStatus: OrderStatus | null;
+  }>({ open: false, newStatus: null });
 
   const allowedTransitions = ALLOWED_TRANSITIONS[order.status].filter((s) => {
     if (s === "Cancelled" && !permissions?.orders.cancel) return false;
@@ -97,21 +103,26 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
     return true;
   });
 
-  const handleStatusChange = async (newStatus: OrderStatus) => {
+  const handleStatusChange = (newStatus: OrderStatus) => {
+    setStatusOpen(false);
+    setConfirmModal({ open: true, newStatus });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!confirmModal.newStatus) return;
     setStatusLoading(true);
-    setStatusError(null);
     const { error } = await updateStatus(
       order.id,
-      newStatus,
+      confirmModal.newStatus,
       currentUser?.email ?? "system",
     );
     if (error) {
-      setStatusError(error);
+      setErrorModal(error);
     } else {
-      setOrder((prev) => ({ ...prev, status: newStatus }));
+      setOrder((prev) => ({ ...prev, status: confirmModal.newStatus! }));
     }
     setStatusLoading(false);
-    setStatusOpen(false);
+    setConfirmModal({ open: false, newStatus: null });
   };
 
   const handleSaveEdit = async () => {
@@ -228,12 +239,6 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
         </div>
       </div>
 
-      {statusError && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600">
-          {statusError}
-        </div>
-      )}
-
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left — Order Items + Timeline */}
@@ -348,8 +353,11 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   </div>
                 </div>
                 <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Phone <span className="text-red-500">*</span>
+                  </label>
                   <ContactInput
-                    label="Phone"
+                    label=""
                     value={editForm.phone}
                     error={editErrors.phone}
                     onChange={(value) => {
@@ -382,14 +390,14 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   <label className="block text-xs text-gray-500 mb-1">
                     Notes
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     maxLength={250}
+                    rows={4}
                     value={editForm.message ?? ""}
                     onChange={(e) =>
                       setEditForm({ ...editForm, message: e.target.value })
                     }
-                    className={inputClass}
+                    className={`${inputClass} w-full resize-none break-words p-2`}
                   />
                 </div>
               </div>
@@ -427,12 +435,12 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   ].map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex justify-between items-start gap-2"
+                      className="flex justify-between items-start gap-4"
                     >
                       <span className="text-xs text-gray-400 shrink-0">
                         {label}
                       </span>
-                      <span className="text-xs text-gray-700 text-right capitalize">
+                      <span className="text-xs text-gray-700 text-right capitalize break-all whitespace-pre-wrap">
                         {value}
                       </span>
                     </div>
@@ -534,6 +542,28 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
       {showInvoice && (
         <InvoiceDownload order={order} onClose={() => setShowInvoice(false)} />
       )}
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title="Update Order Status"
+        description={`Change order status to "${confirmModal.newStatus}"?`}
+        confirmLabel="Update"
+        variant="restore"
+        loading={statusLoading}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setConfirmModal({ open: false, newStatus: null })}
+      />
+
+      <ConfirmModal
+        open={!!errorModal}
+        title="Cannot Update Status"
+        description={errorModal ?? ""}
+        confirmLabel="Got it"
+        variant="danger"
+        loading={false}
+        onConfirm={() => setErrorModal(null)}
+        onCancel={() => setErrorModal(null)}
+      />
     </div>
   );
 };

@@ -58,6 +58,13 @@ interface RevenueChartProps {
 }
 
 const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-[400px] flex items-center justify-center">
+        <p className="text-sm text-gray-400">No revenue data available.</p>
+      </div>
+    );
+  }
   return (
     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-[400px]">
       <div className="flex justify-between items-center mb-6">
@@ -72,7 +79,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height="80%">
+      <ResponsiveContainer width="100%" height={280}>
         <LineChart
           data={data}
           style={{ outline: "none" }}

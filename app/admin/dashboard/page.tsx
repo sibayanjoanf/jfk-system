@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {loading ? (
+      {loading || !data ? (
         <div className="flex items-center justify-center h-64 text-gray-400 gap-2">
           <Loader2 className="animate-spin" size={20} />
           <span className="text-sm">Loading dashboard...</span>

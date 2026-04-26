@@ -114,7 +114,6 @@ const InboundTable: React.FC<InboundTableProps> = ({
   const [formErrors, setFormErrors] = useState({
     product: false,
     quantity: false,
-    notes: false,
     supplier: false,
   });
 
@@ -225,7 +224,6 @@ const InboundTable: React.FC<InboundTableProps> = ({
     setFormErrors({
       product: false,
       quantity: false,
-      notes: false,
       supplier: false,
     });
 
@@ -259,14 +257,13 @@ const InboundTable: React.FC<InboundTableProps> = ({
   const handleSave = async () => {
     const isProductValid = !!form.variant_id;
     const isQtyValid = Number(form.quantity) > 0;
-    const isNotesValid = !!form.notes.trim();
+    // const isNotesValid = !!form.notes.trim();
     const isSupplierValid = !!form.supplier.trim();
 
-    if (!isProductValid || !isQtyValid || !isNotesValid || !isSupplierValid) {
+    if (!isProductValid || !isQtyValid || !isSupplierValid) {
       setFormErrors({
         product: !isProductValid,
         quantity: !isQtyValid,
-        notes: !isNotesValid,
         supplier: !isSupplierValid,
       });
       return;
@@ -297,7 +294,6 @@ const InboundTable: React.FC<InboundTableProps> = ({
     setFormErrors({
       product: false,
       quantity: false,
-      notes: false,
       supplier: false,
     });
     setShowForm(false);
@@ -538,11 +534,11 @@ const InboundTable: React.FC<InboundTableProps> = ({
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Notes <span className="text-red-600">*</span>
+                Notes
               </label>
               <input
                 type="text"
-                placeholder="Any notes about this batch"
+                placeholder="Any notes about this batch (optional)"
                 maxLength={150}
                 value={form.notes}
                 onChange={(e) => {
@@ -550,13 +546,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                   if (e.target.value.trim())
                     setFormErrors((prev) => ({ ...prev, notes: false }));
                 }}
-                className={`w-full px-3.5 py-2.5 text-sm bg-white border ${formErrors.notes ? "border-red-400" : "border-gray-200"} rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all`}
               />
-              {formErrors.notes && (
-                <p className="text-xs text-red-500 mt-1">
-                  Notes are required for adjustments
-                </p>
-              )}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">

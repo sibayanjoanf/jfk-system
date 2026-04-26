@@ -69,9 +69,7 @@ const InquiryTable: React.FC<InquiryTableProps> = ({
         <div>
           <h2 className="text-base font-semibold text-gray-900">Messages</h2>
           <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-            All inquiries submitted by customers are listed below.
-            <br />
-            Click on a particular inquiry to view its full details.
+            All inquiries submitted. Click on a row to view full details.
           </p>
         </div>
 

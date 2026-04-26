@@ -128,9 +128,8 @@ const ArchivedUsers: React.FC = () => {
               Archived Users
             </h2>
             <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-              Users that have been archived are listed below.
-              <br />
-              Select rows and click Restore to move them back to active.
+              Users that have been archived are listed below. Select rows to
+              restore them.
             </p>
           </div>
           {someSelected && isSuperAdmin && (
@@ -153,7 +152,6 @@ const ArchivedUsers: React.FC = () => {
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 gap-2 text-gray-400">
-              <Users size={24} strokeWidth={1.5} />
               <p className="text-sm">No archived users found.</p>
             </div>
           ) : (

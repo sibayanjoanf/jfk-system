@@ -41,9 +41,9 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const [sent, setSent] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [verified, setVerified] = useState(false);
@@ -91,14 +91,14 @@ export default function ForgotPasswordPage() {
   // Step 1 — send OTP to email via Supabase Auth
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim() || !isValidEmailFormat(email)) {
       setErrors({ email: "Please enter valid email address" });
       return;
     }
-    
+
     setErrors({});
-    
+
     setLoading(true);
     setError("");
 
@@ -174,13 +174,15 @@ export default function ForgotPasswordPage() {
   return (
     <div className="h-full w-full flex flex-col items-center justify-between bg-transparent p-4">
       <div className="flex justify-center w-full">
-        <Image
-          src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
-          alt="JFK Logo"
-          width={45}
-          height={45}
-          className="opacity-90"
-        />
+        <div className="relative w-[45px] h-[45px]">
+          <Image
+            src="https://zdahzxsipjtwxbraslvb.supabase.co/storage/v1/object/public/JFK%20Assets/logo/jfk_logo.png"
+            alt="JFK Logo"
+            fill
+            sizes="45px"
+            className="opacity-90 object-contain"
+          />
+        </div>
       </div>
 
       <div className="w-[250px] md:w-[400px] overflow-x-hidden">
@@ -213,12 +215,14 @@ export default function ForgotPasswordPage() {
                         setErrors((prev) => ({ ...prev, email: "" }));
                       }
                     }}
-                    className={`pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.email ? 'border-red-400' : ''}`}
+                    className={`pl-12 h-12 border-gray-200 bg-gray-50 rounded-lg w-full text-sm ${errors.email ? "border-red-400" : ""}`}
                     required
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>
+                  <p className="text-xs text-red-500 mt-1 ml-1">
+                    {errors.email}
+                  </p>
                 )}
               </div>
               {error && (

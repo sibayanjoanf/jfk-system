@@ -324,7 +324,7 @@ export default function InquiryFormPage() {
                 >
                   <SelectTrigger
                     className={cn(
-                      "w-full py-6 bg-transparent text-sm border-gray-200 border-2 text-gray-900",
+                      "w-full py-5.75 bg-transparent text-sm border-gray-200 border-2 text-gray-900",
                       errors.deliveryPref && "border-red-400 border-2",
                     )}
                   >
@@ -353,7 +353,7 @@ export default function InquiryFormPage() {
                 >
                   <SelectTrigger
                     className={cn(
-                      "w-full py-6 bg-transparent text-sm border-gray-200 border-2",
+                      "w-full py-5.75 bg-transparent text-sm border-gray-200 border-2",
                       errors.paymentPref && "border-red-400 border-2",
                     )}
                   >
