@@ -405,6 +405,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                             src={form.image_url}
                             alt={form.product}
                             fill
+                            sizes="36px"
                             className="object-cover"
                           />
                         ) : (
@@ -465,6 +466,7 @@ const AdjustmentTable: React.FC<AdjustmentTableProps> = ({
                                   src={v.image_url}
                                   alt={v.name}
                                   fill
+                                  sizes="36px"
                                   className="object-cover"
                                 />
                               ) : (

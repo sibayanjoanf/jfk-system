@@ -376,6 +376,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                             src={form.image_url}
                             alt={form.product}
                             fill
+                            sizes="36px"
                             className="object-cover"
                           />
                         ) : (
@@ -436,6 +437,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                                   src={v.image_url}
                                   alt={v.name}
                                   fill
+                                  sizes="36px"
                                   className="object-cover"
                                 />
                               ) : (
@@ -532,7 +534,7 @@ const InboundTable: React.FC<InboundTableProps> = ({
                 </p>
               )}
             </div>
-            <div className="sm:col-span-2">
+            {/* <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-gray-600 mb-1.5">
                 Notes
               </label>
@@ -546,10 +548,11 @@ const InboundTable: React.FC<InboundTableProps> = ({
                   if (e.target.value.trim())
                     setFormErrors((prev) => ({ ...prev, notes: false }));
                 }}
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all"
               />
-            </div>
+            </div> */}
           </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
             <button
               onClick={() => setShowForm(false)}
               className="px-4 py-2 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
