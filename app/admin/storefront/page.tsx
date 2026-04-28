@@ -53,10 +53,10 @@ const StorefrontPanel: React.FC = () => {
             <button
               key={tab.key}
               onClick={() => setActiveStorefrontTab(tab.key)}
-              className={`flex items-center gap-2 flex-1 justify-center px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
+              className={`cursor-pointer flex items-center gap-2 flex-1 justify-center px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
                 activeStorefrontTab === tab.key
                   ? "bg-red-600 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-50"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-red-600"
               }`}
             >
               <Icon size={13} />

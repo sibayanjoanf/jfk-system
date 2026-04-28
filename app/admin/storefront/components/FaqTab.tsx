@@ -98,7 +98,7 @@ const FaqTab: React.FC = () => {
               setShowAddCat(!showAddCat);
               setNewCatError(false);
             }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
             <Plus size={13} />
             Add Category
@@ -240,7 +240,7 @@ const FaqTab: React.FC = () => {
                         setEditingCatName(cat.name);
                         setEditCatError(false);
                       }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                      className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
                     >
                       <Pencil size={13} />
                     </button>
@@ -253,7 +253,7 @@ const FaqTab: React.FC = () => {
                         });
                         setConfirmOpen(true);
                       }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors"
+                      className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -288,7 +288,7 @@ const FaqTab: React.FC = () => {
                                 answer: faq.answer,
                               });
                             }}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
                           >
                             <Pencil size={12} />
                           </button>
@@ -302,7 +302,7 @@ const FaqTab: React.FC = () => {
                               });
                               setConfirmOpen(true);
                             }}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
                           >
                             <Trash2 size={12} />
                           </button>

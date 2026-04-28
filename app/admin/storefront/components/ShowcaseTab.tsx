@@ -129,7 +129,7 @@ const ShowcaseTab: React.FC = () => {
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
           >
             <Plus size={13} />
             Add Image
@@ -162,7 +162,7 @@ const ShowcaseTab: React.FC = () => {
               </div>
               <button
                 onClick={() => handleDeleteClick(item.id)}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
               >
                 <Trash2 size={13} />
               </button>

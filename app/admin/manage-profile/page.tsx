@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   CircleUserRound,
   LogOut,
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { ROLE_LABELS, UserRole } from "@/app/admin/user-management/userTypes";
 import { ContactInput } from "@/components/admin/ContactInput";
 import ConfirmModal from "../components/ConfirmModal";
+import OTPModal from "../components/OTPModal";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,6 +67,11 @@ const ProfilePage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpValue, setOtpValue] = useState(["", "", "", "", "", ""]);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [profileForm, setProfileForm] = useState({
     firstName: "",
@@ -231,19 +237,56 @@ const ProfilePage: React.FC = () => {
       setSavingPassword(false);
       return;
     }
-    const { error } = await supabase.auth.updateUser({
+  const { error: otpError } = await supabase.auth.signInWithOtp({
+    email: profileForm.email,
+    options: { shouldCreateUser: false },
+  });
+
+    if (otpError) {
+      setSavingPassword(false);
+      if (otpError.message.toLowerCase().includes("security purposes")) {
+        showError("Please wait a moment before requesting another code.");
+      } else {
+        showError(otpError.message);
+      }
+      return;
+    }
+
+    setSavingPassword(false);
+    setShowOtpModal(true);
+  };
+
+  const handleVerifyAndUpdate = async (token: string) => {
+    setVerifyingOtp(true);
+    setOtpError("");
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: profileForm.email,
+      token, // ✅ uses the token passed in directly
+      type: "email",
+    });
+
+    if (verifyError) {
+      setOtpError("Invalid or expired code. Please try again.");
+      setVerifyingOtp(false);
+      return;
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
       password: passwordForm.newPassword,
     });
-    setSavingPassword(false);
-    if (error) showError(error.message);
-    else {
-      showSuccess("Password updated successfully.");
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+
+    setVerifyingOtp(false);
+
+    if (updateError) {
+      setOtpError(updateError.message);
+      return;
     }
+
+    setShowOtpModal(false);
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    setSavingPassword(false);
+    showSuccess("Password updated successfully.");
   };
 
   // const handleSaveEmail = async () => {
@@ -339,7 +382,7 @@ const ProfilePage: React.FC = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium transition-all border-b border-gray-50 last:border-0 ${
+                  className={`cursor-pointer flex items-center justify-between w-full px-4 py-3.5 text-sm font-medium transition-all border-b border-gray-50 last:border-0 ${
                     isActive
                       ? "bg-red-50 text-red-600"
                       : "text-gray-600 hover:bg-gray-50"
@@ -355,7 +398,7 @@ const ProfilePage: React.FC = () => {
             })}
             <button
               onClick={() => setShowLogoutModal(true)}
-              className="flex items-center gap-2.5 w-full px-4 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all border-t border-gray-100"
+              className="cursor-pointer flex items-center gap-2.5 w-full px-4 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all border-t border-gray-100"
             >
               <LogOut size={15} />
               Log out
@@ -479,7 +522,7 @@ const ProfilePage: React.FC = () => {
                 <button
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                  className="cursor-pointer flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
                 >
                   {saving && <Loader2 size={13} className="animate-spin" />}
                   Save Changes
@@ -531,7 +574,7 @@ const ProfilePage: React.FC = () => {
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                        className="cursor-pointer absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
                       >
                         {showCurrentPassword ? (
                           <EyeOff size={15} />
@@ -573,7 +616,7 @@ const ProfilePage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                        className="cursor-pointer absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
                       >
                         {showNewPassword ? (
                           <EyeOff size={15} />
@@ -641,7 +684,7 @@ const ProfilePage: React.FC = () => {
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                        className="cursor-pointer absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
                       >
                         {showConfirmPassword ? (
                           <EyeOff size={15} />
@@ -661,7 +704,7 @@ const ProfilePage: React.FC = () => {
                   <button
                     onClick={handleSavePassword}
                     disabled={savingPassword}
-                    className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                    className="cursor-pointer flex items-center gap-2 px-5 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
                   >
                     {savingPassword && (
                       <Loader2 size={13} className="animate-spin" />
@@ -840,6 +883,21 @@ const ProfilePage: React.FC = () => {
         variant="danger"
         onConfirm={handleLogout}
         onCancel={() => setShowLogoutModal(false)}
+      />
+      <OTPModal
+        open={showOtpModal}
+        email={profileForm.email}
+        otpError={otpError}
+        verifying={verifyingOtp}
+        onComplete={(token) => handleVerifyAndUpdate(token)}
+        onResend={() => supabase.auth.signInWithOtp({
+          email: profileForm.email,
+          options: { shouldCreateUser: false }
+        })}
+        onCancel={() => {
+          setShowOtpModal(false);
+          setOtpError("");
+        }}
       />
     </div>
   );

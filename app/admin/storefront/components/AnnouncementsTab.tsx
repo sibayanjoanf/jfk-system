@@ -86,7 +86,7 @@ const AnnouncementsTab: React.FC = () => {
           <button
             onClick={handleAdd}
             disabled={adding}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-60"
+            className="cursor-pointer flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-60"
           >
             {adding ? (
               <Loader2 size={14} className="animate-spin" />
@@ -125,7 +125,7 @@ const AnnouncementsTab: React.FC = () => {
                   setPendingId(ann.id);
                   setConfirmOpen(true);
                 }}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
+                className="cursor-pointer p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0"
               >
                 <Trash2 size={13} />
               </button>
@@ -155,14 +155,14 @@ const AnnouncementsTab: React.FC = () => {
               <button
                 onClick={() => setConfirmOpen(false)}
                 disabled={deleting}
-                className="flex-1 px-4 py-2 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="cursor-pointer flex-1 px-4 py-2 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-60"
+                className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-60"
               >
                 {deleting ? (
                   <>

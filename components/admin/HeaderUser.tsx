@@ -108,22 +108,22 @@ const HeaderUser: React.FC = () => {
           </div>
 
           <Link href="/admin/manage-profile">
-            <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-              <User size={15} className="text-gray-400" />
+            <button className="cursor-pointer flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors group">
+              <User size={15} className="text-gray-400 group-hover:text-red-400 transition-colors" />
               Profile
             </button>
           </Link>
 
           <Link href="/admin/storefront">
-            <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-              <Megaphone size={15} className="text-gray-400" />
+            <button className="cursor-pointer flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors group">
+              <Megaphone size={15} className="text-gray-400 group-hover:text-red-400 transition-colors" />
               Storefront
             </button>
           </Link>
 
           <Link href="/">
-            <button className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-              <Laptop size={15} className="text-gray-400" />
+            <button className="cursor-pointer flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors group">
+              <Laptop size={15} className="text-gray-400 group-hover:text-red-400 transition-colors" />
               Visit Site
             </button>
           </Link>
