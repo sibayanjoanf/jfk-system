@@ -17,6 +17,7 @@ import {
 import { Categories, Product, ShowcaseProducts } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { Reveal } from "@/components/reveal";
+export const dynamic = "force-dynamic";
 
 interface CategorySectionProps {
   image: string;
@@ -190,6 +191,8 @@ async function getShowcase(): Promise<ShowcaseProducts[]> {
           )
         )
       `);
+    console.log("Showcase data:", JSON.stringify(data, null, 2)); // add this
+    console.log("Showcase error:", error);
     if (error) throw error;
     return data || [];
   } catch (error) {
