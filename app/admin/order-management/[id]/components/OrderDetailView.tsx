@@ -77,7 +77,7 @@ const validateEmailFormat = (val: string) => {
 
 const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const router = useRouter();
-  const { updateStatus, updateOrder } = useOrderMutations();
+  const { updateStatus, updateOrder, updateOrderFees } = useOrderMutations();
   const { currentUser } = useCurrentUser();
   const permissions = currentUser?.permissions;
   const [order, setOrder] = useState<Order>(initialOrder);
@@ -90,6 +90,11 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [errorModal, setErrorModal] = useState<string | null>(null);
+  const [tax, setTax] = useState<number>(initialOrder.tax ?? 0);
+  const [deliveryFee, setDeliveryFee] = useState<number>(
+    initialOrder.delivery_fee ?? 0,
+  );
+  const [feeSaving, setFeeSaving] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     newStatus: OrderStatus | null;
@@ -102,6 +107,13 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
       return false;
     return true;
   });
+
+  const handleFeeBlur = async () => {
+    setFeeSaving(true);
+    await updateOrderFees(order.id, tax, deliveryFee);
+    setOrder((prev) => ({ ...prev, tax, delivery_fee: deliveryFee }));
+    setFeeSaving(false);
+  };
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     setStatusOpen(false);
@@ -162,6 +174,14 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
     }
     setSaving(false);
   };
+
+  console.log("Address fields:", {
+    street: order.street,
+    city: order.city,
+    province: order.province,
+    zip_code: order.zip_code,
+    full_order: order,
+  });
 
   return (
     <div className="p-0">
@@ -386,6 +406,71 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                     </p>
                   )}
                 </div>
+                {editForm.delivery_preference?.toLowerCase() === "delivery" && (
+                  <>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        Street
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={100}
+                        value={editForm.street ?? ""}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, street: e.target.value })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={50}
+                          value={editForm.city ?? ""}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, city: e.target.value })
+                          }
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          Province
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={50}
+                          value={editForm.province ?? ""}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              province: e.target.value,
+                            })
+                          }
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        ZIP Code
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={10}
+                        value={editForm.zip_code ?? ""}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, zip_code: e.target.value })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
                     Notes
@@ -423,6 +508,14 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   {[
                     { label: "Phone", value: order.phone },
                     { label: "Delivery", value: order.delivery_preference },
+                    ...(order.delivery_preference?.toLowerCase() === "delivery"
+                      ? [
+                          { label: "Street", value: order.street },
+                          { label: "City", value: order.city },
+                          { label: "Province", value: order.province },
+                          { label: "ZIP", value: order.zip_code },
+                        ]
+                      : []),
                     { label: "Payment", value: order.payment_preference },
                     {
                       label: "Type",
@@ -489,9 +582,10 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   <span className="text-xs text-gray-700">{value}</span>
                 </div>
               ))}
+
               <div className="pt-2 mt-2 border-t border-gray-100 space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">Original Total</span>
+                  <span className="text-xs text-gray-400">Subtotal</span>
                   <span className="text-xs text-gray-700">
                     ₱
                     {order.total_amount.toLocaleString(undefined, {
@@ -499,6 +593,28 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                     })}
                   </span>
                 </div>
+                {deliveryFee > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-400">Delivery Fee</span>
+                    <span className="text-xs text-gray-700">
+                      +₱
+                      {deliveryFee.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                )}
+                {tax > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-400">Tax</span>
+                    <span className="text-xs text-gray-700">
+                      +₱
+                      {tax.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                )}
                 {(order.refunded_items ?? []).length > 0 && (
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-400">Refunded</span>
@@ -524,13 +640,73 @@ const OrderDetailView: React.FC<Props> = ({ initialOrder }) => {
                   <span className="text-base font-semibold text-gray-900">
                     <span className="text-sm font-medium">₱</span>
                     {(
-                      order.total_amount -
+                      order.total_amount +
+                      tax +
+                      deliveryFee -
                       (order.refunded_items ?? []).reduce(
                         (sum, item) => sum + item.price * item.quantity,
                         0,
                       )
                     ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
+                </div>
+              </div>
+
+              {/* Fees Card */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                  Fees
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">
+                      Delivery Fee
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        ₱
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={deliveryFee}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          if (val > 999999) return;
+                          setDeliveryFee(val);
+                        }}
+                        onBlur={handleFeeBlur}
+                        className="w-full pl-7 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5">
+                      Tax
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        ₱
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={tax}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          if (val > 999999) return;
+                          setTax(val);
+                        }}
+                        onBlur={handleFeeBlur}
+                        className="w-full pl-7 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+                  {feeSaving && (
+                    <p className="text-[10px] text-gray-400 text-right">
+                      Saving...
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

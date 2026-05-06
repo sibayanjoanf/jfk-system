@@ -241,10 +241,10 @@ export default async function Page() {
               </span>
             </h1>
             <p className="mb-8 leading-relaxed text-gray-700 text-sm">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat adipiscing elit.
+              JFK Tile and Stone Builders is a leading provider of quality tiles
+              and other construction materials at lower costs. We are engaged in
+              wholesaling and retailing of both imported and local tiles,
+              granite slabs, kitchen and bath fixtures, doors and more.
             </p>
             <Link href={"/collection"}>
               <Button
@@ -267,7 +267,9 @@ export default async function Page() {
                 Product Category
               </h2>
               <p className="text-sm mx-auto max-w-2xl text-gray-700">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                Discover a world of premium building essentials. We offer a vast
+                selection of local and imported tiles, stones, and fixtures at
+                prices that make quality accessible.
               </p>
             </div>
 
@@ -349,10 +351,11 @@ export default async function Page() {
                   We Provide You The Best Experience
                 </h2>
                 <p className="mb-6 leading-relaxed text-gray-600 text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat.
+                  Experience the perfect balance of durability and design.
+                  Whether you are wholesaling for a large project or retailing
+                  for a home renovation, we provide expert sourcing of quality
+                  tiles, stones, and fixtures to ensure your build stands the
+                  test of time.
                 </p>
                 <div className="flex justify-end">
                   <Link
@@ -382,10 +385,10 @@ export default async function Page() {
                   Got Questions? We&apos;re Here to Help!
                 </h2>
                 <p className="mb-6 leading-relaxed text-gray-600 text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat.
+                  Whether you’re choosing the right tile for your home or need a
+                  bulk quote for a large-scale project, our team is ready to
+                  assist. Reach out today for expert advice on our local and
+                  imported collections, pricing, or product availability.
                 </p>
                 <div className="flex justify-end">
                   <Link

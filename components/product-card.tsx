@@ -307,21 +307,48 @@ export function ProductCard({
                     </span>
 
                     {!isOutOfStock && !isFullyStockedInCart && (
-                      <div className="flex items-center border rounded-md h-10 bg-white">
+                      <div className="flex items-center border rounded-md h-9 bg-white">
                         <button
                           onClick={handleDecrement}
-                          className="p-2 hover:bg-gray-100"
+                          disabled={selectedQty <= 1}
+                          className="p-2 border-r hover:bg-gray-100 disabled:opacity-30 transition-colors"
                         >
-                          <Minus size={16} />
+                          <Minus size={17} />
                         </button>
-                        <span className="w-10 text-center font-semibold text-sm">
-                          {selectedQty}
-                        </span>
+                        <input
+                          type="number"
+                          value={selectedQty}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val)) {
+                              setSelectedQty(
+                                Math.min(
+                                  Math.max(1, val),
+                                  stockQtyNum - currentQtyInCart,
+                                ),
+                              );
+                            } else if (e.target.value === "") {
+                              setSelectedQty(0);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (
+                              e.target.value === "" ||
+                              parseInt(e.target.value) < 1
+                            ) {
+                              setSelectedQty(1);
+                            }
+                          }}
+                          className="w-10 text-center font-semibold text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
                         <button
                           onClick={handleIncrement}
-                          className="p-2 hover:bg-gray-100"
+                          disabled={
+                            currentQtyInCart + selectedQty >= stockQtyNum
+                          }
+                          className="p-2 border-l hover:bg-gray-100 disabled:opacity-30 transition-colors"
                         >
-                          <Plus size={16} />
+                          <Plus size={17} />
                         </button>
                       </div>
                     )}

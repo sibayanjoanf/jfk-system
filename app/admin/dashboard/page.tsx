@@ -15,10 +15,11 @@ import {
 } from "lucide-react";
 import HeaderUser from "@/components/admin/HeaderUser";
 import HeaderNotifications from "@/components/admin/HeaderNotif";
-import { useDashboard } from "./useDashboard";
+import { TimeFilter, useDashboard } from "./useDashboard";
 
 const Dashboard: React.FC = () => {
   const { data, loading } = useDashboard();
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("Monthly");
 
   const [sortConfig, setSortConfig] = useState<{
     field: string;
@@ -124,7 +125,11 @@ const Dashboard: React.FC = () => {
           {/* Charts Row */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
             <div className="xl:col-span-2">
-              <RevenueChart data={data?.revenueByMonth ?? []} />
+              <RevenueChart
+                data={data?.revenueByMonth ?? []}
+                timeFilter={timeFilter}
+                onTimeFilterChange={setTimeFilter}
+              />
             </div>
             <div className="xl:col-span-1">
               <OrderStatusChart data={data?.orderStatusCounts ?? []} />

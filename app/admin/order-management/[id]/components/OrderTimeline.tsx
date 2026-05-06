@@ -104,7 +104,10 @@ const OrderTimeline: React.FC<Props> = ({ order }) => {
           {TIMELINE_STEPS.map((step, idx) => {
             const isDone = currentIndex >= idx;
             const isCurrent =
-              currentIndex === idx && !isCancelled && !isRefunded;
+              currentIndex === idx &&
+              !isCancelled &&
+              !isRefunded &&
+              order.status !== "Completed";
             const entry = getHistoryForStatus(step.status);
             const dt = entry ? formatDateTime(entry.changed_at) : null;
 
@@ -117,7 +120,7 @@ const OrderTimeline: React.FC<Props> = ({ order }) => {
                   {isDone ? (
                     <CheckCircle2
                       size={30}
-                      className={isCurrent ? "text-red-600" : "text-green-500"}
+                      className="text-green-500"
                       strokeWidth={1.5}
                     />
                   ) : (

@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -10,6 +11,7 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import type { Payload } from "recharts/types/component/DefaultTooltipContent";
+import { TimeFilter } from "@/app/admin/dashboard/useDashboard";
 
 interface RevenueData {
   name: string;
@@ -25,28 +27,22 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div
-        className="text-center"
         style={{
-          backgroundColor: "#050F24",
-          borderRadius: "12px",
-          padding: "10px 40px",
-          color: "#fff",
+          backgroundColor: "#fff",
+          borderRadius: "10px",
+          padding: "10px 16px",
+          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+          fontSize: "12px",
+          border: "none",
         }}
       >
-        <p className="text-xs font-medium mb-2">{label}</p>
-        <div className="flex flex-col gap-1">
-          {payload.map((entry: Payload<number, string>, index: number) => (
-            <p
-              key={index}
-              className="text-sm font-medium leading-tight"
-              style={{
-                color: entry.dataKey === "facebook" ? "#DF2025" : "#27D095",
-              }}
-            >
-              ₱{entry.value}
-            </p>
-          ))}
-        </div>
+        <p className="text-xs text-gray-400 mb-1">{label}</p>
+        <p className="text-sm font-semibold text-gray-900">
+          ₱
+          {Number(payload[0]?.value ?? 0).toLocaleString("en-PH", {
+            minimumFractionDigits: 2,
+          })}
+        </p>
       </div>
     );
   }
@@ -55,9 +51,17 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 interface RevenueChartProps {
   data: RevenueData[];
+  timeFilter: TimeFilter;
+  onTimeFilterChange: (f: TimeFilter) => void;
 }
 
-const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
+const RevenueChart: React.FC<RevenueChartProps> = ({
+  data,
+  timeFilter,
+  onTimeFilterChange,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (!data || data.length === 0) {
     return (
       <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-[400px] flex items-center justify-center">
@@ -65,69 +69,80 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
       </div>
     );
   }
+
   return (
     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-[400px]">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-md font-semibold text-[#050F24]">
           Revenue Over Time
         </h3>
-        <div className="flex gap-4 text-xs font-normal text-gray-500">
-          <span className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#27D095]" />
-            Website
-          </span>
+        <div className="relative">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs border rounded-lg font-medium transition-colors ${
+              isOpen
+                ? "bg-red-600 text-white border-red-600"
+                : "border-red-200 text-red-600 hover:bg-red-50"
+            }`}
+          >
+            {timeFilter}
+            <ChevronDown size={14} />
+          </button>
+          {isOpen && (
+            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+              {(["Daily", "Weekly", "Monthly", "Yearly"] as TimeFilter[]).map(
+                (item) => (
+                  <button
+                    key={item}
+                    onClick={() => {
+                      onTimeFilterChange(item);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs hover:bg-gray-100 transition-colors ${
+                      item === timeFilter
+                        ? "text-red-600 font-semibold"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ),
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <ResponsiveContainer width="100%" height={280}>
-        <LineChart
+        <BarChart
           data={data}
-          style={{ outline: "none" }}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
-            stroke="#f0f0f0"
+            stroke="#F1F5F9"
           />
-
           <XAxis
             dataKey="name"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: "#6F757E", fontSize: 12 }}
-            dy={10}
+            tick={{ fill: "#94A3B8", fontSize: 11 }}
           />
-
           <YAxis
-            width={50}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: "#6F757E", fontSize: 12 }}
-            dx={-10}
+            tick={{ fill: "#94A3B8", fontSize: 11 }}
+            tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`}
           />
-
-          <Tooltip
-            content={<CustomTooltip />}
-            shared={true}
-            cursor={{ stroke: "#6F757E", strokeDasharray: "5 5" }}
-          />
-
-          <Line
-            type="monotone"
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#F8FAFC" }} />
+          <Bar
             dataKey="website"
-            stroke="#27D095"
-            strokeWidth={4}
-            dot={false}
-            strokeLinecap="round"
-            activeDot={{
-              r: 6,
-              fill: "#fff",
-              strokeWidth: 3,
-              stroke: "#27D095",
-            }}
+            fill="#DF2025"
+            radius={[4, 4, 0, 0]}
+            barSize={10}
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

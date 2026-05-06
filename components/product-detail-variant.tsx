@@ -109,6 +109,19 @@ export function ProductDetailVariant({ product, variants }: Props) {
                   </p>
                 )}
               </div>
+              <h3 className="text-sm font-bold uppercase tracking-widest mt-4">
+                <span
+                  className={
+                    selectedVariant.stock_qty > 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }
+                >
+                  {selectedVariant.stock_qty > 0
+                    ? `In Stock (${selectedVariant.stock_qty})`
+                    : "Out of Stock (0)"}
+                </span>
+              </h3>
             </div>
 
             {/* Variant Selector */}

@@ -136,7 +136,11 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
           value={v.attribute_name}
           maxLength={30}
           onChange={(e) =>
-            onUpdate(v._key, "attribute_name", capitalizeFirstChar(e.target.value))
+            onUpdate(
+              v._key,
+              "attribute_name",
+              capitalizeFirstChar(e.target.value),
+            )
           }
           placeholder="e.g. Design, Color"
           className={inputClass}
@@ -149,7 +153,11 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
           value={v.attribute_value}
           maxLength={30}
           onChange={(e) =>
-            onUpdate(v._key, "attribute_value", capitalizeFirstChar(e.target.value))
+            onUpdate(
+              v._key,
+              "attribute_value",
+              capitalizeFirstChar(e.target.value),
+            )
           }
           placeholder="e.g. Black, White"
           className={inputClass}
@@ -187,14 +195,11 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
       </div>
       <div>
         <label className={labelClass}>Stock Qty</label>
-        <input
-          type="number"
-          value={v.stock_qty}
-          readOnly
-          className={`${inputClass} bg-gray-50 text-gray-400 cursor-not-allowed`}
-        />
+        <div className="px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+          {v.stock_qty}
+        </div>
         <p className="text-[10px] text-gray-400 mt-1">
-          Manage stock via Inventory.
+          Manage stock via Inventory
         </p>
       </div>
     </div>
@@ -209,6 +214,9 @@ const VariantFields: React.FC<VariantFieldsProps> = ({
         placeholder="e.g. kitchen,fixtures,white"
         className={inputClass}
       />
+      <p className="text-[10px] text-gray-400 mt-1">
+        Comma-separated keywords to improve searchability
+      </p>
     </div>
   </div>
 );

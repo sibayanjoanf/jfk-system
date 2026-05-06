@@ -3,6 +3,25 @@ import { Order, OrderStatus, CreateOrderForm, OrderItem } from "../types";
 
 export function useOrderMutations() {
 
+  const updateOrderFees = async (
+    id: string,
+    tax: number,
+    delivery_fee: number,
+  ): Promise<{ error: string | null }> => {
+    try {
+      const { error } = await supabase
+        .from("inquiries")
+        .update({ tax, delivery_fee })
+        .eq("id", id);
+
+      if (error) throw error;
+      return { error: null };
+    } catch (err) {
+      const e = err as { message: string };
+      return { error: e.message };
+    }
+  };
+
   const updateStatus = async (id: string, status: OrderStatus, performedBy = "system"): Promise<{ error: string | null }> => {
     try {
       const { data: orders } = await supabase
@@ -50,6 +69,10 @@ export function useOrderMutations() {
           message:             updates.message,
           items:               updates.items,
           total_amount:        updates.total_amount,
+          street:              updates.street,  
+          city:                updates.city,     
+          province:            updates.province, 
+          zip_code:            updates.zip_code, 
         })
         .eq("id", id);
 
@@ -214,6 +237,7 @@ const restoreOrders = async (ids: string[], performedBy = "system"): Promise<{ e
   };
 
   return {
+    updateOrderFees,
     updateStatus,
     updateOrder,
     createOrder,

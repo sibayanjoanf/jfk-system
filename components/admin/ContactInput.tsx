@@ -9,6 +9,12 @@ import PhoneInput, {
 import flags from "react-phone-number-input/flags";
 import en from "react-phone-number-input/locale/en.json";
 import "react-phone-number-input/style.css";
+import {
+  parsePhoneNumber,
+  getExampleNumber,
+  isValidPhoneNumber,
+} from "libphonenumber-js";
+import examples from "libphonenumber-js/mobile/examples";
 
 interface CountryOption {
   value: Country;
@@ -84,7 +90,7 @@ const CustomCountrySelect = ({ value, onChange }: CustomCountrySelectProps) => {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full -left-3 mt-6 w-65 bg-white border border-gray-100 rounded-2xl shadow-xl z-[9999] overflow-hidden">
+        <div className="absolute top-full -left-3 mt-6 w-65 bg-white border border-gray-100 rounded-lg shadow-xl z-[9999] overflow-hidden">
           {/* Search */}
           <div className="p-2">
             <div className="flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
@@ -167,6 +173,26 @@ export const ContactInput: React.FC<ContactInputProps> = ({
 }) => {
   const formattedValue = value && !value.startsWith("+") ? `+${value}` : value;
 
+  const handleChange = (val: string | undefined) => {
+    const newVal = val ?? "";
+
+    if (newVal) {
+      try {
+        const parsed = parsePhoneNumber(newVal);
+        if (parsed?.country) {
+          const example = getExampleNumber(parsed.country, examples);
+          const maxNationalLength = example?.nationalNumber?.length ?? 15;
+          const currentNationalLength = parsed.nationalNumber?.length ?? 0;
+          if (currentNationalLength > maxNationalLength) return;
+        }
+      } catch {}
+    }
+
+    onChange(newVal);
+  };
+
+  const isValid = !formattedValue || isValidPhoneNumber(formattedValue);
+
   return (
     <div className="w-full">
       {label && (
@@ -176,16 +202,45 @@ export const ContactInput: React.FC<ContactInputProps> = ({
       )}
       <div
         className={`flex items-center px-3 bg-gray-50/50 border rounded-md h-10.25 shadow-xs transition-all focus-within:bg-white focus-within:ring-1 ${
-          error
+          error || (!isValid && formattedValue)
             ? "border-red-400 focus-within:ring-red-400"
             : "border-gray-200 focus-within:ring-red-500 focus-within:border-red-500"
         } ${className}`}
+        onKeyDown={(e) => {
+          // Allow control keys
+          const allowedKeys = [
+            "Backspace",
+            "Delete",
+            "ArrowLeft",
+            "ArrowRight",
+            "Tab",
+            "Enter",
+          ];
+          if (allowedKeys.includes(e.key)) return;
+
+          // Block non-digit keys
+          if (!/^\d$/.test(e.key)) return;
+
+          if (!formattedValue) return;
+
+          try {
+            const parsed = parsePhoneNumber(formattedValue);
+            if (parsed?.country) {
+              const example = getExampleNumber(parsed.country, examples);
+              const maxNationalLength = example?.nationalNumber?.length ?? 15;
+              const currentNationalLength = parsed.nationalNumber?.length ?? 0;
+              if (currentNationalLength >= maxNationalLength) {
+                e.preventDefault();
+              }
+            }
+          } catch {}
+        }}
       >
         <PhoneInput
           international
           defaultCountry="PH"
           value={formattedValue}
-          onChange={(val) => onChange(val ?? "")}
+          onChange={handleChange}
           countrySelectComponent={CustomCountrySelect}
           flags={flags}
           labels={en}
@@ -193,6 +248,11 @@ export const ContactInput: React.FC<ContactInputProps> = ({
         />
       </div>
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {!error && formattedValue && !isValid && (
+        <p className="text-xs text-red-500 mt-1">
+          Invalid phone number for selected country
+        </p>
+      )}
 
       <style jsx global>{`
         .PhoneInput {

@@ -28,6 +28,14 @@ import Pagination from "./components/Pagination";
 import AddProductDrawer from "./components/AddProdDrawer";
 import EditProductDrawer from "./components/EditProdDrawer";
 import ConfirmModal from "@/app/admin/components/ConfirmModal";
+import { exportProductsPDF } from "./utils/exportProductsPDF";
+import { FileDown } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const getStatusStyles = (status: string) => {
   switch (status) {
@@ -416,6 +424,26 @@ const ProductManagement: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => exportProductsPDF(filteredProducts)}
+                    className="flex items-center gap-1.5 px-2 py-2 text-xs font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <FileDown size={14} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  sideOffset={5}
+                  className="text-[10px] py-1 px-2 bg-red-600"
+                >
+                  <p>Export to PDF</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <button
               onClick={() => setAddDrawerOpen(true)}

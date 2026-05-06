@@ -43,7 +43,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export function useDashboard() {
+export type TimeFilter = "Daily" | "Weekly" | "Monthly" | "Yearly";
+export function useDashboard(timeFilter: TimeFilter = "Monthly") {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -78,20 +79,77 @@ export function useDashboard() {
         return sum + Number(o.total_amount) - refundedAmount;
       }, 0);
 
-      // Revenue by mont
-      const currentYear = new Date().getFullYear();
-      const revenueByMonth = MONTHS.map((name, i) => {
-        const monthOrders = completedOrders.filter((o) => {
-          const d = new Date(o.created_at);
-          return d.getFullYear() === currentYear && d.getMonth() === i;
+      // Revenue by time filter
+      const now = new Date();
+      let revenueByMonth: { name: string; website: number }[] = [];
+
+      if (timeFilter === "Monthly") {
+        const currentYear = now.getFullYear();
+        revenueByMonth = MONTHS.map((name, i) => {
+          const monthOrders = completedOrders.filter((o) => {
+            const d = new Date(o.created_at);
+            return d.getFullYear() === currentYear && d.getMonth() === i;
+          });
+          const revenue = monthOrders.reduce((sum, o) => {
+            const refundedAmount = (o.refunded_items ?? [])
+              .reduce((r: number, item: OrderItem) => r + (item.price || 0) * (item.quantity || 0), 0);
+            return sum + Number(o.total_amount) - refundedAmount;
+          }, 0);
+          return { name, website: revenue };
         });
-        const revenue = monthOrders.reduce((sum, o) => {
-          const refundedAmount = (o.refunded_items ?? [])
-            .reduce((r: number, item: OrderItem) => r + (item.price || 0) * (item.quantity || 0), 0);
-          return sum + Number(o.total_amount) - refundedAmount;
-        }, 0);
-        return { name, website: revenue };
-      });
+      } else if (timeFilter === "Yearly") {
+        const years = [...new Set(completedOrders.map((o) => new Date(o.created_at).getFullYear()))].sort();
+        revenueByMonth = years.map((year) => {
+          const revenue = completedOrders
+            .filter((o) => new Date(o.created_at).getFullYear() === year)
+            .reduce((sum, o) => {
+              const refundedAmount = (o.refunded_items ?? [])
+                .reduce((r: number, item: OrderItem) => r + (item.price || 0) * (item.quantity || 0), 0);
+              return sum + Number(o.total_amount) - refundedAmount;
+            }, 0);
+          return { name: String(year), website: revenue };
+        });
+      } else if (timeFilter === "Weekly") {
+        const weeks: { name: string; website: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const day = new Date(now);
+          day.setDate(now.getDate() - i);
+          const label = day.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
+          const revenue = completedOrders
+            .filter((o) => {
+              const d = new Date(o.created_at);
+              return d.toDateString() === day.toDateString();
+            })
+            .reduce((sum, o) => {
+              const refundedAmount = (o.refunded_items ?? [])
+                .reduce((r: number, item: OrderItem) => r + (item.price || 0) * (item.quantity || 0), 0);
+              return sum + Number(o.total_amount) - refundedAmount;
+            }, 0);
+          weeks.push({ name: label, website: revenue });
+        }
+        revenueByMonth = weeks;
+      } else if (timeFilter === "Daily") {
+        const hours = Array.from({ length: 24 }, (_, i) => {
+          const hour = i % 12 === 0 ? 12 : i % 12;
+          const ampm = i < 12 ? "AM" : "PM";
+          return { label: `${hour}${ampm}`, hour: i };
+        });
+        revenueByMonth = hours.map(({ label, hour }) => {
+          const revenue = completedOrders
+            .filter((o) => {
+              const d = new Date(o.created_at);
+              return (
+                d.toDateString() === now.toDateString() && d.getHours() === hour
+              );
+            })
+            .reduce((sum, o) => {
+              const refundedAmount = (o.refunded_items ?? [])
+                .reduce((r: number, item: OrderItem) => r + (item.price || 0) * (item.quantity || 0), 0);
+              return sum + Number(o.total_amount) - refundedAmount;
+            }, 0);
+          return { name: label, website: revenue };
+        });
+      }
 
       // Order status count
       const statusList = ["Pending", "Processing", "Paid", "Completed", "Cancelled", "Refunded"];
@@ -170,7 +228,7 @@ export function useDashboard() {
     };
 
     fetchAll();
-  }, []);
+  }, [timeFilter]);
 
   return { data, loading };
 }

@@ -309,12 +309,13 @@ export default function ContactPage() {
                     <Textarea
                       id="message"
                       placeholder="Message"
-                      maxLength={500}
                       value={messageBox}
                       onChange={(e) => {
-                        setMessage(e.target.value);
-                        if (e.target.value.trim() && errors.messageBox) {
-                          setErrors((prev) => ({ ...prev, messageBox: "" }));
+                        if (e.target.value.length <= 500) {
+                          setMessage(e.target.value);
+                          if (e.target.value.trim() && errors.messageBox) {
+                            setErrors((prev) => ({ ...prev, messageBox: "" }));
+                          }
                         }
                       }}
                       className={cn(
@@ -323,11 +324,18 @@ export default function ContactPage() {
                         errors.messageBox && "border-red-500",
                       )}
                     />
-                    {errors.messageBox && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {errors.messageBox}
+                    <div className="flex justify-between items-center mt-0">
+                      {errors.messageBox ? (
+                        <p className="text-xs text-red-500">
+                          {errors.messageBox}
+                        </p>
+                      ) : (
+                        <span />
+                      )}
+                      <p className="text-xs text-gray-400">
+                        {messageBox.length}/500 characters
                       </p>
-                    )}
+                    </div>
                   </Field>
 
                   <Button

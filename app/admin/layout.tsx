@@ -37,6 +37,33 @@ export default function AdminLayout({
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const channel = supabase
+      .channel("current_user_profile")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_profiles",
+          filter: `id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          console.log("🔥 Profile updated!", payload);
+          window.location.reload();
+        },
+      )
+      .subscribe((status) => {
+        console.log("📡 Layout Realtime status:", status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
+
   const authOnlyPages = [
     "/admin",
     "/admin/forgot-password",

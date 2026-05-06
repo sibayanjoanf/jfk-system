@@ -332,10 +332,10 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                     onChange={(e) => {
                       setName(e.target.value);
                       if (e.target.value.trim()) {
-                         setErrors((prev) => ({ ...prev, name: "" }));
+                        setErrors((prev) => ({ ...prev, name: "" }));
                       }
                     }}
-                    className={`${inputClass} bg-gray-50 ${errors.name ? 'border-red-400' : ''}`}
+                    className={`${inputClass} bg-gray-50 ${errors.name ? "border-red-400" : ""}`}
                   />
                   {errors.name && <p className={errorClass}>{errors.name}</p>}
                 </div>
@@ -387,7 +387,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                           }
                         }}
                         disabled={!selectedCategoryId}
-                        className={`${inputClass} bg-gray-50 text-gray-700 appearance-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed ${errors.subCategory ? 'border-red-400' : ''}`}
+                        className={`${inputClass} bg-gray-50 text-gray-700 appearance-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed ${errors.subCategory ? "border-red-400" : ""}`}
                       >
                         <option value="">Select sub-category</option>
                         {subCategories.map((s) => (
@@ -480,10 +480,13 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                                   .toUpperCase();
                                 updateExisting(v.id, "sku", sanitizedValue);
                                 if (sanitizedValue.trim()) {
-                                  setErrors((prev) => ({ ...prev, [`ex_sku_${i}`]: "" }));
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    [`ex_sku_${i}`]: "",
+                                  }));
                                 }
                               }}
-                              className={`${inputClass} ${errors[`ex_sku_${i}`] ? 'border-red-400' : ''}`}
+                              className={`${inputClass} ${errors[`ex_sku_${i}`] ? "border-red-400" : ""}`}
                             />
                             {errors[`ex_sku_${i}`] && (
                               <p className={errorClass}>
@@ -517,12 +520,12 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                             type="text"
                             value={v.attribute_name}
                             maxLength={30}
-                           onChange={(e) => {
+                            onChange={(e) => {
                               const value = e.target.value;
                               updateExisting(
                                 v.id,
                                 "attribute_name",
-                                capitalizeFirstChar(value)
+                                capitalizeFirstChar(value),
                               );
                             }}
                             placeholder="e.g. Design, Color"
@@ -540,7 +543,7 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                               updateExisting(
                                 v.id,
                                 "attribute_value",
-                                capitalizeFirstChar(value)
+                                capitalizeFirstChar(value),
                               );
                             }}
                             placeholder="e.g. Black, White"
@@ -564,12 +567,15 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                               if (/^\d*(\.?\d{0,2})$/.test(val)) {
                                 updateExisting(v.id, "price", e.target.value);
                                 if (e.target.value.trim()) {
-                                  setErrors((prev) => ({ ...prev, [`ex_price_${i}`]: "" }));
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    [`ex_price_${i}`]: "",
+                                  }));
                                 }
                               }
                             }}
                             min="0"
-                            className={`${inputClass} ${errors[`ex_price_${i}`] ? 'border-red-400' : ''}`}
+                            className={`${inputClass} ${errors[`ex_price_${i}`] ? "border-red-400" : ""}`}
                           />
                           {errors[`ex_price_${i}`] && (
                             <p className={errorClass}>
@@ -579,14 +585,11 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                         </div>
                         <div>
                           <label className={labelClass}>Stock Qty</label>
-                          <input
-                            type="number"
-                            value={v.stock_qty}
-                            readOnly
-                            className={`${inputClass} bg-gray-100 cursor-not-allowed`}
-                          />
+                          <div className="px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+                            {v.stock_qty}
+                          </div>
                           <p className="text-[10px] text-gray-400 mt-1">
-                            Manage stock via Inventory.
+                            Manage stock via Inventory
                           </p>
                         </div>
                       </div>
@@ -602,6 +605,9 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                           placeholder="e.g. kitchen,fixtures,white"
                           className={inputClass}
                         />
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          Comma-separated keywords to improve searchability
+                        </p>
                       </div>
                     </div>
                   ))
@@ -637,7 +643,9 @@ const EditProductDrawer: React.FC<EditProductDrawerProps> = ({
                     onRemove={(key) =>
                       setNewVariants((p) => p.filter((v) => v._key !== key))
                     }
-                    clearError={(key) => setErrors((prev) => ({ ...prev, [key]: "" }))}
+                    clearError={(key) =>
+                      setErrors((prev) => ({ ...prev, [key]: "" }))
+                    }
                   />
                 ))}
               </div>

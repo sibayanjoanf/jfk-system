@@ -93,6 +93,17 @@ const TrackOrderView: React.FC<Props> = ({ order }) => {
     }),
   });
 
+  const maskEmail = (email: string) => {
+    const [local, domain] = email.split("@");
+    if (local.length <= 2) return `${local[0]}*@${domain}`;
+    return `${local[0]}${"*".repeat(local.length - 2)}${local[local.length - 1]}@${domain}`;
+  };
+
+  const maskPhone = (phone: string) => {
+    const visible = phone.slice(-4);
+    return `${"*".repeat(phone.length - 4)}${visible}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Order Header */}
@@ -144,9 +155,9 @@ const TrackOrderView: React.FC<Props> = ({ order }) => {
                   label: "Name",
                   value: `${order.first_name} ${order.last_name}`,
                 },
-                { label: "Phone", value: order.phone },
+                { label: "Phone", value: maskPhone(order.phone) },
                 ...(order.email
-                  ? [{ label: "Email", value: order.email }]
+                  ? [{ label: "Email", value: maskEmail(order.email) }]
                   : []),
                 { label: "Delivery", value: order.delivery_preference },
                 { label: "Payment", value: order.payment_preference },
@@ -173,7 +184,10 @@ const TrackOrderView: React.FC<Props> = ({ order }) => {
                 {TIMELINE_STEPS.map((step, idx) => {
                   const isDone = currentIndex >= idx;
                   const isCurrent =
-                    currentIndex === idx && !isCancelled && !isRefunded;
+                    currentIndex === idx &&
+                    !isCancelled &&
+                    !isRefunded &&
+                    order.status !== "Completed";
                   const entry = getHistoryForStatus(step.status);
                   const dt = entry ? formatDateTime(entry.changed_at) : null;
 
@@ -186,13 +200,7 @@ const TrackOrderView: React.FC<Props> = ({ order }) => {
                         {isDone ? (
                           <CheckCircle2
                             size={30}
-                            className={
-                              order.status === "Completed"
-                                ? "text-green-500"
-                                : isCurrent
-                                  ? "text-red-600"
-                                  : "text-green-500"
-                            }
+                            className="text-green-500"
                             strokeWidth={1.5}
                           />
                         ) : (

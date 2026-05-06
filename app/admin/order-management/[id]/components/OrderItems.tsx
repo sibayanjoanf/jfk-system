@@ -284,10 +284,13 @@ const OrderItems: React.FC<Props> = ({
         })}
 
         {!isExpanded && hasMore && !refundMode && (
-          <div className="px-6 py-2 bg-gray-50/50 text-center">
-            <p className="text-[10px] text-gray-400">
+          <div className="px-6 py-2 bg-gray-50 hover:bg-gray-100 text-center">
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="text-[10px] text-gray-400 transition-colors font-medium"
+            >
               + {order.items.length - 3} more items hidden
-            </p>
+            </button>
           </div>
         )}
       </div>

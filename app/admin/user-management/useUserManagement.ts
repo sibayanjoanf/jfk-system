@@ -43,6 +43,43 @@ export function useUserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchCurrentUser();
+
+    const channel = supabase
+      .channel("user_profiles_changes")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "user_profiles" },
+        (payload) => {
+          console.log("Realtime fired!", payload);
+          const updated = payload.new as UserProfile;
+
+          setUsers((prev) =>
+            prev.map((u) => (u.id === updated.id ? updated : u))
+          );
+
+          setCurrentUser((current) => {
+            if (current && current.id === updated.id) {
+              const roleChanged = current.role !== updated.role;
+              const statusChanged = current.status !== updated.status;
+              const permissionsChanged =
+                JSON.stringify(current.permissions) !==
+                JSON.stringify(updated.permissions);
+
+              if (roleChanged || statusChanged || permissionsChanged) {
+                window.location.reload();
+              }
+            }
+            return current;
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log("📡 Realtime status:", status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const approveUser = async (

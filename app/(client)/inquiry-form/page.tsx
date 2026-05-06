@@ -44,6 +44,10 @@ export default function InquiryFormPage() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
+  const [zipCode, setZipCode] = useState("");
 
   const { items, clearCart } = useCart();
   const totalAmount = items.reduce(
@@ -98,6 +102,13 @@ export default function InquiryFormPage() {
       newErrors.paymentPref = "Please select a payment preference.";
     setErrors(newErrors);
 
+    if (deliveryPref === "delivery") {
+      if (!street.trim()) newErrors.street = "Street address is required.";
+      if (!city.trim()) newErrors.city = "City is required.";
+      if (!province.trim()) newErrors.province = "Province is required.";
+      if (!zipCode.trim()) newErrors.zipCode = "ZIP code is required.";
+    }
+
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
       try {
@@ -119,6 +130,10 @@ export default function InquiryFormPage() {
               message,
               items,
               totalAmount,
+              street,
+              city,
+              province,
+              zipCode,
             }),
           },
         );
@@ -320,6 +335,12 @@ export default function InquiryFormPage() {
                   onValueChange={(val) => {
                     setDeliveryPref(val);
                     setErrors((p) => ({ ...p, deliveryPref: "" }));
+                    if (val === "pickup") {
+                      setStreet("");
+                      setCity("");
+                      setProvince("");
+                      setZipCode("");
+                    }
                   }}
                 >
                   <SelectTrigger
@@ -374,14 +395,108 @@ export default function InquiryFormPage() {
               </div>
             </div>
 
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Message / Notes (optional)"
-              disabled={isSubmitting}
-              className="min-h-[120px] md:min-h-[160px] border-gray-200 bg-transparent p-4 text-sm placeholder:text-gray-400 resize-none"
-            />
+            {deliveryPref === "delivery" && (
+              <div className="flex flex-col gap-3 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                  Delivery Address
+                </p>
+                <Field>
+                  <Input
+                    placeholder="Street / Barangay"
+                    className={cn(
+                      inputStyles,
+                      errors.street && "border-red-400",
+                    )}
+                    value={street}
+                    onChange={(e) => {
+                      setStreet(e.target.value);
+                      setErrors((p) => ({ ...p, street: "" }));
+                    }}
+                    disabled={isSubmitting}
+                  />
+                  {errors.street && (
+                    <p className="text-xs text-red-500 mt-1">{errors.street}</p>
+                  )}
+                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field>
+                    <Input
+                      placeholder="City / Municipality"
+                      className={cn(
+                        inputStyles,
+                        errors.city && "border-red-400",
+                      )}
+                      value={city}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        setErrors((p) => ({ ...p, city: "" }));
+                      }}
+                      disabled={isSubmitting}
+                    />
+                    {errors.city && (
+                      <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+                    )}
+                  </Field>
+                  <Field>
+                    <Input
+                      placeholder="Province"
+                      className={cn(
+                        inputStyles,
+                        errors.province && "border-red-400",
+                      )}
+                      value={province}
+                      onChange={(e) => {
+                        setProvince(e.target.value);
+                        setErrors((p) => ({ ...p, province: "" }));
+                      }}
+                      disabled={isSubmitting}
+                    />
+                    {errors.province && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors.province}
+                      </p>
+                    )}
+                  </Field>
+                </div>
+                <Field>
+                  <Input
+                    placeholder="ZIP Code"
+                    className={cn(
+                      inputStyles,
+                      errors.zipCode && "border-red-400",
+                    )}
+                    value={zipCode}
+                    maxLength={10}
+                    onChange={(e) => {
+                      setZipCode(e.target.value.replace(/\D/g, ""));
+                      setErrors((p) => ({ ...p, zipCode: "" }));
+                    }}
+                    disabled={isSubmitting}
+                  />
+                  {errors.zipCode && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.zipCode}
+                    </p>
+                  )}
+                </Field>
+              </div>
+            )}
+
+            <div>
+              <Textarea
+                id="message"
+                value={message}
+                onChange={(e) => {
+                  if (e.target.value.length <= 500) setMessage(e.target.value);
+                }}
+                placeholder="Message / Notes (optional)"
+                disabled={isSubmitting}
+                className="h-[120px] md:h-[160px] border-gray-200 bg-transparent p-4 text-sm placeholder:text-gray-400 resize-none overflow-y-auto"
+              />
+              <p className="text-xs text-gray-400 mt-3 text-right">
+                {message.length}/500 characters
+              </p>
+            </div>
 
             <Button
               onClick={handleSubmit}
@@ -444,9 +559,16 @@ export default function InquiryFormPage() {
               <p className="text-xs uppercase tracking-widest text-gray-400 mb-1">
                 Your Order
               </p>
-              <h2 className="font-semibold text-xl md:text-2xl text-gray-900">
-                {items.length} {items.length === 1 ? "item" : "items"}
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-xl md:text-2xl text-gray-900">
+                  {items.length} {items.length === 1 ? "item" : "items"}
+                </h2>
+                <Link href="/collection">
+                  <button className="text-xs font-medium text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                    + Add More Items
+                  </button>
+                </Link>
+              </div>
             </div>
 
             <div

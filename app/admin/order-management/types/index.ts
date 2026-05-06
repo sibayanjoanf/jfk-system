@@ -32,6 +32,12 @@ export interface Order {
   refunded_items: OrderItem[];
   total_amount: number;
   created_at: string;
+  tax?: number;
+  delivery_fee?: number;
+  street?: string;
+  city?: string;
+  province?: string;
+  zip_code?: string;
 }
 
 export interface OrderRow {

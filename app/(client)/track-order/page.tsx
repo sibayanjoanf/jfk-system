@@ -1,7 +1,7 @@
 "use client";
 
 import jsQR from "jsqr";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Field, FieldGroup } from "@/components/ui/field";
@@ -37,18 +37,18 @@ const formatOrderId = (value: string, prevValue: string) => {
 export default function TrackOrderPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-
+  const orderResultRef = useRef<HTMLDivElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [orderId, setOrderId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
-
   const [showScanner, setShowScanner] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof navigator === "undefined") return false;
-    return /Mobi|Android|iPhone/i.test(navigator.userAgent);
-  });
+  const [email, setEmail] = useState("");
+  // const [isMobile, setIsMobile] = useState(() => {
+  //   if (typeof navigator === "undefined") return false;
+  //   return /Mobi|Android|iPhone/i.test(navigator.userAgent);
+  // });
 
   const handleScanResult = (scannedId: string) => {
     setOrderId(scannedId);
@@ -59,7 +59,7 @@ export default function TrackOrderPage() {
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
-  const handleScanClick = () => cameraInputRef.current?.click();
+  // const handleScanClick = () => cameraInputRef.current?.click();
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -93,21 +93,23 @@ export default function TrackOrderPage() {
     await handleTrackById(scannedId);
   };
 
-  const handleTrackById = async (id: string) => {
+  const handleTrackById = async (id: string, emailCheck?: string) => {
     setLoading(true);
     setError("");
     setOrder(null);
 
-    const { data, error: fetchError } = await supabase
-      .from("inquiries")
-      .select("*")
-      .eq("order_number", id)
-      .single();
+    let query = supabase.from("inquiries").select("*").eq("order_number", id);
+
+    if (emailCheck) {
+      query = query.eq("email", emailCheck);
+    }
+
+    const { data, error: fetchError } = await query.single();
 
     setLoading(false);
 
     if (fetchError || !data) {
-      setError("Order not found. Check your QR or Order ID.");
+      setError("Order not found. Please check your Order ID and email.");
       return;
     }
 
@@ -128,6 +130,12 @@ export default function TrackOrderPage() {
       created_at: data.created_at,
       refunded_items: data.refunded_items ?? [],
     });
+    setTimeout(() => {
+      orderResultRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
   };
 
   const handleTrack = () => {
@@ -135,7 +143,11 @@ export default function TrackOrderPage() {
       setError("Please enter your Order ID");
       return;
     }
-    handleTrackById(orderId.trim().toUpperCase());
+    if (!email.trim()) {
+      setError("Please enter your email");
+      return;
+    }
+    handleTrackById(orderId.trim().toUpperCase(), email.trim().toLowerCase());
   };
 
   return (
@@ -258,7 +270,7 @@ export default function TrackOrderPage() {
 
                 <div>
                   <FieldGroup>
-                    <Field className="mb-4">
+                    <Field>
                       <Input
                         id="order-id"
                         className={`text-sm ${error ? "border-red-400 focus-visible:ring-red-400" : ""}`}
@@ -279,6 +291,20 @@ export default function TrackOrderPage() {
                           if (orderId === "ORD-") {
                             setOrderId("");
                           }
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleTrack()}
+                      />
+                    </Field>
+                    <Field className="mb-4 -mt-2">
+                      <Input
+                        id="email"
+                        type="email"
+                        className={`text-sm ${error ? "border-red-400 focus-visible:ring-red-400" : ""}`}
+                        placeholder="Enter your email address"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setError("");
                         }}
                         onKeyDown={(e) => e.key === "Enter" && handleTrack()}
                       />
@@ -309,7 +335,10 @@ export default function TrackOrderPage() {
 
             {/* Order Result */}
             {order && (
-              <div className="mt-16 border-t border-gray-100 pt-12">
+              <div
+                ref={orderResultRef}
+                className="mt-16 border-t border-gray-100 pt-12"
+              >
                 <TrackOrderView order={order} />
               </div>
             )}

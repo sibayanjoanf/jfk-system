@@ -47,6 +47,12 @@ const InvoiceDownload: React.FC<Props> = ({ order, onClose }) => {
     fetchConfig();
   }, []);
 
+  const documentTitle = ["Pending", "Processing", "Cancelled"].includes(
+    order.status,
+  )
+    ? "QUOTATION"
+    : "INVOICE";
+
   const handlePrint = (currentConfig: InvoiceConfig) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
@@ -60,7 +66,7 @@ const InvoiceDownload: React.FC<Props> = ({ order, onClose }) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Invoice - ${order.order_number}</title>
+        <title>${documentTitle} - ${order.order_number}</title>
         <meta charset="utf-8" />
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -287,7 +293,7 @@ const InvoiceDownload: React.FC<Props> = ({ order, onClose }) => {
               </div>
             </div>
             <div style="text-align:right;">
-              <div class="invoice-title">INVOICE</div>
+              <div class="invoice-title">${documentTitle}</div>
               <div class="invoice-meta">
                 <span class="invoice-number">${order.order_number}</span><br/>
                 ${new Date(order.created_at).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}<br/>

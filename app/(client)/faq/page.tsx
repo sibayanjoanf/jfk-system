@@ -62,10 +62,11 @@ export default function FAQPage() {
               <span className="mr-[25px]">Frequently Asked Questions</span>
             </h1>
             <p className="mb-8 leading-relaxed text-gray-700 text-sm">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat adipiscing elit.
+              Find quick answers to common inquiries about our product sourcing,
+              wholesale opportunities, and delivery services. We’ve compiled
+              everything you need to know to make your purchasing process as
+              smooth as possible, from tile specifications to bulk order
+              logistics.
             </p>
           </div>
         </div>
